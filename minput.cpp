@@ -1,106 +1,57 @@
-#include <dinput.h>
+#include <SDL.h>
 #include "pang.h"
 
-
-MINPUT::MINPUT()
+MINPUT::MINPUT ()
 {
-	ZeroMemory(buffer, sizeof(buffer));
+    // Initialize buffer
+    //memset ( buffer, 0, sizeof ( buffer ) );
 }
 
-MINPUT::~MINPUT()
+MINPUT::~MINPUT ()
 {
-	if(lpDIDK) lpDIDK->Release();
+    // Release SDL input device
+    //if ( sdlKeyboard )
+    //    SDL_DestroyKeyboard ( sdlKeyboard );
 }
 
-/////////////////////////////////////////////
-// InitInput
-// Funcion que inicia DirectInput
-/////////////////////////////////////////////
-BOOL MINPUT::Init(HINSTANCE hInst, HWND hwnd)
+BOOL MINPUT::Init ( HINSTANCE hInst, HWND hwnd )
 {
-	if ( DirectInput8Create (hInst, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&lpDI, NULL)==DI_OK)
-		if(InitKeyboard(hwnd)) return TRUE;
-	return FALSE;
+    // Initialize SDL
+    if ( SDL_Init ( SDL_INIT_VIDEO | SDL_INIT_EVENTS ) != 0 )
+        return FALSE;
+
+    // Create SDL window (if needed)
+    // HWND hwnd could be used to create an SDL window if required.
+
+    // Create SDL keyboard device
+    //sdlKeyboard = SDL_CreateKeyboard ();
+
+    //return (sdlKeyboard != nullptr);
+    return true;
 }
 
-/////////////////////////////////////////////
-//Funcion que inicia el teclado
-/////////////////////////////////////////////
-BOOL MINPUT::InitKeyboard (HWND hwnd)
-{
-	if (lpDI->CreateDevice(GUID_SysKeyboard, &lpDIDK, NULL)!=DI_OK)
-	{
-		return FALSE;
-	}
-
-	if (lpDIDK->SetCooperativeLevel(hwnd, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND)!=DI_OK)
-	{
-		lpDIDK->Release();
-		return FALSE;
-	}
-
-	if (lpDIDK->SetDataFormat(&c_dfDIKeyboard)!=DI_OK)
-	{
-		lpDIDK->Release();
-		return FALSE;
-	}
-
-	if (lpDIDK->Acquire()!=DI_OK)
-	{
-		lpDIDK->Release();
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-//////////////////////////////////////////////////////////////
-//  ReadKeyboard()
+//BOOL MINPUT::ReadKeyboard ()
+//{
+//    // Update keyboard state
+//    SDL_PumpEvents ();
+//    int numKeys;
+//    const Uint8* keyState = SDL_GetKeyboardState ( &numKeys );
 //
-//  Lee el buffer del teclado y lo guarda en un buffer nuestro
-/////////////////////////////////////////////////////////////
-BOOL MINPUT::ReadKeyboard()
+//    // Copy SDL keyboard state to buffer
+//    memcpy ( buffer, keyState, sizeof ( int ) * numKeys );
+//
+//    return TRUE;
+//}
+
+BOOL MINPUT::Key ( SDL_Scancode k )
 {
-	 HRESULT  hr;
-
-   hr = lpDIDK->GetDeviceState(sizeof(buffer),(LPVOID)&buffer); 
-
-   if (hr!=DI_OK)
-         return FALSE;
-	 return TRUE;
+    const Uint8* keyState = SDL_GetKeyboardState ( NULL );
+    // Check if key k is pressed
+    return keyState[k];
 }
 
-//////////////////////////////////////////////////////////////
-//  Key()
-//
-//  comprueba si la tecla <k> esta en el buffer del teclado
-/////////////////////////////////////////////////////////////
-BOOL MINPUT::Key(UINT k)
+BOOL MINPUT::ReacquireInput ( void )
 {
-	return buffer[k] & 0x80;
-}
-
-
-//////////////////////////////////////////////////////////////
-//  ReacquireInput()
-//
-//  Readquiere el dispositivo de entrada actual. Si la funcion
-//	Acquire devuelve S_FALSE significa que el dispositivo ya esta
-//	adquirido y no hace falta readquirirlo.
-/////////////////////////////////////////////////////////////
-BOOL MINPUT::ReacquireInput(void)
-{
-    HRESULT hRes;
-
-	if(lpDIDK)
-	{
-		 // adquirirmos el dispositivo	
-		hRes = IDirectInputDevice_Acquire(lpDIDK);
-		if(SUCCEEDED(hRes))		
-		   return TRUE;
-		else
-
-		   return FALSE;
-	}
-
+    // SDL does not require explicit acquisition or reacquisition
+    return TRUE;
 }

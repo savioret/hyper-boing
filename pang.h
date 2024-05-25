@@ -73,14 +73,14 @@ typedef struct PGAMEBITMAPS
 class KEYS
 {
 public:
-	UINT left;
-	UINT right;
-	UINT shoot;
+	SDL_Scancode left;
+	SDL_Scancode right;
+	SDL_Scancode shoot;
 
-	void SetLeft(UINT _left) { this->left = _left; }
-	void SetRight(UINT _right) { this->right = _right; }
-	void SetShoot(UINT _shoot) { this->shoot = _shoot; }
-	void Set(UINT lf, UINT rg, UINT sh)
+	void SetLeft( SDL_Scancode _left) { this->left = _left; }
+	void SetRight( SDL_Scancode _right) { this->right = _right; }
+	void SetShoot( SDL_Scancode _shoot) { this->shoot = _shoot; }
+	void Set( SDL_Scancode lf, SDL_Scancode rg, SDL_Scancode sh)
 	{
 		this->left = lf;
 		this->right = rg;

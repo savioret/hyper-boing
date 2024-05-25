@@ -140,7 +140,7 @@ void * PMENU::MoveAll()
 	else
 		if(!cont) visible = !visible;
 
-	input.ReadKeyboard();
+	//input.ReadKeyboard();
 
 	if(input.Key(gameinf.keys[PLAYER1].shoot))
 			return new PSELECT;

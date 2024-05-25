@@ -335,8 +335,8 @@ void PGAMEINFO::Init()
 		graph.SetColorKey(bmp.player[PLAYER2][i].bmp, RGB(255,0,0));
 	//-------------------------------------------------------------//
 
-	keys[PLAYER1].Set(DIK_LEFT, DIK_RIGHT, DIK_SPACE);
-	keys[PLAYER2].Set(DIK_A, DIK_S, DIK_LCONTROL);
+	keys[PLAYER1].Set ( SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT, SDL_SCANCODE_SPACE );
+	keys[PLAYER2].Set ( SDL_SCANCODE_A, SDL_SCANCODE_S, SDL_SCANCODE_LCTRL );
 }
 
 void PGAMEINFO::InitStages()
@@ -375,6 +375,12 @@ void PGAMEINFO::InitStages()
 	extra.ex3 = 1;
 	extra.ex4 = 1;
 	stage[i].Add(OBJ_BALL, 1);  // añade a la secuencia en tiempo =1, tamaño=3
+	for ( x = 10; x < 650; x += 64 )
+		if ( x < 250 || x> 350 )
+		{
+			stage[i].AddX ( OBJ_BALL, x, 395, 2, extra );  // añade a la secuencia en tiempo =1, tamaño=3		
+			stage[i].AddX ( OBJ_BALL, x, 180, 2, extra );
+		}
 
 	extra.ex1 = 0;
 	extra.ex2 = 0;

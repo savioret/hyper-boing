@@ -138,9 +138,9 @@ void * PSELECT::MoveAll()
 
 	if(initdelay>0) initdelay--;
 
-	input.ReadKeyboard();
+	//input.ReadKeyboard();
 
-	if(input.Key(VK_ESCAPE))
+	if(input.Key( SDL_SCANCODE_ESCAPE ))
 		return new PMENU;
 
 	

@@ -105,7 +105,7 @@ int PSTAGECLEAR::MoveAll()
 {
 	BOOL a = FALSE, b = FALSE, c = FALSE;
 
-	input.ReadKeyboard();
+	//input.ReadKeyboard();
 	if(input.Key(gameinf.keys[PLAYER1].shoot))
 	{
 		if(!endcount)

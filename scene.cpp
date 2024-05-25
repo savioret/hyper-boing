@@ -530,7 +530,7 @@ void * PSCENE::MoveAll()
 		else
 			cont++; //Frames virtuales por segundo
 
-	input.ReadKeyboard();
+	//input.ReadKeyboard();
 	/*gameinf.player[PLAYER1]->score = 100;
 	if(input.Key((UINT)'S')) Win();*/
 	if(gameover)
