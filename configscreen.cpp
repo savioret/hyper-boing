@@ -183,17 +183,17 @@ int PCONFIGSCREEN::DrawAll()
 
 void PCONFIGSCREEN::DrawUI()
 {
-    int y = 60;
+    int y = 50;
     int xLabel = 80;
     int xKey = 320;
-    int lineHeight = 35;
+    int lineHeight = 25;
     
     // Título
-    DrawText("CONFIGURACION", 220, 20, false);
+    DrawText("CONFIGURACION", 220, 10, false);
     
     // Separador
     SDL_SetRenderDrawColor(graph.renderer, 255, 255, 255, 255);
-    SDL_RenderDrawLine(graph.renderer, 60, 50, 580, 50);
+    SDL_RenderDrawLine(graph.renderer, 60, 40, 580, 40);
     
     // Jugador 1
     DrawText("JUGADOR 1:", xLabel, y, false);
@@ -209,7 +209,7 @@ void PCONFIGSCREEN::DrawUI()
     
     DrawText("Disparar:", xLabel + 20, y, selectedOption == 2);
     DrawKeyName(tempKeys[0][2], xKey, y);
-    y += lineHeight + 15;
+    y += lineHeight + 10;
     
     // Jugador 2
     DrawText("JUGADOR 2:", xLabel, y, false);
@@ -225,23 +225,23 @@ void PCONFIGSCREEN::DrawUI()
     
     DrawText("Disparar:", xLabel + 20, y, selectedOption == 5);
     DrawKeyName(tempKeys[1][2], xKey, y);
-    y += lineHeight + 15;
+    y += lineHeight + 10;
     
     // Separador
     SDL_SetRenderDrawColor(graph.renderer, 255, 255, 255, 255);
     SDL_RenderDrawLine(graph.renderer, 60, y, 580, y);
-    y += 15;
+    y += 10;
     
     // Modo de pantalla
     DrawText("Modo de Pantalla:", xLabel, y, selectedOption == 6);
     const char* modeText = (tempRenderMode == RENDERMODE_NORMAL) ? "Ventana" : "Pantalla Completa";
     DrawText(modeText, xKey, y, false);
-    y += lineHeight + 15;
+    y += lineHeight + 10;
     
     // Instrucciones
     SDL_SetRenderDrawColor(graph.renderer, 255, 255, 255, 255);
     SDL_RenderDrawLine(graph.renderer, 60, y, 580, y);
-    y += 15;
+    y += 10;
     
     if (state == CONFIG_WAITING_KEY)
     {
@@ -250,7 +250,7 @@ void PCONFIGSCREEN::DrawUI()
     else
     {
         DrawText("Flechas: Navegar  |  ENTER: Cambiar tecla", 80, y, false);
-        DrawText("F1: Guardar  |  ESC: Cancelar", 160, y + 20, false);
+        DrawText("F1: Guardar  |  ESC: Cancelar", 160, y + 15, false);
     }
 }
 

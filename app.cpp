@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <SDL.h>
 #include "pang.h"
 
 // Inicializar variables estáticas
@@ -19,8 +20,8 @@ int PAPP::Init()
     SetGameSpeed(60);
     diftime1 = 0;
     diftime2 = gamespeed;
-    time1 = GetTickCount() + gamespeed;
-    time2 = GetTickCount();
+    time1 = SDL_GetTicks() + gamespeed;
+    time2 = SDL_GetTicks();
     fps = 0;
     fpsv = 0;
     
@@ -127,7 +128,7 @@ void * PAPP::DoTick()
 
     if(framestatus==0)
     {
-        time1=GetTickCount();
+        time1=SDL_GetTicks();
         diftime2=time1-time2;
         if(diftime2< gamespeed) return NULL;
         time2=time1;
@@ -152,7 +153,7 @@ void * PAPP::DoTick()
     {
         DrawAll();
         framestatus=0;
-        tick=GetTickCount();
+        tick=SDL_GetTicks();
         if(tick-lasttick>1000)
         {
           fps = cont;
@@ -176,8 +177,9 @@ void PAPP::DoPause()
 {	
     diftime1=0; 
     diftime2=gamespeed;
-    time1 = GetTickCount()+gamespeed;
-    time2 = GetTickCount();
+    time1 = SDL_GetTicks()+gamespeed;
+    time2 = SDL_GetTicks();
+
 
     return;
 }

@@ -1,5 +1,5 @@
 #include "pang.h"
-
+#include <SDL.h>
 int PSELECT::InitBitmaps()
 {
     bmp.back.Init(&graph, "graph\\titleback.png", 0, 0);
@@ -35,8 +35,8 @@ int PSELECT::Init()
     SetGameSpeed(GLOBAL_GAMESPEED);
     diftime1=0; 
     diftime2=gamespeed;
-    time1 = GetTickCount()+gamespeed;
-    time2 = GetTickCount();
+    time1 = SDL_GetTicks()+gamespeed;
+    time2 = SDL_GetTicks();
 
     delay = 13;
     count = 0;

@@ -86,53 +86,58 @@ void PMENU::DrawMenu()
     int option2X = (RES_X - (bmp.optionConfig.bmp ? bmp.optionConfig.sx : 200)) / 2;
     int option3X = (RES_X - (bmp.optionExit.bmp ? bmp.optionExit.sx : 150)) / 2;
     
+    // Draw menu options
+    // All bitmaps are resized to 200x40.
+    // X position for center: (640 - 200) / 2 = 220
+    int menuCenterX = 220; 
+    
     // OPCIÓN 1: JUGAR
     if (bmp.optionPlay.bmp)
     {
         if (selectedOption == 0 && visible)
-            graph.Draw(&bmp.optionPlay, option1X, menuStartY);
+            graph.DrawScaled(&bmp.optionPlay, menuCenterX, menuStartY, 200, 40);
         else if(selectedOption != 0)
-            graph.Draw(&bmp.optionPlay, option1X, menuStartY);
+            graph.DrawScaled(&bmp.optionPlay, menuCenterX, menuStartY, 200, 40);
     }
     else
     {
         if (selectedOption != 0 || visible)
-            graph.Text("JUGAR", option1X, menuStartY);
+            graph.Text("JUGAR", menuCenterX, menuStartY);
     }
     
     // OPCIÓN 2: CONFIGURACIÓN
     if (bmp.optionConfig.bmp)
     {
         if (selectedOption == 1 && visible)
-            graph.Draw(&bmp.optionConfig, option2X, menuStartY + spacing);
+            graph.DrawScaled(&bmp.optionConfig, menuCenterX, menuStartY + spacing, 200, 40);
         else if(selectedOption != 1)
-            graph.Draw(&bmp.optionConfig, option2X, menuStartY + spacing);
+            graph.DrawScaled(&bmp.optionConfig, menuCenterX, menuStartY + spacing, 200, 40);
     }
     else
     {
         if (selectedOption != 1 || visible)
-            graph.Text("CONFIGURACION", option2X, menuStartY + spacing);
+            graph.Text("CONFIGURACION", menuCenterX, menuStartY + spacing);
     }
         
     // OPCIÓN 3: SALIR
     if (bmp.optionExit.bmp)
     {
         if (selectedOption == 2 && visible)
-         graph.Draw(&bmp.optionExit, option3X, menuStartY + spacing * 2);
+         graph.DrawScaled(&bmp.optionExit, menuCenterX, menuStartY + spacing * 2, 200, 40);
         else if(selectedOption != 2)
-            graph.Draw(&bmp.optionExit, option3X, menuStartY + spacing * 2);
+            graph.DrawScaled(&bmp.optionExit, menuCenterX, menuStartY + spacing * 2, 200, 40);
     }
     else
     {
         if (selectedOption != 2 || visible)
-         graph.Text("SALIR", option3X, menuStartY + spacing * 2);
+         graph.Text("SALIR", menuCenterX, menuStartY + spacing * 2);
     }
     
     // Dibujar indicador de selección a la izquierda
     if(visible)
     {
-        int indicatorY = menuStartY + (spacing * selectedOption) + 5;
-        int indicatorX = 120;
+        int indicatorY = menuStartY + (spacing * selectedOption) + 12; // Adjusted for new height
+        int indicatorX = menuCenterX - 20; // Position relative to center
         graph.Text(">", indicatorX, indicatorY);
     }
 }

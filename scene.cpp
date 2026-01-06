@@ -479,7 +479,7 @@ void* PSCENE::MoveAll()
     int i, res;
 
     static int tck = 0, lasttck = 0, cont = 0;
-    tck = GetTickCount();
+    tck = SDL_GetTicks();
     if ( tck - lasttck > 1000 )
     {
         fpsv = cont;
@@ -834,7 +834,7 @@ int PSCENE::DrawAll()
     graph.Flip();
 
     static int tck = 0, lasttck = 0, cont = 0;
-    tck = GetTickCount();
+    tck = SDL_GetTicks();
     if ( tck - lasttck > 1000 )
     {
         fps = cont;

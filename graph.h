@@ -60,6 +60,7 @@ public:
 
 
     void Draw ( SPRITE* spr, int x, int y );
+    void DrawScaled ( SPRITE* spr, int x, int y, int w, int h ); // NEW
     void Draw ( SDL_Texture* texture, RECT* srcRect, int x, int y );
     void DrawClipped ( SDL_Texture* texture, RECT* srcRect, int x, int y );
     void DrawClipped ( SPRITE* spr, int x, int y );
