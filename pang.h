@@ -18,7 +18,6 @@
 #include "stageclear.h"
 #include "configscreen.h"
 #include "mlist.h"
-#include "pangmap.h"
 #include "ball.h"
 #include "player.h"
 #include "item.h"
@@ -64,7 +63,7 @@
 
 typedef struct PGAMEBITMAPS
 {
-	SPRITE player[2][21];	
+    SPRITE player[2][21];	
 };
 
 
@@ -73,24 +72,24 @@ typedef struct PGAMEBITMAPS
   clase KEYS
 
   Esta clase contiene informacion acerda de las teclas del
-  juego. Cada jugador tendrá una instancia de esta clase asociada.
+  juego. Cada jugador tendrÃ¡ una instancia de esta clase asociada.
 ********************************************************/
 class KEYS
 {
 public:
-	SDL_Scancode left;
-	SDL_Scancode right;
-	SDL_Scancode shoot;
+    SDL_Scancode left;
+    SDL_Scancode right;
+    SDL_Scancode shoot;
 
-	void SetLeft( SDL_Scancode _left) { this->left = _left; }
-	void SetRight( SDL_Scancode _right) { this->right = _right; }
-	void SetShoot( SDL_Scancode _shoot) { this->shoot = _shoot; }
-	void Set( SDL_Scancode lf, SDL_Scancode rg, SDL_Scancode sh)
-	{
-		this->left = lf;
-		this->right = rg;
-		this->shoot = sh;
-	}
+    void SetLeft( SDL_Scancode _left) { this->left = _left; }
+    void SetRight( SDL_Scancode _right) { this->right = _right; }
+    void SetShoot( SDL_Scancode _shoot) { this->shoot = _shoot; }
+    void Set( SDL_Scancode lf, SDL_Scancode rg, SDL_Scancode sh)
+    {
+        this->left = lf;
+        this->right = rg;
+        this->shoot = sh;
+    }
 };
 
 /********************************************************
@@ -102,24 +101,24 @@ public:
 class PGAMEINFO
 {
 public:
-	int numplayers;
-	int numstages;
-	PLAYER *player[2];
-	PAPP *scene;
-	KEYS keys[2];
+    int numplayers;
+    int numstages;
+    PLAYER *player[2];
+    PAPP *scene;
+    KEYS keys[2];
 
-	PGAMEBITMAPS bmp;
+    PGAMEBITMAPS bmp;
 
-	int currentstage;
-	PSTAGE stage[6];
-	BOOL menu;
-	
-	PGAMEINFO();
+    int currentstage;
+    PSTAGE stage[6];
+    BOOL menu;
+    
+    PGAMEINFO();
 
-	void Init();
-	void InitStages();
-	void SetCurrent(PAPP *app);
-	void Release();
+    void Init();
+    void InitStages();
+    void SetCurrent(PAPP *app);
+    void Release();
 };
 
 class PSCENE;

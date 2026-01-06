@@ -2,8 +2,8 @@
 
 ITEM::ITEM(int _x, int _y, int _id)
 {
-	x = _x;
-	y = _y;
+    x = _x;
+    y = _y;
 
-	id = _id;
+    id = _id;
 }

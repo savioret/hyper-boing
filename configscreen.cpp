@@ -16,10 +16,10 @@ PCONFIGSCREEN::PCONFIGSCREEN()
 
 int PCONFIGSCREEN::Init()
 {
-    // Llamar a la inicializaciÛn base
+    // Llamar a la inicializaci√≥n base
     PAPP::Init();
     
-    // Inicializar el fondo compartido si no est· ya
+    // Inicializar el fondo compartido si no est√° ya
     PAPP::InitSharedBackground();
     
     // Copiar las teclas actuales a las temporales
@@ -74,7 +74,7 @@ void * PCONFIGSCREEN::MoveAll()
     }
     else // CONFIG_NORMAL
     {
-        // NavegaciÛn con teclas
+        // Navegaci√≥n con teclas
         static bool upPressed = false;
         static bool downPressed = false;
         static bool leftPressed = false;
@@ -154,7 +154,7 @@ void * PCONFIGSCREEN::MoveAll()
             return new PMENU();
         }
         
-        // ESC para cancelar y volver al men˙
+        // ESC para cancelar y volver al men√∫
         if (input.Key(SDL_SCANCODE_ESCAPE))
         {
             CancelConfiguration();
@@ -173,7 +173,7 @@ int PCONFIGSCREEN::DrawAll()
     // Dibujar el fondo scrolling compartido
     PAPP::DrawScrollingBackground();
     
-    // Dibujar la interfaz de configuraciÛn encima
+    // Dibujar la interfaz de configuraci√≥n encima
     DrawUI();
     
     graph.Flip();
@@ -188,7 +188,7 @@ void PCONFIGSCREEN::DrawUI()
     int xKey = 320;
     int lineHeight = 35;
     
-    // TÌtulo
+    // T√≠tulo
     DrawText("CONFIGURACION", 220, 20, false);
     
     // Separador
@@ -258,13 +258,13 @@ void PCONFIGSCREEN::DrawText(const char* text, int x, int y, bool selected)
 {
     if (selected)
     {
-        // Dibujar indicador de selecciÛn
+        // Dibujar indicador de selecci√≥n
         SDL_SetRenderDrawColor(graph.renderer, 255, 255, 0, 255);
         SDL_Rect selRect = {x - 10, y, 5, 16};
         SDL_RenderFillRect(graph.renderer, &selRect);
     }
     
-    // Usar graph.Text si est· disponible
+    // Usar graph.Text si est√° disponible
     graph.Text(text, x, y);
 }
 

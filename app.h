@@ -9,13 +9,13 @@ class SPRITE;
 
   Esta clase se utiliza para crear diferentes instancias
   de la pantalla del juego en la que nos encontremos.
-  Ser· la clase Padre de una serie de clases que forman
+  Ser√° la clase Padre de una serie de clases que forman
   parte del juego, a modo de "modulo" independiente.
 
-  De ahÌ las funciones virtuales puras abajo declaradas:
+  De ah√≠ las funciones virtuales puras abajo declaradas:
 
   - Init();
-		Cada modulo llevar· asociado unos bitmaps y recursos
+		Cada modulo llevar√° asociado unos bitmaps y recursos
 		necesarios, que se cargaran al crearse el objeto.
 		De esta manera los recursos del sistema se administran
 		mejor.

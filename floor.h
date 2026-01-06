@@ -15,19 +15,19 @@
 class FLOOR
 {
 public:
-	PSCENE *scene;
-	SPRITE *spr;
+    PSCENE *scene;
+    SPRITE *spr;
 
-	int x, y;
-	int sx, sy;
-	int id;
-	BOOL dead;
+    int x, y;
+    int sx, sy;
+    int id;
+    BOOL dead;
 
-	FLOOR(PSCENE *scn, int _x, int _y, int _id);
-	~FLOOR();
+    FLOOR(PSCENE *scn, int _x, int _y, int _id);
+    ~FLOOR();
 
-	void Update();
-	void Kill(){dead = TRUE ;}
+    void Update();
+    void Kill(){dead = TRUE ;}
 };
 
 #endif

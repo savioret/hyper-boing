@@ -7,11 +7,12 @@
 /********************************************************
   clase PCONFIGSCREEN
 
-  Pantalla de configuraciÛn de teclas usando SDL2.
-  Reemplaza el di·logo de Windows con una interfaz SDL2.
+  Pantalla de configuraci√≥n de teclas usando SDL2.
+  Reemplaza el di√°logo de Windows con una interfaz SDL2.
 ********************************************************/
 
-enum ConfigState {
+enum ConfigState
+{
     CONFIG_NORMAL,      // Estado normal, navegando por opciones
     CONFIG_WAITING_KEY  // Esperando que el usuario pulse una tecla
 };
@@ -19,30 +20,30 @@ enum ConfigState {
 class PCONFIGSCREEN : public PAPP
 {
 public:
-    // Estado de la configuraciÛn
+    // Estado de la configuraci√≥n
     ConfigState state;
-    int selectedOption; // OpciÛn seleccionada (0-6: 3 teclas por jugador + 1 modo pantalla)
-    int waitingForKey;  // QuÈ tecla estamos esperando configurar
-    
+    int selectedOption; // Opci√≥n seleccionada (0-6: 3 teclas por jugador + 1 modo pantalla)
+    int waitingForKey;  // Qu√© tecla estamos esperando configurar
+
     // Teclas temporales (se guardan al confirmar)
     SDL_Scancode tempKeys[2][3]; // [player][left/right/shoot]
-    
+
     // Modo de renderizado temporal
     int tempRenderMode; // RENDERMODE_NORMAL o RENDERMODE_EXCLUSIVE
-    
-    PCONFIGSCREEN();
-    
-    int Init();
-    void * MoveAll();
-    int DrawAll();
-    int Release();
-    
-    void DrawUI();
-    void DrawText(const char* text, int x, int y, bool selected = false);
-    void DrawKeyName(SDL_Scancode key, int x, int y);
-    void SaveConfiguration();
-    void CancelConfiguration();
-    const char* GetKeyName(SDL_Scancode scancode);
+
+    PCONFIGSCREEN ();
+
+    int Init ();
+    void* MoveAll ();
+    int DrawAll ();
+    int Release ();
+
+    void DrawUI ();
+    void DrawText ( const char* text, int x, int y, bool selected = false );
+    void DrawKeyName ( SDL_Scancode key, int x, int y );
+    void SaveConfiguration ();
+    void CancelConfiguration ();
+    const char* GetKeyName ( SDL_Scancode scancode );
 };
 
 #endif

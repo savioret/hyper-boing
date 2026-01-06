@@ -8,32 +8,32 @@
   constructor de BALL
 
   Crea una pelota de identificacion <id>en la posicion <x>, <y> 
-  de tamaño size y de altura  maxima de salto <top>, que comenzara 
+  de tamaÃ±o size y de altura  maxima de salto <top>, que comenzara 
   desplazandose en la direccion <dirx> <diry>
 ********************************************************/
 
 BALL::BALL(PSCENE *scn, int _x, int _y, int _size, int _top, int _dirx, int _diry, int _id )
 {
-	scene = scn;	
-	this->x = _x;
-	this->y = _y;
-	this->size = _size;
-	id = _id;
+    scene = scn;	
+    this->x = _x;
+    this->y = _y;
+    this->size = _size;
+    id = _id;
 
-	top = _top;
+    top = _top;
 
-	dirx = _dirx;
-	diry = _diry;
-	diameter = scn->bmp.redball[size].sx;
+    dirx = _dirx;
+    diry = _diry;
+    diameter = scn->bmp.redball[size].sx;
 
-	t = 0;
-	y0 = y;
+    t = 0;
+    y0 = y;
 
 
 
-	if(!top) InitTop();
-	y = MAX_Y - top;
-	Init();
+    if(!top) InitTop();
+    y = MAX_Y - top;
+    Init();
 }
 
 /********************************************************
@@ -41,30 +41,30 @@ BALL::BALL(PSCENE *scn, int _x, int _y, int _size, int _top, int _dirx, int _dir
 
   En este constructor se toma como referencia una pelota
   considerada como la pelota padre, de la que hereda su altura
-  y su posicion, y tomando como referencia el tamaño de su padre
-  se define el tamaño una unidad mas pequeña.
+  y su posicion, y tomando como referencia el tamaÃ±o de su padre
+  se define el tamaÃ±o una unidad mas pequeÃ±a.
 ********************************************************/
 
 BALL::BALL(PSCENE *scn, BALL *oldball)
 {
-	scene = scn;
-	this->x = oldball->x;
-	this->y = oldball->y;
+    scene = scn;
+    this->x = oldball->x;
+    this->y = oldball->y;
 
-	y0 = oldball->y;
-	id = oldball->id;
-	diry = 1;
-	dirx = 1;
-	t = oldball->t;
+    y0 = oldball->y;
+    id = oldball->id;
+    diry = 1;
+    dirx = 1;
+    t = oldball->t;
 
-	size = oldball->size + 1; // size = indice del vector de pelotas
+    size = oldball->size + 1; // size = indice del vector de pelotas
 
-	diameter = scn->bmp.redball[size].sx;
+    diameter = scn->bmp.redball[size].sx;
 
-	InitTop();
-	Init();
+    InitTop();
+    Init();
 
-	t=0; //t=0 --> v=0
+    t=0; //t=0 --> v=0
 }
 
 
@@ -74,15 +74,15 @@ BALL::~BALL()
 
 void BALL::Init()
 {		
-	hit = FALSE;
+    hit = FALSE;
 
-	acc = 8/((float)(top-diameter)*(400/top));	
-	tmax = sqrt((float)(2*(top-diameter))/(acc));
+    acc = 8/((float)(top-diameter)*(400/top));	
+    tmax = sqrt((float)(2*(top-diameter))/(acc));
 
-	if(y0)  // si y0 esta definido
-		y0 -= MAX_Y - top; //sacamos la diferencia en pixels
+    if(y0)  // si y0 esta definido
+        y0 -= MAX_Y - top; //sacamos la diferencia en pixels
 
-	spr = &scene->bmp.redball[size]; // bitmap correspondiente al tamaño
+    spr = &scene->bmp.redball[size]; // bitmap correspondiente al tamaÃ±o
 }
 
 /********************************************************
@@ -95,38 +95,38 @@ void BALL::Init()
 void BALL::InitTop()
 {
 
-	float d = MAX_Y - MIN_Y;
+    float d = MAX_Y - MIN_Y;
 
-	if(size==0)
-		top = d;
-	else if(size==1)
-		top = d * 0.6;
-	else if(size==2)
-		top = d * 0.4;
-	else if(size==3)
-		top = d * 0.26;
-	else
-		top = d * 0.1;
+    if(size==0)
+        top = d;
+    else if(size==1)
+        top = d * 0.6;
+    else if(size==2)
+        top = d * 0.4;
+    else if(size==3)
+        top = d * 0.26;
+    else
+        top = d * 0.1;
 }
 void BALL::Kill()
 {
-	hit = TRUE;
+    hit = TRUE;
 }
 
 void BALL::SetDir(int _dirx, int _diry)
 {
-	dirx = _dirx;
-	diry = _diry;	
+    dirx = _dirx;
+    diry = _diry;	
 }
 
 void BALL::SetDirX(int _dirx)
 {
-	dirx = _dirx;	
+    dirx = _dirx;	
 }
 
 void BALL::SetDirY(int _diry)
 {
-	diry = _diry;	
+    diry = _diry;	
 }
 
 
@@ -136,38 +136,38 @@ void BALL::SetDirY(int _diry)
 ********************************************************/
 BOOL BALL::Colision(SHOOT * sh)
 {
-	if(!sh->dead)
-		if(sh->x > x && sh->x < x+diameter && y+diameter>sh->y && y<sh->yi)	
-			return TRUE;		
+    if(!sh->dead)
+        if(sh->x > x && sh->x < x+diameter && y+diameter>sh->y && y<sh->yi)	
+            return TRUE;		
 
-	return FALSE;
+    return FALSE;
 }
 
 POINT BALL::Colision(FLOOR * fl)
 {
-	POINT col;
-	col.x=col.y=0;
+    POINT col;
+    col.x=col.y=0;
 
-	if( (y+diameter > fl->y && y < fl->y + fl->sy) || (y+diameter >= fl->y && y <= fl->y + fl->sy) && (y<= fl->y+fl->sy ||  y+diameter > fl->y + fl->sy) )
-		if((x+diameter >= fl->x ) && (x <= fl->x) && dirx == 1) col.x = SIDE_LEFT;
-			else if((x <= fl->x + fl->sx) && (x + diameter > fl->x+fl->sx) && dirx == -1) col.x = SIDE_RIGHT;
+    if( (y+diameter > fl->y && y < fl->y + fl->sy) || (y+diameter >= fl->y && y <= fl->y + fl->sy) && (y<= fl->y+fl->sy ||  y+diameter > fl->y + fl->sy) )
+        if((x+diameter >= fl->x ) && (x <= fl->x) && dirx == 1) col.x = SIDE_LEFT;
+            else if((x <= fl->x + fl->sx) && (x + diameter > fl->x+fl->sx) && dirx == -1) col.x = SIDE_RIGHT;
 
-	if( (x+diameter > fl->x && x < fl->x + fl->sx)	||(x+diameter >= fl->x && x <= fl->x + fl->sx) && (x <= fl->x + fl->sx || x + diameter > fl->x+fl->sx) )
-		if((y+diameter >= fl->y) && (y < fl->y) && diry == 1) col.y =  SIDE_TOP;
-			else if((y<= fl->y+fl->sy) &&  (y+diameter > fl->y + fl->sy) && diry==-1) col.y =  SIDE_BOTTOM;	
+    if( (x+diameter > fl->x && x < fl->x + fl->sx)	||(x+diameter >= fl->x && x <= fl->x + fl->sx) && (x <= fl->x + fl->sx || x + diameter > fl->x+fl->sx) )
+        if((y+diameter >= fl->y) && (y < fl->y) && diry == 1) col.y =  SIDE_TOP;
+            else if((y<= fl->y+fl->sy) &&  (y+diameter > fl->y + fl->sy) && diry==-1) col.y =  SIDE_BOTTOM;	
 
-	return col;
+    return col;
 }
 
 BOOL BALL::Colision(PLAYER *pl)
 {
 
-	if(y+diameter > pl->y+pl->spr->yoff+3)  // lado superior del jugador
-		if( x < pl->x + pl->spr->xoff + pl->sx-5 &&  // lado derecho del jugador
-			x+diameter > pl->x+pl->spr->xoff+5 )  // lado izquierdo del jugador	
-			return TRUE;
+    if(y+diameter > pl->y+pl->spr->yoff+3)  // lado superior del jugador
+        if( x < pl->x + pl->spr->xoff + pl->sx-5 &&  // lado derecho del jugador
+            x+diameter > pl->x+pl->spr->xoff+5 )  // lado izquierdo del jugador	
+            return TRUE;
 
-	return FALSE;
+    return FALSE;
 }
 
 /********************************************************
@@ -181,55 +181,55 @@ BOOL BALL::Colision(PLAYER *pl)
 
 void BALL::Move()
 {
-	float incy;
-	float incx = dirx * 0.80;
-	float height = MAX_Y - y;
-	static float yprev;
-	static float dif=0;		
+    float incy;
+    float incx = dirx * 0.80;
+    float height = MAX_Y - y;
+    static float yprev;
+    static float dif=0;		
 
-	if(diry==-1)yprev = y;
-	
-	y = y0 + 0.5*acc*(t*t);
+    if(diry==-1)yprev = y;
+    
+    y = y0 + 0.5*acc*(t*t);
 
-	y = MAX_Y - top + y;
+    y = MAX_Y - top + y;
 
-	if(diry==-1 && y < MAX_Y-diameter-2) dif = y - yprev; 
-	else dif = 1000;
+    if(diry==-1 && y < MAX_Y-diameter-2) dif = y - yprev; 
+    else dif = 1000;
 
-	ABSF(dif);
+    ABSF(dif);
 
-	x += incx;
+    x += incx;
 
-	t+=diry;
+    t+=diry;
 
-	if(diry==1)	
-		if(y+diameter >= MAX_Y)
-		{			
-			y0=0;
-			diry = -1;
-			t = tmax; // cuando la pelota llega al suelo adquiere la velocidad calculada
-					  // de manera que al subir su altura maxima sea <top>
-		}
-	if(diry==-1)
-	{
-		if(dif<0.006)  // cuando la pelota ya apenas sube cambiamos de direccion
-		{
-			diry = 1;			
-		}
+    if(diry==1)	
+        if(y+diameter >= MAX_Y)
+        {			
+            y0=0;
+            diry = -1;
+            t = tmax; // cuando la pelota llega al suelo adquiere la velocidad calculada
+                      // de manera que al subir su altura maxima sea <top>
+        }
+    if(diry==-1)
+    {
+        if(dif<0.006)  // cuando la pelota ya apenas sube cambiamos de direccion
+        {
+            diry = 1;			
+        }
 
-		if(t<0) t =0 ;
-	}
+        if(t<0) t =0 ;
+    }
 
-	if(dirx==1)	
-		if(x+diameter>=MAX_X)
-		{
-			x = MAX_X - diameter;
-			dirx = -1;
-		}
-	if(dirx==-1)
-		if(x<=MIN_X)
-		{
-			x = MIN_X;
-			dirx = 1;
-		}
+    if(dirx==1)	
+        if(x+diameter>=MAX_X)
+        {
+            x = MAX_X - diameter;
+            dirx = -1;
+        }
+    if(dirx==-1)
+        if(x<=MIN_X)
+        {
+            x = MIN_X;
+            dirx = 1;
+        }
 }

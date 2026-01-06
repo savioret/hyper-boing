@@ -8,11 +8,11 @@
 class SPRITE
 {
 public:
-	LPDIRECTDRAWSURFACE7 bmp;
-	int sx, sy;
-	GRAPH * graph;
+    LPDIRECTDRAWSURFACE7 bmp;
+    int sx, sy;
+    GRAPH * graph;
 
-	void Init(GRAPH *gr, char file[]);
+    void Init(GRAPH *gr, char file[]);
 };
 
 #endif

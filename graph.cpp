@@ -211,8 +211,8 @@ void GRAPH::Flip () {
 }
 
 void GRAPH::Text ( const char texto[], int x, int y ) {
-    // Implementación básica sin SDL_TTF
-    // Dibujamos rectángulos pequeños para simular caracteres
+    // ImplementaciÃ³n bÃ¡sica sin SDL_TTF
+    // Dibujamos rectÃ¡ngulos pequeÃ±os para simular caracteres
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     
     int charWidth = 8;
@@ -228,25 +228,25 @@ void GRAPH::Text ( const char texto[], int x, int y ) {
             continue;
         }
         
-        // Dibujar un rectángulo simple para cada carácter
+        // Dibujar un rectÃ¡ngulo simple para cada carÃ¡cter
         SDL_Rect charRect = {currentX + 1, y + 1, charWidth - 2, charHeight - 2};
         SDL_RenderFillRect(renderer, &charRect);
         
         // Dibujar algunos "detalles" para diferenciar caracteres
         if (c >= 'A' && c <= 'Z') {
-            // Letra mayúscula - línea superior
+            // Letra mayÃºscula - lÃ­nea superior
             SDL_SetRenderDrawColor(renderer, 200, 200, 255, 255);
             SDL_RenderDrawLine(renderer, currentX + 2, y + 3, currentX + charWidth - 2, y + 3);
             SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         }
         else if (c >= 'a' && c <= 'z') {
-            // Letra minúscula - línea media
+            // Letra minÃºscula - lÃ­nea media
             SDL_SetRenderDrawColor(renderer, 255, 255, 200, 255);
             SDL_RenderDrawLine(renderer, currentX + 2, y + charHeight/2, currentX + charWidth - 2, y + charHeight/2);
             SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         }
         else if (c >= '0' && c <= '9') {
-            // Número - más pequeño
+            // NÃºmero - mÃ¡s pequeÃ±o
             charRect.w = charWidth - 3;
             charRect.h = charHeight - 3;
             SDL_SetRenderDrawColor(renderer, 255, 200, 200, 255);

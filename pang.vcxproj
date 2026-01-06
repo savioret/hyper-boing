@@ -144,7 +144,7 @@
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>$(SDL_ROOT)\include;$(SDL_IMAGE_ROOT)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SDL_ROOT)\include;$(SDL_IMAGE_ROOT)\include;$(SDL_TTF_ROOT)\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -166,7 +166,7 @@
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalDependencies>SDL2.lib;SDL2_Image.lib;dinput8.lib;winmm.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SDL_ROOT)\lib\x64;$(SDL_IMAGE_ROOT)\lib\x64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SDL_ROOT)\lib\x64;$(SDL_IMAGE_ROOT)\lib\x64;$(SDL_TTF_ROOT)\lib\x64</AdditionalLibraryDirectories>
       <EntryPointSymbol>WinMainCRTStartup</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
@@ -247,12 +247,9 @@
     <ClCompile Include="app.cpp" />
     <ClCompile Include="ball.cpp" />
     <ClCompile Include="bmfont.cpp" />
-    <ClCompile Include="configdlg.cpp" />
     <ClCompile Include="configscreen.cpp" />
-    <ClCompile Include="constructor.cpp" />
     <ClCompile Include="floor.cpp" />
     <ClCompile Include="graph.cpp" />
-    <ClCompile Include="initdlg.cpp" />
     <ClCompile Include="item.cpp" />
     <ClCompile Include="menu.cpp" />
     <ClCompile Include="minput.cpp" />
@@ -270,7 +267,6 @@
     <ClInclude Include="ball.h" />
     <ClInclude Include="bmfont.h" />
     <ClInclude Include="configscreen.h" />
-    <ClInclude Include="constructor.h" />
     <ClInclude Include="floor.h" />
     <ClInclude Include="graph.h" />
     <ClInclude Include="item.h" />

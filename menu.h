@@ -3,36 +3,36 @@
 
 typedef struct PMNUBITMAPS
 {
-	SPRITE title;
-	SPRITE optionPlay;
-	SPRITE optionConfig;
-	SPRITE optionExit;
+    SPRITE title;
+    SPRITE optionPlay;
+    SPRITE optionConfig;
+    SPRITE optionExit;
 }PMENUBITMAPS;
 
 /*******************************************************
-	clase MENU
+    clase MENU
 
-	Clase Hija de PAPP, es un modulo del juego.
+    Clase Hija de PAPP, es un modulo del juego.
 
-	Es el menu principal del juego.
+    Es el menu principal del juego.
 *********************************************************/
 class PMENU : public PAPP
 {
 public:
-	
-	PMENUBITMAPS bmp;
-	int x, y; // posición del título
-	int selectedOption; // 0=JUGAR, 1=CONFIGURACION, 2=SALIR
-	BOOL visible; // parpadeo de la opción seleccionada
-	int cont; //contador para el parpadeo 
-	int Init();
-	int InitBitmaps();
-	void DrawTitle();
-	void DrawMenu();
+    
+    PMENUBITMAPS bmp;
+    int x, y; // posiciÃ³n del tÃ­tulo
+    int selectedOption; // 0=JUGAR, 1=CONFIGURACION, 2=SALIR
+    BOOL visible; // parpadeo de la opciÃ³n seleccionada
+    int cont; //contador para el parpadeo 
+    int Init();
+    int InitBitmaps();
+    void DrawTitle();
+    void DrawMenu();
 
-	void * MoveAll();
-	int DrawAll();
-	int Release();
+    void * MoveAll();
+    int DrawAll();
+    int Release();
 };
 
 #endif

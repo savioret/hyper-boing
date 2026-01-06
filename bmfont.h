@@ -14,14 +14,14 @@
 class BMNUMFONT
 {
 public:
-	SPRITE *spr;
-	int offsets[10];
-	int numchars;	
-		
-	void Init(SPRITE *sprite);
-	RECT GetRect( char numchr);
-	void SetValue(int number, int xoff);
-	void SetValues(int *xoff);
+    SPRITE *spr;
+    int offsets[10];
+    int numchars;	
+        
+    void Init(SPRITE *sprite);
+    RECT GetRect( char numchr);
+    void SetValue(int number, int xoff);
+    void SetValues(int *xoff);
 
 };
 
