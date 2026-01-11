@@ -1,23 +1,23 @@
 #include "pang.h"
+#include "appdata.h"
 #include <SDL.h>
+
+// Convenience macros for AppData access
+#define appGraph AppData::instance().graph
+#define appInput AppData::instance().input
 
 int SelectSync::initBitmaps()
 {
-    bmp.back.init(&graph, "graph\\titleback.png", 0, 0);
-    graph.setColorKey(bmp.back.getBmp(), 0xFF0000);
+    bmp.back.init(&appGraph, "graph\\titleback.png", 0, 0);
+    appGraph.setColorKey(bmp.back.getBmp(), 0xFF0000);
 
-    bmp.mode.init(&graph, "graph\\selecmodo.png", 0, 0);
-    graph.setColorKey(bmp.mode.getBmp(), 0xFF0000);
+    bmp.mode.init(&appGraph, "graph\\selecmodo.png", 0, 0);
+    appGraph.setColorKey(bmp.mode.getBmp(), 0xFF0000);
     
-    // bmp.selText[PLAYER1].init(&graph, "graph\\select1ptext.png", 0, 0);
-    // graph.setColorKey(bmp.selText[PLAYER1].getBmp(), 0x0000FF);
-    // bmp.selText[PLAYER2].init(&graph, "graph\\select2ptext.png", 0, 0);
-    // graph.setColorKey(bmp.selText[PLAYER2].getBmp(), 0x0000FF);
-
-    bmp.select[PLAYER1].init(&graph, "graph\\select1p.png", 0, 0);
-    graph.setColorKey(bmp.select[PLAYER1].getBmp(), 0x00FF00);
-    bmp.select[PLAYER2].init(&graph, "graph\\select2p.png", 0, 0);
-    graph.setColorKey(bmp.select[PLAYER2].getBmp(), 0x969696);
+    bmp.select[PLAYER1].init(&appGraph, "graph\\select1p.png", 0, 0);
+    appGraph.setColorKey(bmp.select[PLAYER1].getBmp(), 0x00FF00);
+    bmp.select[PLAYER2].init(&appGraph, "graph\\select2p.png", 0, 0);
+    appGraph.setColorKey(bmp.select[PLAYER2].getBmp(), 0x969696);
 
     return 1;
 }
@@ -67,25 +67,22 @@ int SelectSync::release()
 
 void SelectSync::drawSelect()
 {
-    SDL_SetRenderDrawColor(graph.getRenderer(), 255, 255, 255, 255);
+    SDL_SetRenderDrawColor(appGraph.getRenderer(), 255, 255, 255, 255);
     if ( option == 0 )
-        graph.filledRectangle(65, 205, 70 + bmp.select[PLAYER1].getWidth() + 5, 210 + bmp.select[PLAYER1].getHeight() + 5);
+        appGraph.filledRectangle(65, 205, 70 + bmp.select[PLAYER1].getWidth() + 5, 210 + bmp.select[PLAYER1].getHeight() + 5);
     else
-        graph.filledRectangle(330, 205, 335 + bmp.select[PLAYER2].getWidth() + 5, 210 + bmp.select[PLAYER2].getHeight() + 5);
+        appGraph.filledRectangle(330, 205, 335 + bmp.select[PLAYER2].getWidth() + 5, 210 + bmp.select[PLAYER2].getHeight() + 5);
 
-    graph.draw(&bmp.mode, 38, 10);
-    graph.draw(&bmp.select[PLAYER1], 70, 210);
-    //graph.draw(&bmp.selText[PLAYER1], 70, 210 + bmp.select[PLAYER1].getHeight() + 10);
-    graph.draw(&bmp.select[PLAYER2], 335, 210);
-    //graph.draw(&bmp.selText[PLAYER2], 350, 210 + bmp.select[PLAYER2].getHeight() + 10);
+    appGraph.draw(&bmp.mode, 38, 10);
+    appGraph.draw(&bmp.select[PLAYER1], 70, 210);
+    appGraph.draw(&bmp.select[PLAYER2], 335, 210);
 }
-
 
 int SelectSync::drawAll()
 {
     GameState::drawScrollingBackground();
     drawSelect();
-    graph.flip();
+    appGraph.flip();
     return 1;
 }
 
@@ -101,10 +98,10 @@ void* SelectSync::moveAll()
 
     GameState::updateScrollingBackground();
 
-    if (input.key(SDL_SCANCODE_ESCAPE))
+    if (appInput.key(SDL_SCANCODE_ESCAPE))
         return new Menu();
 
-    if (input.key(gameinf.getKeys()[PLAYER1].left) || input.key(gameinf.getKeys()[PLAYER1].right))
+    if (appInput.key(gameinf.getKeys()[PLAYER1].left) || appInput.key(gameinf.getKeys()[PLAYER1].right))
     {
         if (!delayCounter)
         {
@@ -114,7 +111,7 @@ void* SelectSync::moveAll()
     }
     else if (!initDelay)
     {
-        if (input.key(SDL_SCANCODE_RETURN) || input.key(gameinf.getKeys()[PLAYER1].shoot))
+        if (appInput.key(SDL_SCANCODE_RETURN) || appInput.key(gameinf.getKeys()[PLAYER1].shoot))
         {
             gameinf.getPlayers()[PLAYER1] = new Player(PLAYER1);
             if (option == PLAYER2)

@@ -3,10 +3,6 @@
 #include "app.h"
 #include "graph.h"
 
-// Declaración anticipada
-class ConfigData;
-extern ConfigData config;
-
 /**
  * enum ConfigState
  */

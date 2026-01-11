@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <string>
 #include <iostream>
+#include "sprite.h"
 #include "graph.h"
 #include "bmfont.h" // For BmNumFont
 
@@ -373,25 +374,4 @@ Uint32 Graph::colorMatch(SDL_Surface* surface, Uint32 rgb) {
 
 bool Graph::setColorKey(SDL_Texture* texture, Uint32 rgb) {
     return true; // SDL2 handles color key during surface->texture conversion
-}
-
-/**
- * Sprite initialization
- *
- * xoff and yoff are used to align the sprite within its bounding box.
- * This is useful to avoid the "Saint Vitus dance" (jittery animations)
- * caused by inconsistent sprite dimensions.
- */
-void Sprite::init(Graph* gr, const std::string& file, int offx, int offy) {
-    graph = gr;
-    graph->loadBitmap(this, file.c_str());
-    xoff = offx;
-    yoff = offy;
-}
-
-void Sprite::release() {
-    if (bmp != nullptr) {
-        SDL_DestroyTexture(bmp);
-        bmp = nullptr;
-    }
 }

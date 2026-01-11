@@ -245,6 +245,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="app.cpp" />
+    <ClCompile Include="appdata.cpp" />
     <ClCompile Include="ball.cpp" />
     <ClCompile Include="bmfont.cpp" />
     <ClCompile Include="configdata.cpp" />
@@ -260,11 +261,13 @@
     <ClCompile Include="scene.cpp" />
     <ClCompile Include="select.cpp" />
     <ClCompile Include="shoot.cpp" />
+    <ClCompile Include="sprite.cpp" />
     <ClCompile Include="stage.cpp" />
     <ClCompile Include="stageclear.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="app.h" />
+    <ClInclude Include="appdata.h" />
     <ClInclude Include="ball.h" />
     <ClInclude Include="bmfont.h" />
     <ClInclude Include="configscreen.h" />
@@ -279,6 +282,7 @@
     <ClInclude Include="scene.h" />
     <ClInclude Include="select.h" />
     <ClInclude Include="shoot.h" />
+    <ClInclude Include="sprite.h" />
     <ClInclude Include="stage.h" />
     <ClInclude Include="stageclear.h" />
   </ItemGroup>

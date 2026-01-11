@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstring>
 #include "pang.h"
+#include "appdata.h"
 #include <SDL.h>
 #include <SDL_render.h>
 #include <SDL_image.h>
@@ -8,6 +9,10 @@
 #ifndef MAX_PATH
 #define MAX_PATH 260
 #endif
+
+// Convenience macros for AppData access  
+#define appGraph AppData::instance().graph
+#define appInput AppData::instance().input
 
 Scene::Scene(Stage* stg, StageClear* pstgclr)
 {
@@ -58,66 +63,66 @@ int Scene::initBitmaps()
     int offs1[10] = { 0, 13, 18, 31, 44, 58, 70, 82, 93, 105 };
     int offs2[10] = { 0, 49, 86, 134, 187, 233, 277, 327, 374, 421 };
 
-    bmp.redball[0].init(&graph, "graph\\ball-rd1.png");
-    bmp.redball[1].init(&graph, "graph\\ball-rd2.png");
-    bmp.redball[2].init(&graph, "graph\\ball-rd3.png");
-    bmp.redball[3].init(&graph, "graph\\ball-rd4.png");
+    bmp.redball[0].init(&appGraph, "graph\\ball-rd1.png");
+    bmp.redball[1].init(&appGraph, "graph\\ball-rd2.png");
+    bmp.redball[2].init(&appGraph, "graph\\ball-rd3.png");
+    bmp.redball[3].init(&appGraph, "graph\\ball-rd4.png");
     for (i = 0; i < 4; i++)
-        graph.setColorKey(bmp.redball[i].getBmp(), 0x00FF00);
+        appGraph.setColorKey(bmp.redball[i].getBmp(), 0x00FF00);
 
-    bmp.miniplayer[PLAYER1].init(&graph, "graph\\miniplayer1.png");
-    bmp.miniplayer[PLAYER2].init(&graph, "graph\\miniplayer2.png");
-    graph.setColorKey(bmp.miniplayer[PLAYER1].getBmp(), 0x00FF00);
-    graph.setColorKey(bmp.miniplayer[PLAYER2].getBmp(), 0x00FF00);
+    bmp.miniplayer[PLAYER1].init(&appGraph, "graph\\miniplayer1.png");
+    bmp.miniplayer[PLAYER2].init(&appGraph, "graph\\miniplayer2.png");
+    appGraph.setColorKey(bmp.miniplayer[PLAYER1].getBmp(), 0x00FF00);
+    appGraph.setColorKey(bmp.miniplayer[PLAYER2].getBmp(), 0x00FF00);
 
-    bmp.lives[PLAYER1].init(&graph, "graph\\lives1p.png");
-    bmp.lives[PLAYER2].init(&graph, "graph\\lives2p.png");
-    graph.setColorKey(bmp.lives[PLAYER1].getBmp(), 0x00FF00);
-    graph.setColorKey(bmp.lives[PLAYER2].getBmp(), 0x00FF00);
+    bmp.lives[PLAYER1].init(&appGraph, "graph\\lives1p.png");
+    bmp.lives[PLAYER2].init(&appGraph, "graph\\lives2p.png");
+    appGraph.setColorKey(bmp.lives[PLAYER1].getBmp(), 0x00FF00);
+    appGraph.setColorKey(bmp.lives[PLAYER2].getBmp(), 0x00FF00);
 
-    bmp.shoot[0].init(&graph, "graph\\weapon1.png");
-    bmp.shoot[1].init(&graph, "graph\\weapon2.png");
-    bmp.shoot[2].init(&graph, "graph\\weapon3.png");
+    bmp.shoot[0].init(&appGraph, "graph\\weapon1.png");
+    bmp.shoot[1].init(&appGraph, "graph\\weapon2.png");
+    bmp.shoot[2].init(&appGraph, "graph\\weapon3.png");
     for (i = 0; i < 3; i++)
-        graph.setColorKey(bmp.shoot[i].getBmp(), 0x00FF00);
+        appGraph.setColorKey(bmp.shoot[i].getBmp(), 0x00FF00);
 
-    bmp.mark[0].init(&graph, "graph\\ladrill1.png");
-    bmp.mark[1].init(&graph, "graph\\ladrill1u.png");
-    bmp.mark[2].init(&graph, "graph\\ladrill1d.png");
-    bmp.mark[3].init(&graph, "graph\\ladrill1l.png");
-    bmp.mark[4].init(&graph, "graph\\ladrill1r.png");
+    bmp.mark[0].init(&appGraph, "graph\\ladrill1.png");
+    bmp.mark[1].init(&appGraph, "graph\\ladrill1u.png");
+    bmp.mark[2].init(&appGraph, "graph\\ladrill1d.png");
+    bmp.mark[3].init(&appGraph, "graph\\ladrill1l.png");
+    bmp.mark[4].init(&appGraph, "graph\\ladrill1r.png");
 
     for (i = 0; i < 5; i++)
-        graph.setColorKey(bmp.mark[i].getBmp(), 0x00FF00);
+        appGraph.setColorKey(bmp.mark[i].getBmp(), 0x00FF00);
 
-    bmp.floor[0].init(&graph, "graph\\floor1.png");
-    graph.setColorKey(bmp.floor[0].getBmp(), 0x00FF00);
-    bmp.floor[1].init(&graph, "graph\\floor2.png");
-    graph.setColorKey(bmp.floor[1].getBmp(), 0x00FF00);
+    bmp.floor[0].init(&appGraph, "graph\\floor1.png");
+    appGraph.setColorKey(bmp.floor[0].getBmp(), 0x00FF00);
+    bmp.floor[1].init(&appGraph, "graph\\floor2.png");
+    appGraph.setColorKey(bmp.floor[1].getBmp(), 0x00FF00);
 
-    bmp.time.init(&graph, "graph\\tiempo.png");
-    graph.setColorKey(bmp.time.getBmp(), 0xFF0000);
+    bmp.time.init(&appGraph, "graph\\tiempo.png");
+    appGraph.setColorKey(bmp.time.getBmp(), 0xFF0000);
 
-    bmp.gameover.init(&graph, "graph\\gameover.png", 16, 16);
-    graph.setColorKey(bmp.gameover.getBmp(), 0x00FF00);
+    bmp.gameover.init(&appGraph, "graph\\gameover.png", 16, 16);
+    appGraph.setColorKey(bmp.gameover.getBmp(), 0x00FF00);
 
-    bmp.continu.init(&graph, "graph\\continue.png", 16, 16);
-    graph.setColorKey(bmp.continu.getBmp(), 0x00FF00);
+    bmp.continu.init(&appGraph, "graph\\continue.png", 16, 16);
+    appGraph.setColorKey(bmp.continu.getBmp(), 0x00FF00);
 
     std::snprintf(cadena, sizeof(cadena), "graph\\%s", stage->back);
-    bmp.back.init(&graph, cadena, 16, 16);
-    graph.setColorKey(bmp.back.getBmp(), 0x00FF00);
+    bmp.back.init(&appGraph, cadena, 16, 16);
+    appGraph.setColorKey(bmp.back.getBmp(), 0x00FF00);
 
-    bmp.fontnum[0].init(&graph, "graph\\fontnum1.png", 0, 0);
-    graph.setColorKey(bmp.fontnum[0].getBmp(), 0xFF0000);
+    bmp.fontnum[0].init(&appGraph, "graph\\fontnum1.png", 0, 0);
+    appGraph.setColorKey(bmp.fontnum[0].getBmp(), 0xFF0000);
     fontNum[0].init(&bmp.fontnum[0]);
     fontNum[0].setValues(offs);
-    bmp.fontnum[1].init(&graph, "graph\\fontnum2.png", 0, 0);
-    graph.setColorKey(bmp.fontnum[1].getBmp(), 0xFF0000);
+    bmp.fontnum[1].init(&appGraph, "graph\\fontnum2.png", 0, 0);
+    appGraph.setColorKey(bmp.fontnum[1].getBmp(), 0xFF0000);
     fontNum[1].init(&bmp.fontnum[1]);
     fontNum[1].setValues(offs1);
-    bmp.fontnum[2].init(&graph, "graph\\fontnum3.png", 0, 0);
-    graph.setColorKey(bmp.fontnum[2].getBmp(), 0x00FF00);
+    bmp.fontnum[2].init(&appGraph, "graph\\fontnum3.png", 0, 0);
+    appGraph.setColorKey(bmp.fontnum[2].getBmp(), 0x00FF00);
     fontNum[2].init(&bmp.fontnum[2]);
     fontNum[2].setValues(offs2);
 
@@ -413,7 +418,7 @@ void* Scene::moveAll()
         {
             if (gameinf.getPlayers()[i])
             {
-                if (input.key(gameinf.getKeys()[i].shoot))
+                if (appInput.key(gameinf.getKeys()[i].shoot))
                 {
                     if (gameOverCount >= 0)
                     {
@@ -450,9 +455,9 @@ void* Scene::moveAll()
             {
                 if (!gameinf.getPlayers()[i]->isDead() && gameinf.getPlayers()[i]->isPlaying())
                 {
-                    if (input.key(gameinf.getKeys()[i].shoot)) { shoot(gameinf.getPlayers()[i]); }
-                    else if (input.key(gameinf.getKeys()[i].left)) gameinf.getPlayers()[i]->moveLeft();
-                    else if (input.key(gameinf.getKeys()[i].right)) gameinf.getPlayers()[i]->moveRight();
+                    if (appInput.key(gameinf.getKeys()[i].shoot)) { shoot(gameinf.getPlayers()[i]); }
+                    else if (appInput.key(gameinf.getKeys()[i].left)) gameinf.getPlayers()[i]->moveLeft();
+                    else if (appInput.key(gameinf.getKeys()[i].right)) gameinf.getPlayers()[i]->moveRight();
                     else gameinf.getPlayers()[i]->stop();
                 }
                 gameinf.getPlayers()[i]->update();
@@ -606,52 +611,52 @@ int Scene::release()
 
 void Scene::drawBackground()
 {
-    graph.draw(&bmp.back, 0, 0);
+    appGraph.draw(&bmp.back, 0, 0);
 }
 
 void Scene::draw(Ball* b)
 {
-    graph.draw(b->getSprite(), (int)b->getX(), (int)b->getY());
+    appGraph.draw(b->getSprite(), (int)b->getX(), (int)b->getY());
 }
 
 void Scene::draw(Player* pl)
 {
-    graph.draw(pl->getSprite(), (int)pl->getX(), (int)pl->getY());
+    appGraph.draw(pl->getSprite(), (int)pl->getX(), (int)pl->getY());
 }
 
 void Scene::draw(Shoot* sht)
 {
-    graph.draw(sht->getSprite(0), (int)sht->getX(), (int)sht->getY());
+    appGraph.draw(sht->getSprite(0), (int)sht->getX(), (int)sht->getY());
 
     for (int i = (int)sht->getY() + sht->getSprite(0)->getHeight(); i < MAX_Y; i += sht->getSprite(1)->getHeight())
-        graph.draw(sht->getSprite(1 + sht->getTail()), (int)sht->getX(), i);
+        appGraph.draw(sht->getSprite(1 + sht->getTail()), (int)sht->getX(), i);
 }
 
 void Scene::draw(Floor* fl)
 {
-    graph.draw(&bmp.floor[fl->getId()], fl->getX(), fl->getY());
+    appGraph.draw(&bmp.floor[fl->getId()], fl->getX(), fl->getY());
 }
 
 void Scene::drawScore()
 {
     if (gameinf.getPlayers()[PLAYER1]->isPlaying())
     {
-        graph.draw(&fontNum[1], gameinf.getPlayers()[PLAYER1]->getScore(), 80, RES_Y - 55);
-        graph.draw(&bmp.miniplayer[PLAYER1], 20, MAX_Y + 7);
+        appGraph.draw(&fontNum[1], gameinf.getPlayers()[PLAYER1]->getScore(), 80, RES_Y - 55);
+        appGraph.draw(&bmp.miniplayer[PLAYER1], 20, MAX_Y + 7);
         for (int i = 0; i < gameinf.getPlayers()[PLAYER1]->getLives(); i++)
         {
-            graph.draw(&bmp.lives[PLAYER1], 80 + 26 * i, MAX_Y + 30);
+            appGraph.draw(&bmp.lives[PLAYER1], 80 + 26 * i, MAX_Y + 30);
         }
     }
 
     if (gameinf.getPlayers()[PLAYER2])
         if (gameinf.getPlayers()[PLAYER2]->isPlaying())
         {
-            graph.draw(&bmp.miniplayer[PLAYER2], 400, MAX_Y + 7);
-            graph.draw(&fontNum[1], gameinf.getPlayers()[PLAYER2]->getScore(), 460, RES_Y - 55);
+            appGraph.draw(&bmp.miniplayer[PLAYER2], 400, MAX_Y + 7);
+            appGraph.draw(&fontNum[1], gameinf.getPlayers()[PLAYER2]->getScore(), 460, RES_Y - 55);
             for (int i = 0; i < gameinf.getPlayers()[PLAYER2]->getLives(); i++)
             {
-                graph.draw(&bmp.lives[PLAYER2], 460 + 26 * i, MAX_Y + 30);
+                appGraph.draw(&bmp.lives[PLAYER2], 460 + 26 * i, MAX_Y + 30);
             }
         }
 }
@@ -660,41 +665,43 @@ void Scene::drawMark()
 {
     for (int j = 0; j < 640; j += 16)
     {
-        graph.draw(&bmp.mark[2], j, 0);
-        graph.draw(&bmp.mark[1], j, MAX_Y + 1);
-        graph.draw(&bmp.mark[0], j, MAX_Y + 17);
-        graph.draw(&bmp.mark[0], j, MAX_Y + 33);
-        graph.draw(&bmp.mark[2], j, MAX_Y + 49);
+        appGraph.draw(&bmp.mark[2], j, 0);
+        appGraph.draw(&bmp.mark[1], j, MAX_Y + 1);
+        appGraph.draw(&bmp.mark[0], j, MAX_Y + 17);
+        appGraph.draw(&bmp.mark[0], j, MAX_Y + 33);
+        appGraph.draw(&bmp.mark[2], j, MAX_Y + 49);
     }
 
     for (int j = 0; j < 416; j += 16)
     {
-        graph.draw(&bmp.mark[4], 0, j);
-        graph.draw(&bmp.mark[3], MAX_X + 1, j);
+        appGraph.draw(&bmp.mark[4], 0, j);
+        appGraph.draw(&bmp.mark[3], MAX_X + 1, j);
     }
 
-    graph.draw(&bmp.mark[0], 0, 0);
-    graph.draw(&bmp.mark[0], MAX_X + 1, 0);
-    graph.draw(&bmp.mark[0], 0, MAX_Y + 1);
-    graph.draw(&bmp.mark[0], MAX_X + 1, MAX_Y + 1);
+    appGraph.draw(&bmp.mark[0], 0, 0);
+    appGraph.draw(&bmp.mark[0], MAX_X + 1, 0);
+    appGraph.draw(&bmp.mark[0], 0, MAX_Y + 1);
+    appGraph.draw(&bmp.mark[0], MAX_X + 1, MAX_Y + 1);
 }
 
 void Scene::drawDebugOverlay()
 {
-    if (!debugMode) return;
+    AppData& appData = AppData::instance();
+    
+    if (!appData.debugMode) return;
     GameState::drawDebugOverlay();
 
     char cadena[256];
     int y = 80;
     int lineHeight = 20;
     
-    if (gameinf.getPlayers()[PLAYER1])
+    if (appData.getPlayers()[PLAYER1])
     {
         std::sprintf(cadena, "P1: Score=%d Lives=%d Shoots=%d", 
-                gameinf.getPlayers()[PLAYER1]->getScore(),
-                gameinf.getPlayers()[PLAYER1]->getLives(),
-                gameinf.getPlayers()[PLAYER1]->getNumShoots());
-        graph.text(cadena, 20, y);
+                appData.getPlayers()[PLAYER1]->getScore(),
+                appData.getPlayers()[PLAYER1]->getLives(),
+                appData.getPlayers()[PLAYER1]->getNumShoots());
+        appData.graph.text(cadena, 20, y);
         y += lineHeight;
     }
     
@@ -704,7 +711,7 @@ void Scene::drawDebugOverlay()
         Ball* ptb = (Ball*)pt->data;
         std::sprintf(cadena, "Ball: y=%.1f size=%d diameter=%d", 
                 ptb->getY(), ptb->getSize(), ptb->getDiameter());
-        graph.text(cadena, 20, y);
+        appData.graph.text(cadena, 20, y);
         y += lineHeight;
     }
     
@@ -712,18 +719,18 @@ void Scene::drawDebugOverlay()
             lsBalls.getDimension(),
             lsShoots.getDimension(),
             lsFloor.getDimension());
-    graph.text(cadena, 20, y);
+    appData.graph.text(cadena, 20, y);
     y += lineHeight;
     
     std::sprintf(cadena, "Stage: %d  Time=%d  Timeline=%d", 
             stage->id, timeRemaining, timeLine);
-    graph.text(cadena, 20, y);
+    appData.graph.text(cadena, 20, y);
     y += lineHeight;
     
     std::sprintf(cadena, "GameOver=%s  LevelClear=%s", 
             gameOver ? "YES" : "NO",
             levelClear ? "YES" : "NO");
-    graph.text(cadena, 20, y);
+    appData.graph.text(cadena, 20, y);
 }
 
 int Scene::drawAll()
@@ -753,8 +760,8 @@ int Scene::drawAll()
 
     drawMark();
     drawScore();
-    graph.draw(&bmp.time, 320 - bmp.time.getWidth() / 2, MAX_Y + 3);
-    graph.draw(&fontNum[FONT_BIG], timeRemaining, 300, MAX_Y + 20);
+    appGraph.draw(&bmp.time, 320 - bmp.time.getWidth() / 2, MAX_Y + 3);
+    appGraph.draw(&fontNum[FONT_BIG], timeRemaining, 300, MAX_Y + 20);
 
     if (gameinf.getPlayers()[PLAYER1]->isVisible() && gameinf.getPlayers()[PLAYER1]->isPlaying())
         draw(gameinf.getPlayers()[PLAYER1]);
@@ -773,11 +780,11 @@ int Scene::drawAll()
 
     if (gameOver)
     {
-        graph.draw(&bmp.gameover, 100, 125);
+        appGraph.draw(&bmp.gameover, 100, 125);
         if (gameOverCount >= 0)
         {
-            graph.draw(&bmp.continu, 110, 240);
-            graph.draw(&fontNum[FONT_HUGE], gameOverCount, 315, 300);
+            appGraph.draw(&bmp.continu, 110, 240);
+            appGraph.draw(&fontNum[FONT_HUGE], gameOverCount, 315, 300);
         }
     }
 
@@ -785,7 +792,7 @@ int Scene::drawAll()
     
     drawDebugOverlay();
     
-    graph.flip();
+    appGraph.flip();
 
     static int tck = 0, lasttck = 0, cont = 0;
     tck = SDL_GetTicks();

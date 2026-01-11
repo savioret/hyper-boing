@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "app.h"
+#include "sprite.h"
 #include "graph.h"
 #include "bmfont.h"
 #include "scene.h"
@@ -20,6 +21,7 @@
 #include "shoot.h"
 #include "floor.h"
 #include "minput.h"
+#include "appdata.h"
 
 // Object identifiers
 constexpr int OBJ_NULL = 0;
@@ -63,86 +65,16 @@ constexpr int SIDE_RIGHT = 4;
 
 constexpr int GLOBAL_GAMESPEED = 60;
 
-/**
- * GameBitmaps struct
- * Stores player sprites.
- */
-struct GameBitmaps
-{
-    Sprite player[2][21];
-};
+// Legacy compatibility: GameInfo is now an alias to AppData
+// This allows gradual migration of code
+using GameInfo = AppData;
 
-/**
- * Keys class
- * Stores keyboard mapping for each player.
- */
-class Keys
-{
-public:
-    SDL_Scancode left;
-    SDL_Scancode right;
-    SDL_Scancode shoot;
-
-    void setLeft(SDL_Scancode l) { left = l; }
-    void setRight(SDL_Scancode r) { right = r; }
-    void setShoot(SDL_Scancode s) { shoot = s; }
-    void set(SDL_Scancode lf, SDL_Scancode rg, SDL_Scancode sh)
-    {
-        left = lf;
-        right = rg;
-        shoot = sh;
-    }
-};
-
-/**
- * GameInfo class
- * Stores common game information across different screens.
- */
-class GameInfo
-{
-private:
-    int numPlayers;
-    int numStages;
-    Player* player[2];
-    GameState* activeScene;
-    Keys playerKeys[2];
-
-    GameBitmaps bitmaps;
-
-    int currentStage;
-    Stage stages[6];
-    bool inMenu;
-
-public:
-    GameInfo();
-
-    void init();
-    void initStages();
-    void setCurrent(GameState* state);
-    void release();
-
-    // Accessors for refactoring transition
-    Player** getPlayers() { return player; }
-    Keys* getKeys() { return playerKeys; }
-    GameBitmaps& getBmp() { return bitmaps; }
-    Stage* getStages() { return stages; }
-    int& getCurrentStage() { return currentStage; }
-    int& getNumPlayers() { return numPlayers; }
-    int& getNumStages() { return numStages; }
-    bool& isMenu() { return inMenu; }
-
-    friend class Scene;
-    friend class Menu;
-    friend class SelectSync;
-};
-
-// Global external objects
-extern Graph graph;
-extern MInput input;
-extern GameInfo gameinf;
-extern Keys keys[2];
+// Global external objects (being phased out - use AppData::instance() instead)
 extern int globalmode;
 extern bool goback;
+
+// Temporary macro for gradual migration
+#define gameinf AppData::instance()
 
 // Sound functions prototypes (Windows-specific MCI wrappers)
 char OpenMusic(char*);

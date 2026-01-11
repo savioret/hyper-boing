@@ -1,9 +1,14 @@
 #include "pang.h"
+#include "appdata.h"
 #include "configscreen.h"
 #include "configdata.h"
 #include <SDL.h>
 #include <cstdio>
 #include <cstring>
+
+// Convenience macros for AppData access
+#define appGraph AppData::instance().graph
+#define appInput AppData::instance().input
 
 ConfigScreen::ConfigScreen()
     : state(ConfigState::Normal), selectedOption(0), waitingForKey(-1), tempRenderMode(0)
@@ -27,9 +32,8 @@ int ConfigScreen::init()
 
     if ( fontLoader.load ( "graph\\font\\monospaced_10.fnt" ) )
     {
-        fontBmp.init ( &graph, "graph\\font\\monospaced_10.png", 0, 0 );
-        fontRenderer.init ( &graph, &fontLoader, &fontBmp);
-        //fontRenderer.setColor(255, 255, 0, 255); // Yellow
+        fontBmp.init ( &appGraph, "graph\\font\\monospaced_10.png", 0, 0 );
+        fontRenderer.init ( &appGraph, &fontLoader, &fontBmp);
         fontRenderer.setScale(2.0f); // Scale 2x for readability
     }
     
@@ -59,7 +63,7 @@ void* ConfigScreen::moveAll()
             }
         }
         
-        if (input.key(SDL_SCANCODE_ESCAPE))
+        if (appInput.key(SDL_SCANCODE_ESCAPE))
         {
             state = ConfigState::Normal;
             SDL_Delay(200);
@@ -72,7 +76,7 @@ void* ConfigScreen::moveAll()
         static bool leftPressed = false;
         static bool rightPressed = false;
         
-        if (input.key(SDL_SCANCODE_UP))
+        if (appInput.key(SDL_SCANCODE_UP))
         {
             if (!upPressed)
             {
@@ -83,7 +87,7 @@ void* ConfigScreen::moveAll()
         }
         else upPressed = false;
         
-        if (input.key(SDL_SCANCODE_DOWN))
+        if (appInput.key(SDL_SCANCODE_DOWN))
         {
             if (!downPressed)
             {
@@ -94,7 +98,7 @@ void* ConfigScreen::moveAll()
         }
         else downPressed = false;
         
-        if (input.key(SDL_SCANCODE_RETURN))
+        if (appInput.key(SDL_SCANCODE_RETURN))
         {
             if (selectedOption < 6)
             {
@@ -106,7 +110,7 @@ void* ConfigScreen::moveAll()
         
         if (selectedOption == 6)
         {
-            if (input.key(SDL_SCANCODE_LEFT))
+            if (appInput.key(SDL_SCANCODE_LEFT))
             {
                 if (!leftPressed)
                 {
@@ -116,7 +120,7 @@ void* ConfigScreen::moveAll()
             }
             else leftPressed = false;
                 
-            if (input.key(SDL_SCANCODE_RIGHT))
+            if (appInput.key(SDL_SCANCODE_RIGHT))
             {
                 if (!rightPressed)
                 {
@@ -127,13 +131,13 @@ void* ConfigScreen::moveAll()
             else rightPressed = false;
         }
         
-        if (input.key(SDL_SCANCODE_F1))
+        if (appInput.key(SDL_SCANCODE_F1))
         {
             saveConfiguration();
             return new Menu();
         }
         
-        if (input.key(SDL_SCANCODE_ESCAPE))
+        if (appInput.key(SDL_SCANCODE_ESCAPE))
         {
             cancelConfiguration();
             return new Menu();
@@ -148,7 +152,7 @@ int ConfigScreen::drawAll()
     GameState::drawScrollingBackground();
     drawUI();
     drawDebugOverlay();
-    graph.flip();
+    appGraph.flip();
     return 1;
 }
 
@@ -161,8 +165,8 @@ void ConfigScreen::drawUI()
     
     drawText("CONFIGURATION", 220, 10, false);
     
-    SDL_SetRenderDrawColor(graph.getRenderer(), 255, 255, 255, 255);
-    SDL_RenderDrawLine(graph.getRenderer(), 60, 40, 580, 40);
+    SDL_SetRenderDrawColor(appGraph.getRenderer(), 255, 255, 255, 255);
+    SDL_RenderDrawLine(appGraph.getRenderer(), 60, 40, 580, 40);
     
     drawText("PLAYER 1:", xLabel, y, false);
     y += lineHeight;
@@ -194,8 +198,8 @@ void ConfigScreen::drawUI()
     drawKeyName(tempKeys[1][2], xKey, y);
     y += lineHeight + 10;
     
-    SDL_SetRenderDrawColor(graph.getRenderer(), 255, 255, 255, 255);
-    SDL_RenderDrawLine(graph.getRenderer(), 60, y, 580, y);
+    SDL_SetRenderDrawColor(appGraph.getRenderer(), 255, 255, 255, 255);
+    SDL_RenderDrawLine(appGraph.getRenderer(), 60, y, 580, y);
     y += 10;
     
     drawText("Screen Mode:", xLabel, y, selectedOption == 6);
@@ -203,8 +207,8 @@ void ConfigScreen::drawUI()
     drawText(modeText, xKey, y, false);
     y += lineHeight + 10;
     
-    SDL_SetRenderDrawColor(graph.getRenderer(), 255, 255, 255, 255);
-    SDL_RenderDrawLine(graph.getRenderer(), 60, y, 580, y);
+    SDL_SetRenderDrawColor(appGraph.getRenderer(), 255, 255, 255, 255);
+    SDL_RenderDrawLine(appGraph.getRenderer(), 60, y, 580, y);
     y += 10;
     
     if (state == ConfigState::WaitingKey)
@@ -218,26 +222,28 @@ void ConfigScreen::drawUI()
     }
 }
 
+void ConfigScreen::drawText(const char* text, int x, int y, bool selected)
+{
+    if (selected)
+    {
+        SDL_SetRenderDrawColor(appGraph.getRenderer(), 255, 255, 0, 255);
+        SDL_Rect selRect = { x - 10, y+10, 5, 16 };
+        SDL_RenderFillRect(appGraph.getRenderer(), &selRect);
+    }
+    fontRenderer.text(text, x, y);
+}
+
 void ConfigScreen::drawDebugOverlay()
 {
-    if (!debugMode) return;
+    AppData& appData = AppData::instance();
+    
+    if (!appData.debugMode) return;
     GameState::drawDebugOverlay();
     char cadena[256];
     int y = 80;
     std::sprintf(cadena, "Selected = %d  State = %d", 
             selectedOption, (int)state);
-    graph.text(cadena, 20, y);
-}
-
-void ConfigScreen::drawText(const char* text, int x, int y, bool selected)
-{
-    if (selected)
-    {
-        SDL_SetRenderDrawColor(graph.getRenderer(), 255, 255, 0, 255);
-        SDL_Rect selRect = { x - 10, y+10, 5, 16 };
-        SDL_RenderFillRect(graph.getRenderer(), &selRect);
-    }
-    fontRenderer.text(text, x, y);
+    appData.graph.text(cadena, 20, y);
 }
 
 void ConfigScreen::drawKeyName(SDL_Scancode key, int x, int y)
@@ -254,11 +260,13 @@ const char* ConfigScreen::getKeyName(SDL_Scancode scancode) const
 
 void ConfigScreen::saveConfiguration()
 {
+    AppData& appData = AppData::instance();
+    
     for (int player = 0; player < 2; player++)
     {
-        gameinf.getKeys()[player].setLeft(tempKeys[player][0]);
-        gameinf.getKeys()[player].setRight(tempKeys[player][1]);
-        gameinf.getKeys()[player].setShoot(tempKeys[player][2]);
+        appData.getKeys()[player].setLeft(tempKeys[player][0]);
+        appData.getKeys()[player].setRight(tempKeys[player][1]);
+        appData.getKeys()[player].setShoot(tempKeys[player][2]);
     }
     
     int oldMode = globalmode;
@@ -267,10 +275,10 @@ void ConfigScreen::saveConfiguration()
     if (oldMode != globalmode)
     {
         bool isFullscreen = (globalmode == RENDERMODE_EXCLUSIVE);
-        graph.setFullScreen(isFullscreen);
+        appData.graph.setFullScreen(isFullscreen);
     }
     
-    config.save();
+    appData.config.save();
 }
 
 void ConfigScreen::cancelConfiguration()

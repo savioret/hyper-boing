@@ -31,14 +31,6 @@ protected:
     BMFontRenderer fontRenderer;
 
 public:
-    // Shared scrolling background
-    static Sprite* sharedBackground;
-    static float scrollX, scrollY;
-    static bool backgroundInitialized;
-    
-    // Global debug mode
-    static bool debugMode;
-
     GameState();
     virtual ~GameState() {}
 
@@ -56,7 +48,7 @@ public:
     virtual int drawAll() = 0;
     virtual int release() = 0;
     
-    // Shared functions
+    // Shared background functions (now use AppData)
     static void initSharedBackground();
     static void updateScrollingBackground();
     static void drawScrollingBackground();

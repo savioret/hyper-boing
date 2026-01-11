@@ -1,3 +1,4 @@
+#include "sprite.h"
 #include "graph.h"
 #include "bmfont.h"
 #include <fstream>

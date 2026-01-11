@@ -1,6 +1,11 @@
 #include <cstdio>
 #include <cstring>
 #include "pang.h"
+#include "appdata.h"
+
+// Convenience macros for AppData access
+#define appGraph AppData::instance().graph
+#define appInput AppData::instance().input
 
 StageClear::StageClear(Scene* scn)
 {
@@ -15,12 +20,12 @@ StageClear::~StageClear()
 
 int StageClear::init()
 {
-    bmp.title1.init(&graph, "graph\\nivel.png", 0, 0);
-    graph.setColorKey(bmp.title1.getBmp(), 0x00FF00);
-    bmp.title2.init(&graph, "graph\\completado.png", 0, 0);
-    graph.setColorKey(bmp.title2.getBmp(), 0x00FF00);
-    bmp.roof.init(&graph, "graph\\ladrill4.png", 0, 0);
-    graph.setColorKey(bmp.roof.getBmp(), 0x00FF00);
+    bmp.title1.init(&appGraph, "graph\\nivel.png", 0, 0);
+    appGraph.setColorKey(bmp.title1.getBmp(), 0x00FF00);
+    bmp.title2.init(&appGraph, "graph\\completado.png", 0, 0);
+    appGraph.setColorKey(bmp.title2.getBmp(), 0x00FF00);
+    bmp.roof.init(&appGraph, "graph\\ladrill4.png", 0, 0);
+    appGraph.setColorKey(bmp.roof.getBmp(), 0x00FF00);
 
     xt1 = -bmp.title1.getWidth();
     xt2 = 640;
@@ -59,8 +64,8 @@ void StageClear::drawAll()
         for (i = -16; i < (yr1 / 16) + 1; i++)
             for (j = 0; j < 40; j++)
             {	
-                graph.drawClipped(&bmp.roof, j * 16, i * 16 - (i % 16));
-                graph.drawClipped(&bmp.roof, j * 16, 480 - (i * 16));
+                appGraph.drawClipped(&bmp.roof, j * 16, i * 16 - (i % 16));
+                appGraph.drawClipped(&bmp.roof, j * 16, 480 - (i * 16));
             }
     }	
     else if (isOpening)
@@ -68,32 +73,32 @@ void StageClear::drawAll()
         for (i = (yr1 / 16) + 1; i > -17; i--)
             for (j = 0; j < 40; j++)
             {	
-                graph.drawClipped(&bmp.roof, j * 16, i * 16 - (i % 16));
-                graph.drawClipped(&bmp.roof, j * 16, 480 - (i * 16));
+                appGraph.drawClipped(&bmp.roof, j * 16, i * 16 - (i % 16));
+                appGraph.drawClipped(&bmp.roof, j * 16, 480 - (i * 16));
             }
     }	
 
-    graph.drawClipped(&bmp.title1, xt1, yt1);
-    graph.drawClipped(&bmp.title2, xt2, yt2);
-    graph.drawClipped(&scene->fontNum[FONT_HUGE], cad, xnum, ynum);
+    appGraph.drawClipped(&bmp.title1, xt1, yt1);
+    appGraph.drawClipped(&bmp.title2, xt2, yt2);
+    appGraph.drawClipped(&scene->fontNum[FONT_HUGE], cad, xnum, ynum);
     
     if (finish) return;
     if (!isClosing)
     {
         if (gameinf.getPlayers()[PLAYER1]->isPlaying())
-            graph.draw(&scene->bmp.miniplayer[PLAYER1], 40, 300);
+            appGraph.draw(&scene->bmp.miniplayer[PLAYER1], 40, 300);
         if (gameinf.getPlayers()[PLAYER2])
             if (gameinf.getPlayers()[PLAYER2]->isPlaying())
-                graph.draw(&scene->bmp.miniplayer[PLAYER2], 350, 300);
+                appGraph.draw(&scene->bmp.miniplayer[PLAYER2], 350, 300);
     }
 
     if (endMove && !isClosing)
     {
         if (gameinf.getPlayers()[PLAYER1]->isPlaying())
-            graph.draw(&scene->fontNum[FONT_SMALL], cscore[PLAYER1], 105, 320);
+            appGraph.draw(&scene->fontNum[FONT_SMALL], cscore[PLAYER1], 105, 320);
         if (gameinf.getPlayers()[PLAYER2])
             if (gameinf.getPlayers()[PLAYER2]->isPlaying())
-                graph.draw(&scene->fontNum[FONT_SMALL], cscore[PLAYER2], 450, 320);
+                appGraph.draw(&scene->fontNum[FONT_SMALL], cscore[PLAYER2], 450, 320);
     }
 }
 
@@ -101,13 +106,13 @@ void StageClear::drawAll()
  * StageClear logic
  *
  * This function manages the stage clear sequence: moving text into screen,
- * incrementing scores, and waiting for player input to proceed.
+ * incrementing scores, and waiting for player appInput to proceed.
  */
 int StageClear::moveAll()
 {
     bool a = false, b = false, c = false;
 
-    if (input.key(gameinf.getKeys()[PLAYER1].shoot))
+    if (appInput.key(gameinf.getKeys()[PLAYER1].shoot))
     {
         if (!endCount)
         {
@@ -120,7 +125,7 @@ int StageClear::moveAll()
     }
     else if (gameinf.getPlayers()[PLAYER2])
     {
-        if (input.key(gameinf.getKeys()[PLAYER2].shoot))
+        if (appInput.key(gameinf.getKeys()[PLAYER2].shoot))
         {
             if (!endCount)
             {

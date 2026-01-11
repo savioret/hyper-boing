@@ -1,15 +1,10 @@
 #include <SDL.h>
 #include <cstdio>
 #include "app.h"
+#include "appdata.h"
+#include "sprite.h"
 #include "graph.h"
 #include "pang.h"
-
-// Initialize static variables
-Sprite* GameState::sharedBackground = nullptr;
-float GameState::scrollX = 0;
-float GameState::scrollY = 0;
-bool GameState::backgroundInitialized = false;
-bool GameState::debugMode = false;
 
 GameState::GameState()
     : gameSpeed(0), fps(0), fpsv(0), active(true), pause(false), 
@@ -34,7 +29,9 @@ int GameState::init()
 
 void GameState::drawDebugOverlay()
 {
-    if (!debugMode) return;
+    AppData& appData = AppData::instance();
+    
+    if (!appData.debugMode) return;
     
     char cadena[256];
     int y = 20;
@@ -42,57 +39,67 @@ void GameState::drawDebugOverlay()
     int width = 400;
     int height = 300;
     
-    SDL_SetRenderDrawBlendMode(graph.getRenderer(), SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(graph.getRenderer(), 0, 0, 0, 180);
+    SDL_SetRenderDrawBlendMode(appData.graph.getRenderer(), SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(appData.graph.getRenderer(), 0, 0, 0, 180);
     SDL_Rect bgRect = {10, 10, width, height};
-    SDL_RenderFillRect(graph.getRenderer(), &bgRect);
-    SDL_SetRenderDrawBlendMode(graph.getRenderer(), SDL_BLENDMODE_NONE);
+    SDL_RenderFillRect(appData.graph.getRenderer(), &bgRect);
+    SDL_SetRenderDrawBlendMode(appData.graph.getRenderer(), SDL_BLENDMODE_NONE);
     
     sprintf(cadena, "FPS = %d  FPSVIRT = %d", fps, fpsv);
-    graph.text(cadena, 20, y);
+    appData.graph.text(cadena, 20, y);
     y += lineHeight;
     
     sprintf(cadena, "Paused = %s  Active = %s", 
             pause ? "YES" : "NO",
             active ? "YES" : "NO");
-    graph.text(cadena, 20, y);
+    appData.graph.text(cadena, 20, y);
 }
 
 void GameState::initSharedBackground()
 {
-    if (!backgroundInitialized)
+    AppData& appData = AppData::instance();
+    
+    if (!appData.backgroundInitialized)
     {
-        sharedBackground = new Sprite();
-        sharedBackground->init(&graph, "graph\\titleback.png", 0, 0);
-        graph.setColorKey(sharedBackground->getBmp(), 0xFF0000);
-        scrollX = 0.0f;
-        scrollY = (float)sharedBackground->getHeight();
-        backgroundInitialized = true;
+        appData.sharedBackground = new Sprite();
+        appData.sharedBackground->init(&appData.graph, "graph\\titleback.png", 0, 0);
+        appData.graph.setColorKey(appData.sharedBackground->getBmp(), 0xFF0000);
+        appData.scrollX = 0.0f;
+        appData.scrollY = (float)appData.sharedBackground->getHeight();
+        appData.backgroundInitialized = true;
     }
 }
 
 void GameState::updateScrollingBackground()
 {
-    if (!backgroundInitialized || !sharedBackground) return;
+    AppData& appData = AppData::instance();
     
-    if (scrollX < sharedBackground->getWidth()) scrollX += 0.5f;
-    else scrollX = 0.0f;
+    if (!appData.backgroundInitialized || !appData.sharedBackground) return;
+    
+    if (appData.scrollX < appData.sharedBackground->getWidth()) 
+        appData.scrollX += 0.5f;
+    else 
+        appData.scrollX = 0.0f;
 
-    if (scrollY > 0) scrollY -= 0.5f;
-    else scrollY = (float)sharedBackground->getHeight();
+    if (appData.scrollY > 0) 
+        appData.scrollY -= 0.5f;
+    else 
+        appData.scrollY = (float)appData.sharedBackground->getHeight();
 }
 
 void GameState::drawScrollingBackground()
 {
-    if (!backgroundInitialized || !sharedBackground) return;
+    AppData& appData = AppData::instance();
+    
+    if (!appData.backgroundInitialized || !appData.sharedBackground) return;
     
     int i, j;
     SDL_Rect rc, rcbx, rcby, rcq;
-    int sx = (int)scrollX;
-    int sy = (int)scrollY;
+    int sx = (int)appData.scrollX;
+    int sy = (int)appData.scrollY;
     
     rc.x = sx;
-    rc.w = sharedBackground->getWidth() - sx;
+    rc.w = appData.sharedBackground->getWidth() - sx;
     rc.y = 0;
     rc.h = sy;
     
@@ -102,33 +109,43 @@ void GameState::drawScrollingBackground()
     rcbx.h = sy;
 
     rcby.x = sx;
-    rcby.w = sharedBackground->getWidth() - sx;
+    rcby.w = appData.sharedBackground->getWidth() - sx;
     rcby.y = sy;
-    rcby.h = sharedBackground->getHeight() - sy;
+    rcby.h = appData.sharedBackground->getHeight() - sy;
 
     rcq.x = 0;
     rcq.w = sx;
     rcq.y = sy;
-    rcq.h = sharedBackground->getHeight() - sy;
+    rcq.h = appData.sharedBackground->getHeight() - sy;
     
     for (i = 0; i < 4; i++)
         for (j = 0; j < 5; j++)
         {
-            graph.draw(sharedBackground->getBmp(), &rc, sharedBackground->getWidth() * i, (sharedBackground->getHeight() * j) + sharedBackground->getHeight() - sy);
-            graph.draw(sharedBackground->getBmp(), &rcbx, (sharedBackground->getWidth() * i) + rc.w, (sharedBackground->getHeight() * j) + sharedBackground->getHeight() - sy);
-            graph.draw(sharedBackground->getBmp(), &rcby, sharedBackground->getWidth() * i, sharedBackground->getHeight() * j);
-            graph.draw(sharedBackground->getBmp(), &rcq, (sharedBackground->getWidth() * i) + sharedBackground->getWidth() - sx, sharedBackground->getHeight() * j);
+            appData.graph.draw(appData.sharedBackground->getBmp(), &rc, 
+                appData.sharedBackground->getWidth() * i, 
+                (appData.sharedBackground->getHeight() * j) + appData.sharedBackground->getHeight() - sy);
+            appData.graph.draw(appData.sharedBackground->getBmp(), &rcbx, 
+                (appData.sharedBackground->getWidth() * i) + rc.w, 
+                (appData.sharedBackground->getHeight() * j) + appData.sharedBackground->getHeight() - sy);
+            appData.graph.draw(appData.sharedBackground->getBmp(), &rcby, 
+                appData.sharedBackground->getWidth() * i, 
+                appData.sharedBackground->getHeight() * j);
+            appData.graph.draw(appData.sharedBackground->getBmp(), &rcq, 
+                (appData.sharedBackground->getWidth() * i) + appData.sharedBackground->getWidth() - sx, 
+                appData.sharedBackground->getHeight() * j);
         }
 }
 
 void GameState::releaseSharedBackground()
 {
-    if (backgroundInitialized && sharedBackground)
+    AppData& appData = AppData::instance();
+    
+    if (appData.backgroundInitialized && appData.sharedBackground)
     {
-        sharedBackground->release();
-        delete sharedBackground;
-        sharedBackground = nullptr;
-        backgroundInitialized = false;
+        appData.sharedBackground->release();
+        delete appData.sharedBackground;
+        appData.sharedBackground = nullptr;
+        appData.backgroundInitialized = false;
     }
 }
 
@@ -151,7 +168,7 @@ void* GameState::doTick()
     if (goback)
     {
         goback = false;
-        gameinf.isMenu() = true;
+        AppData::instance().isMenu() = true;
         return (GameState*) new Menu;
     }
 

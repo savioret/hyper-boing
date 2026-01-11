@@ -1,7 +1,8 @@
 #pragma once
 
 #include "app.h"
-#include "graph.h"
+#include "sprite.h"
+
 
 /**
  * MenuBitmaps struct

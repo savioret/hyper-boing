@@ -1,15 +1,20 @@
 #include "pang.h"
+#include "appdata.h"
 #include <SDL.h>
 #include <SDL_image.h>
 #include <cstdio>
 #include <cstring>
 
+// Convenience macros for AppData access
+#define appGraph AppData::instance().graph
+#define appInput AppData::instance().input
+
 extern int quit;
 
 int Menu::initBitmaps()
 {
-    bmp.title.init(&graph, "graph\\title.png", 0, 0);
-    graph.setColorKey(bmp.title.getBmp(), 0x00FF00);
+    bmp.title.init(&appGraph, "graph\\title.png", 0, 0);
+    appGraph.setColorKey(bmp.title.getBmp(), 0x00FF00);
     
     // Initialize shared background
     GameState::initSharedBackground();
@@ -17,10 +22,8 @@ int Menu::initBitmaps()
     // Load BMFont for menu
     if (fontLoader.load("graph\\font\\thickfont_grad_64.fnt"))
     {
-        bmp.menuFont.init(&graph, "graph\\font\\thickfont_grad_64.png", 0, 0);
-        fontRenderer.init(&graph, &fontLoader, &bmp.menuFont);
-        //fontRenderer.setColor(255, 255, 0, 255); // Yellow
-        //fontRenderer.setScale(2.0f); // Scale 2x for readability
+        bmp.menuFont.init(&appGraph, "graph\\font\\thickfont_grad_64.png", 0, 0);
+        fontRenderer.init(&appGraph, &fontLoader, &bmp.menuFont);
     }
 
     return 1;
@@ -68,7 +71,7 @@ void Menu::drawTitle()
     int titleX = (RES_X - bmp.title.getWidth()) / 2;
     int titleY = yPos;
     
-    graph.drawClipped(&bmp.title, titleX, titleY);
+    appGraph.drawClipped(&bmp.title, titleX, titleY);
 }
 
 void Menu::drawMenu()
@@ -109,22 +112,24 @@ int Menu::drawAll()
     drawTitle();
     drawMenu();
     drawDebugOverlay();
-    graph.flip();
+    appGraph.flip();
     return 1;
 }
 
 void Menu::drawDebugOverlay()
 {
-    if (!debugMode) return;
+    AppData& appData = AppData::instance();
+    
+    if (!appData.debugMode) return;
     GameState::drawDebugOverlay();
     char cadena[256];
     int y = 80;
     int lineHeight = 20;
     std::sprintf(cadena, "Title Y = %d  Selected = %d", yPos, selectedOption);
-    graph.text(cadena, 20, y);
+    appData.graph.text(cadena, 20, y);
     y += lineHeight;
-    std::sprintf(cadena, "Scroll X=%d Y=%d", GameState::scrollX, GameState::scrollY);
-    graph.text(cadena, 20, y);
+    std::sprintf(cadena, "Scroll X=%d Y=%d", (int)appData.scrollX, (int)appData.scrollY);
+    appData.graph.text(cadena, 20, y);
 }
 
 void* Menu::moveAll()
@@ -143,7 +148,7 @@ void* Menu::moveAll()
 
     if (yPos >= 50)
     {
-        if (input.key(SDL_SCANCODE_UP) || input.key(gameinf.getKeys()[PLAYER1].left))
+        if (appInput.key(SDL_SCANCODE_UP) || appInput.key(gameinf.getKeys()[PLAYER1].left))
         {
             if (!upPressed)
             {
@@ -154,7 +159,7 @@ void* Menu::moveAll()
         }
         else upPressed = false;
             
-        if (input.key(SDL_SCANCODE_DOWN) || input.key(gameinf.getKeys()[PLAYER1].right))
+        if (appInput.key(SDL_SCANCODE_DOWN) || appInput.key(gameinf.getKeys()[PLAYER1].right))
         {
             if (!downPressed)
             {
@@ -165,13 +170,13 @@ void* Menu::moveAll()
         }
         else downPressed = false;
         
-        if (input.key(SDL_SCANCODE_RETURN) || input.key(gameinf.getKeys()[PLAYER1].shoot))
+        if (appInput.key(SDL_SCANCODE_RETURN) || appInput.key(gameinf.getKeys()[PLAYER1].shoot))
         {
             if (!enterPressed)
             {
                 switch (selectedOption)
                 {
-                    case 0: return new SelectSync(); // Select class
+                    case 0: return new SelectSync();
                     case 1: return new ConfigScreen();
                     case 2: quit = 1; return nullptr;
                 }
