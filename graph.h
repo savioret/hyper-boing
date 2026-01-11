@@ -97,6 +97,7 @@ public:
 
     void text(const char texto[], int x, int y);
     void rectangle(int a, int b, int c, int d);
+    void filledRectangle(int a, int b, int c, int d);
 
     bool copyBitmap(SDL_Texture*& texture, SDL_Surface* surface, int x, int y, int dx, int dy);
     void loadBitmap(Sprite* spr, const char* szBitmap);

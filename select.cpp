@@ -9,10 +9,10 @@ int SelectSync::initBitmaps()
     bmp.mode.init(&graph, "graph\\selecmodo.png", 0, 0);
     graph.setColorKey(bmp.mode.getBmp(), 0xFF0000);
     
-    bmp.selText[PLAYER1].init(&graph, "graph\\select1ptext.png", 0, 0);
-    graph.setColorKey(bmp.selText[PLAYER1].getBmp(), 0x0000FF);
-    bmp.selText[PLAYER2].init(&graph, "graph\\select2ptext.png", 0, 0);
-    graph.setColorKey(bmp.selText[PLAYER2].getBmp(), 0x0000FF);
+    // bmp.selText[PLAYER1].init(&graph, "graph\\select1ptext.png", 0, 0);
+    // graph.setColorKey(bmp.selText[PLAYER1].getBmp(), 0x0000FF);
+    // bmp.selText[PLAYER2].init(&graph, "graph\\select2ptext.png", 0, 0);
+    // graph.setColorKey(bmp.selText[PLAYER2].getBmp(), 0x0000FF);
 
     bmp.select[PLAYER1].init(&graph, "graph\\select1p.png", 0, 0);
     graph.setColorKey(bmp.select[PLAYER1].getBmp(), 0x00FF00);
@@ -55,8 +55,8 @@ int SelectSync::release()
 {
     bmp.select[PLAYER1].release();
     bmp.select[PLAYER2].release();
-    bmp.selText[PLAYER1].release();
-    bmp.selText[PLAYER2].release();
+    // bmp.selText[PLAYER1].release();
+    // bmp.selText[PLAYER2].release();
     bmp.mode.release();
     bmp.back.release();
 
@@ -67,16 +67,17 @@ int SelectSync::release()
 
 void SelectSync::drawSelect()
 {
-    if (option == 0) 	
-        graph.rectangle(65, 205, 70 + bmp.select[PLAYER1].getWidth() + 5, 210 + bmp.select[PLAYER1].getHeight() + 5);
+    SDL_SetRenderDrawColor(graph.getRenderer(), 255, 255, 255, 255);
+    if ( option == 0 )
+        graph.filledRectangle(65, 205, 70 + bmp.select[PLAYER1].getWidth() + 5, 210 + bmp.select[PLAYER1].getHeight() + 5);
     else
-        graph.rectangle(330, 205, 335 + bmp.select[PLAYER2].getWidth() + 5, 210 + bmp.select[PLAYER2].getHeight() + 5);
+        graph.filledRectangle(330, 205, 335 + bmp.select[PLAYER2].getWidth() + 5, 210 + bmp.select[PLAYER2].getHeight() + 5);
 
     graph.draw(&bmp.mode, 38, 10);
     graph.draw(&bmp.select[PLAYER1], 70, 210);
-    graph.draw(&bmp.selText[PLAYER1], 70, 210 + bmp.select[PLAYER1].getHeight() + 10);
+    //graph.draw(&bmp.selText[PLAYER1], 70, 210 + bmp.select[PLAYER1].getHeight() + 10);
     graph.draw(&bmp.select[PLAYER2], 335, 210);
-    graph.draw(&bmp.selText[PLAYER2], 350, 210 + bmp.select[PLAYER2].getHeight() + 10);
+    //graph.draw(&bmp.selText[PLAYER2], 350, 210 + bmp.select[PLAYER2].getHeight() + 10);
 }
 
 

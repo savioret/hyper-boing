@@ -330,6 +330,11 @@ void Graph::rectangle(int a, int b, int c, int d) {
     SDL_RenderDrawRect(renderer, &rect);
 }
 
+void Graph::filledRectangle(int a, int b, int c, int d) {
+    SDL_Rect rect = { a, b, c - a, d - b };
+    SDL_RenderFillRect(renderer, &rect);
+}
+
 void Graph::loadBitmap(Sprite* spr, const char* szBitmap) {
     SDL_Surface* loadedSurface = IMG_Load(szBitmap);
     if (loadedSurface == nullptr) {

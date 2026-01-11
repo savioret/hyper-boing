@@ -9,8 +9,8 @@
 int quit = 0;
 bool goback = false;
 int globalmode;
-char WindowName[] = "Chuper Pang Revolution";
-char WindowTitle[] = "¡Chuper Pang!";
+char WindowName[] = "Hyper Boing";
+char WindowTitle[] = "¡Hyper Boing!";
 
 Graph graph;      // Graphics mode object
 MInput input;     // Input handler object
@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
     }
     
     // Initialize Graphics with SDL
-    if (!graph.init("Chuper Pang Revolution", globalmode))
+    if (!graph.init("Hyper Boing", globalmode))
     {
         printf("Error initializing Graphics\n");
         return 1;
