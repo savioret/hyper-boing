@@ -6,8 +6,8 @@
 
 // Initialize static variables
 Sprite* App::sharedBackground = nullptr;
-int App::scrollX = 0;
-int App::scrollY = 0;
+float App::scrollX = 0;
+float App::scrollY = 0;
 bool App::backgroundInitialized = false;
 bool App::debugMode = false;
 
@@ -65,8 +65,8 @@ void App::initSharedBackground()
         sharedBackground = new Sprite();
         sharedBackground->init(&graph, "graph\\titleback.png", 0, 0);
         graph.setColorKey(sharedBackground->getBmp(), 0xFF0000);
-        scrollX = 0;
-        scrollY = sharedBackground->getHeight();
+        scrollX = 0.0f;
+        scrollY = (float)sharedBackground->getHeight();
         backgroundInitialized = true;
     }
 }
@@ -75,11 +75,11 @@ void App::updateScrollingBackground()
 {
     if (!backgroundInitialized || !sharedBackground) return;
     
-    if (scrollX < sharedBackground->getWidth()) scrollX++;
-    else scrollX = 0;
+    if (scrollX < sharedBackground->getWidth()) scrollX += 0.5f;
+    else scrollX = 0.0f;
 
-    if (scrollY > 0) scrollY--;
-    else scrollY = sharedBackground->getHeight();
+    if (scrollY > 0) scrollY -= 0.5f;
+    else scrollY = (float)sharedBackground->getHeight();
 }
 
 void App::drawScrollingBackground()
@@ -88,34 +88,36 @@ void App::drawScrollingBackground()
     
     int i, j;
     SDL_Rect rc, rcbx, rcby, rcq;
+    int sx = (int)scrollX;
+    int sy = (int)scrollY;
     
-    rc.x = scrollX;
-    rc.w = sharedBackground->getWidth() - scrollX;
+    rc.x = sx;
+    rc.w = sharedBackground->getWidth() - sx;
     rc.y = 0;
-    rc.h = scrollY;
+    rc.h = sy;
     
     rcbx.x = 0;
-    rcbx.w = scrollX;
+    rcbx.w = sx;
     rcbx.y = 0;
-    rcbx.h = scrollY;
+    rcbx.h = sy;
 
-    rcby.x = scrollX;
-    rcby.w = sharedBackground->getWidth() - scrollX;
-    rcby.y = scrollY;
-    rcby.h = sharedBackground->getHeight() - scrollY;
+    rcby.x = sx;
+    rcby.w = sharedBackground->getWidth() - sx;
+    rcby.y = sy;
+    rcby.h = sharedBackground->getHeight() - sy;
 
     rcq.x = 0;
-    rcq.w = scrollX;
-    rcq.y = scrollY;
-    rcq.h = sharedBackground->getHeight() - scrollY;
+    rcq.w = sx;
+    rcq.y = sy;
+    rcq.h = sharedBackground->getHeight() - sy;
     
     for (i = 0; i < 4; i++)
         for (j = 0; j < 5; j++)
         {
-            graph.draw(sharedBackground->getBmp(), &rc, sharedBackground->getWidth() * i, (sharedBackground->getHeight() * j) + sharedBackground->getHeight() - scrollY);
-            graph.draw(sharedBackground->getBmp(), &rcbx, (sharedBackground->getWidth() * i) + rc.w, (sharedBackground->getHeight() * j) + sharedBackground->getHeight() - scrollY);
+            graph.draw(sharedBackground->getBmp(), &rc, sharedBackground->getWidth() * i, (sharedBackground->getHeight() * j) + sharedBackground->getHeight() - sy);
+            graph.draw(sharedBackground->getBmp(), &rcbx, (sharedBackground->getWidth() * i) + rc.w, (sharedBackground->getHeight() * j) + sharedBackground->getHeight() - sy);
             graph.draw(sharedBackground->getBmp(), &rcby, sharedBackground->getWidth() * i, sharedBackground->getHeight() * j);
-            graph.draw(sharedBackground->getBmp(), &rcq, (sharedBackground->getWidth() * i) + sharedBackground->getWidth() - scrollX, sharedBackground->getHeight() * j);
+            graph.draw(sharedBackground->getBmp(), &rcq, (sharedBackground->getWidth() * i) + sharedBackground->getWidth() - sx, sharedBackground->getHeight() * j);
         }
 }
 

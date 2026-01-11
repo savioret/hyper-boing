@@ -33,7 +33,7 @@ protected:
 public:
     // Shared scrolling background
     static Sprite* sharedBackground;
-    static int scrollX, scrollY;
+    static float scrollX, scrollY;
     static bool backgroundInitialized;
     
     // Global debug mode
