@@ -202,7 +202,7 @@ int Scene::objectScore(int id)
 void Scene::win()
 {
     CloseMusic();
-    OpenMusic("music\\win.mid");
+    OpenMusic("music\\win.ogg");
     PlayMusic();
     levelClear = true;
 
@@ -468,7 +468,7 @@ void* Scene::moveAll()
                     gameOver = true;
                     gameOverCount = 10;
                     CloseMusic();
-                    OpenMusic("music\\gameover.mid");
+                    OpenMusic("music\\gameover.ogg");
                     PlayMusic();
                 }
             }
@@ -479,7 +479,7 @@ void* Scene::moveAll()
                     gameOver = true;
                     gameOverCount = 10;
                     CloseMusic();
-                    OpenMusic("music\\gameover.mid");
+                    OpenMusic("music\\gameover.ogg");
                     PlayMusic();
                 }
             }

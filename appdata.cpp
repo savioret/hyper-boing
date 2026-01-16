@@ -141,7 +141,7 @@ void AppData::initStages()
     stages[i].xpos[PLAYER1] = 250;
     stages[i].xpos[PLAYER2] = 350;
     stages[i].setBack("fondo1.png");
-    stages[i].setMusic("stage1.mid");
+    stages[i].setMusic("stage1.ogg");
     stages[i].timelimit = 100;
     stages[i].id = i + 1;
     stages[i].add(OBJ_FLOOR, 550, 50, 0);		
@@ -166,7 +166,7 @@ void AppData::initStages()
     i = 1;
     stages[i].xpos[PLAYER1] = stages[i].xpos[PLAYER2] = 270;
     stages[i].setBack("fondo2.png");
-    stages[i].setMusic("stage4.mid");
+    stages[i].setMusic("stage4.ogg");
     stages[i].timelimit = 100;
     stages[i].id = i + 1;
     extra.ex1 = 3; extra.ex2 = 200; extra.ex3 = 0; extra.ex4 = 1;
@@ -182,7 +182,7 @@ void AppData::initStages()
     stages[i].xpos[PLAYER1] = 200;
     stages[i].xpos[PLAYER2] = 350;
     stages[i].setBack("fondo1.png");
-    stages[i].setMusic("stage5.mid");
+    stages[i].setMusic("stage5.ogg");
     stages[i].timelimit = 100;
     stages[i].id = i + 1;
     stages[i].add(OBJ_FLOOR, 250, 70, 0);			
@@ -196,7 +196,7 @@ void AppData::initStages()
     /* Stage 4 */
     i = 3;
     stages[i].setBack("fondo3.png");
-    stages[i].setMusic("stage3.mid");
+    stages[i].setMusic("stage3.ogg");
     stages[i].timelimit = 100;
     stages[i].id = i + 1;
     extra.ex1 = 0;
@@ -211,7 +211,7 @@ void AppData::initStages()
     stages[i].xpos[PLAYER1] = 250;
     stages[i].xpos[PLAYER2] = 350;
     stages[i].setBack("fondo5.png");
-    stages[i].setMusic("stage4.mid");
+    stages[i].setMusic("stage4.ogg");
     stages[i].timelimit = 100;
     stages[i].id = i + 1;
     stages[i].add(OBJ_FLOOR, 16, 100, 0);
@@ -245,7 +245,7 @@ void AppData::initStages()
     stages[i].xpos[PLAYER1] = 250;
     stages[i].xpos[PLAYER2] = 350;
     stages[i].setBack("fondo4.png");
-    stages[i].setMusic("stage2.mid");
+    stages[i].setMusic("stage2.ogg");
     stages[i].timelimit = 100;
     stages[i].id = i + 1;
     extra.ex1 = 1;
@@ -290,4 +290,19 @@ void AppData::release()
         delete[] stages;
         stages = nullptr;
     }
+}
+
+void AppData::preloadMenuMusic()
+{
+    AudioManager::instance().preloadMusic("music\\menu.ogg");
+}
+
+void AppData::preloadStageMusic()
+{
+    // Preload all stage music tracks
+    AudioManager::instance().preloadMusic("music\\stage1.ogg");
+    AudioManager::instance().preloadMusic("music\\stage2.ogg");
+    AudioManager::instance().preloadMusic("music\\stage3.ogg");
+    AudioManager::instance().preloadMusic("music\\stage4.ogg");
+    AudioManager::instance().preloadMusic("music\\stage5.ogg");
 }

@@ -283,5 +283,8 @@ void ConfigScreen::cancelConfiguration()
 
 int ConfigScreen::release()
 {
+    fontBmp.release();
+    fontRenderer.release();
+    
     return 1;
 }

@@ -109,6 +109,10 @@ public:
     void initStages();
     void setCurrent(GameState* state);
     void release();
+    
+    // Music preloading methods
+    void preloadMenuMusic();
+    void preloadStageMusic();
 
     // Accessors for convenience (to ease migration)
     Player** getPlayers() { return player; }

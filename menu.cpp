@@ -43,7 +43,7 @@ int Menu::init()
     blinkCounter = 30;
 
     CloseMusic();
-    OpenMusic("music\\menu.mid");
+    OpenMusic("music\\menu.ogg");
     PlayMusic();
 
     return 1;

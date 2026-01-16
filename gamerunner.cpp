@@ -38,8 +38,19 @@ bool GameRunner::initialize()
         return false;
     }
     
+    // Initialize audio subsystem (SDL_mixer)
+    if (!AudioManager::instance().init())
+    {
+        printf("Error: Failed to initialize audio subsystem\n");
+        return false;
+    }
+    
     // Initialize game data (player sprites, etc.)
     appData.init();
+    
+    // Preload menu music to avoid delays when returning from other screens
+    printf("Preloading menu music...\n");
+    appData.preloadMenuMusic();
     
     // Create and initialize first screen (Menu)
     appData.currentScreen = new Menu();
