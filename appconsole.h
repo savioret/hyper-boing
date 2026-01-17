@@ -54,13 +54,13 @@ struct ConsoleCommand
 class AppConsole
 {
 private:
-    static AppConsole* s_instance;
+    static std::unique_ptr<AppConsole> s_instance;
     
     // Rendering
     Graph* graph;
-    BMFontLoader* fontLoader;
-    Sprite* fontTexture;
-    BMFontRenderer* fontRenderer;
+    std::unique_ptr<BMFontLoader> fontLoader;
+    std::unique_ptr<Sprite> fontTexture;
+    std::unique_ptr<BMFontRenderer> fontRenderer;
     bool fontOwned;  // Whether we own the font resources
     
     // State
@@ -91,6 +91,9 @@ private:
     AppConsole();
     AppConsole(const AppConsole&) = delete;
     AppConsole& operator=(const AppConsole&) = delete;
+    
+    // Friend declaration for make_unique
+    friend std::unique_ptr<AppConsole> std::make_unique<AppConsole>();
     
     // Internal methods
     void renderBackground();

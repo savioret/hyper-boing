@@ -18,7 +18,7 @@
 #endif
 
 // Initialize static singleton instance
-AppData* AppData::s_instance = nullptr;
+std::unique_ptr<AppData> AppData::s_instance = nullptr;
 
 AppData::AppData()
     : numPlayers(1), numStages(6), currentStage(1), inMenu(true),
@@ -27,10 +27,11 @@ AppData::AppData()
       quit(false), goBack(false), renderMode(RENDERMODE_NORMAL),
       currentScreen(nullptr), nextScreen(nullptr)
 {
-    player[PLAYER1] = player[PLAYER2] = nullptr;
+    player[PLAYER1] = nullptr;
+    player[PLAYER2] = nullptr;
     
-    // Allocate stages array
-    stages = new Stage[6];
+    // Initialize stages vector
+    stages.resize(6);
 }
 
 // Redefine macros after construction
@@ -43,7 +44,7 @@ AppData& AppData::instance()
 {
     if (!s_instance)
     {
-        s_instance = new AppData();
+        s_instance = std::make_unique<AppData>();
     }
     return *s_instance;
 }
@@ -53,8 +54,7 @@ void AppData::destroy()
     if (s_instance)
     {
         s_instance->release();
-        delete s_instance;
-        s_instance = nullptr;
+        s_instance.reset();
     }
 }
 
@@ -275,21 +275,19 @@ void AppData::release()
         bitmaps.player[PLAYER2][i].release();
     }
     
-    // Release shared background
+    // Release shared background (unique_ptr will auto-delete, just release SDL resources)
     if (backgroundInitialized && sharedBackground)
     {
         sharedBackground->release();
-        delete sharedBackground;
-        sharedBackground = nullptr;
+        sharedBackground.reset();
         backgroundInitialized = false;
     }
     
-    // Clean up stages array
-    if (stages)
-    {
-        delete[] stages;
-        stages = nullptr;
-    }
+    // Players are unique_ptrs, will auto-delete
+    player[PLAYER1].reset();
+    player[PLAYER2].reset();
+    
+    // Vector will auto-clean up stages
 }
 
 void AppData::preloadMenuMusic()

@@ -3,7 +3,7 @@
 #include <sys/stat.h>
 
 // Initialize static singleton instance
-AudioManager* AudioManager::s_instance = nullptr;
+std::unique_ptr<AudioManager> AudioManager::s_instance = nullptr;
 
 // Helper function to check if file exists
 static bool fileExists(const char* filename)
@@ -21,7 +21,7 @@ AudioManager& AudioManager::instance()
 {
     if (!s_instance)
     {
-        s_instance = new AudioManager();
+        s_instance = std::make_unique<AudioManager>();
     }
     return *s_instance;
 }
@@ -37,8 +37,7 @@ void AudioManager::destroy()
             Mix_CloseAudio();
         }
         
-        delete s_instance;
-        s_instance = nullptr;
+        s_instance.reset();
     }
 }
 

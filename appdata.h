@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+#include <vector>
 #include <SDL.h>
 #include "sprite.h"
 #include "graph.h"
@@ -60,7 +62,7 @@ class AppData
 {
 private:
     // Singleton instance
-    static AppData* s_instance;
+    static std::unique_ptr<AppData> s_instance;
 
     // Private constructor for singleton
     AppData();
@@ -68,6 +70,9 @@ private:
     // Delete copy constructor and assignment operator
     AppData(const AppData&) = delete;
     AppData& operator=(const AppData&) = delete;
+    
+    // Friend declaration for make_unique
+    friend std::unique_ptr<AppData> std::make_unique<AppData>();
 
 public:
     // Singleton accessor
@@ -82,16 +87,16 @@ public:
     // Game session data (from GameInfo)
     int numPlayers;
     int numStages;
-    Player* player[2];
+    std::unique_ptr<Player> player[2];
     Keys playerKeys[2];
     GameBitmaps bitmaps;
     int currentStage;
-    Stage* stages; // Dynamic array
+    std::vector<Stage> stages;
     bool inMenu;
     GameState* activeScene;
 
     // Shared background resources (moved from GameState statics)
-    Sprite* sharedBackground;
+    std::unique_ptr<Sprite> sharedBackground;
     float scrollX;
     float scrollY;
     bool backgroundInitialized;
@@ -101,8 +106,8 @@ public:
     bool quit;           // Application quit flag
     bool goBack;         // Return to menu flag
     int renderMode;      // Render mode (windowed/fullscreen)
-    GameState* currentScreen;  // Current active screen
-    GameState* nextScreen;     // Next screen to transition to
+    std::unique_ptr<GameState> currentScreen;  // Current active screen
+    std::unique_ptr<GameState> nextScreen;     // Next screen to transition to
 
     // Initialization methods
     void init();
@@ -115,10 +120,10 @@ public:
     void preloadStageMusic();
 
     // Accessors for convenience (to ease migration)
-    Player** getPlayers() { return player; }
+    Player** getPlayers() { return reinterpret_cast<Player**>(player); }
     Keys* getKeys() { return playerKeys; }
     GameBitmaps& getBmp() { return bitmaps; }
-    Stage* getStages() { return stages; }
+    Stage* getStages() { return stages.data(); }
     int& getCurrentStage() { return currentStage; }
     int& getNumPlayers() { return numPlayers; }
     int& getNumStages() { return numStages; }

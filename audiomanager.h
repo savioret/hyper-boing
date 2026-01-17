@@ -4,6 +4,7 @@
 #include <SDL_mixer.h>
 #include <string>
 #include <map>
+#include <memory>
 
 /**
  * AudioManager class (Singleton)
@@ -15,7 +16,7 @@
 class AudioManager
 {
 private:
-    static AudioManager* s_instance;
+    static std::unique_ptr<AudioManager> s_instance;
     
     std::map<std::string, Mix_Music*> loadedMusic;
     std::map<std::string, Mix_Chunk*> loadedSounds;
@@ -29,6 +30,9 @@ private:
     // Delete copy constructor and assignment operator
     AudioManager(const AudioManager&) = delete;
     AudioManager& operator=(const AudioManager&) = delete;
+    
+    // Friend declaration for make_unique
+    friend std::unique_ptr<AudioManager> std::make_unique<AudioManager>();
 
 public:
     // Singleton accessor

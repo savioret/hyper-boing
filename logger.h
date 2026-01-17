@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <cstdarg>
+#include <memory>
 
 /**
  * Log levels inspired by loguru (Python)
@@ -59,7 +60,7 @@ struct LogEntry
 class Logger
 {
 private:
-    static Logger* s_instance;
+    static std::unique_ptr<Logger> s_instance;
     
     bool consoleEnabled;
     bool consoleCreated;
@@ -76,6 +77,9 @@ private:
     Logger();
     Logger(const Logger&) = delete;
     Logger& operator=(const Logger&) = delete;
+    
+    // Friend declaration for make_unique
+    friend std::unique_ptr<Logger> std::make_unique<Logger>();
     
     // Internal logging
     void logInternal(LogLevel level, const char* format, va_list args);

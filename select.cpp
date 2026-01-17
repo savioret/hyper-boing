@@ -113,9 +113,9 @@ void* SelectSync::moveAll()
     {
         if (appInput.key(SDL_SCANCODE_RETURN) || appInput.key(gameinf.getKeys()[PLAYER1].shoot))
         {
-            gameinf.getPlayers()[PLAYER1] = new Player(PLAYER1);
+            gameinf.player[PLAYER1] = std::make_unique<Player>(PLAYER1);
             if (option == PLAYER2)
-                gameinf.getPlayers()[PLAYER2] = new Player(PLAYER2);
+                gameinf.player[PLAYER2] = std::make_unique<Player>(PLAYER2);
             gameinf.initStages();
             return new Scene(&gameinf.getStages()[0]);
         }

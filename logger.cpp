@@ -8,7 +8,7 @@
 #endif
 
 // Initialize static singleton instance
-Logger* Logger::s_instance = nullptr;
+std::unique_ptr<Logger> Logger::s_instance = nullptr;
 
 Logger::Logger()
     : consoleEnabled(false), consoleCreated(false), minLevel(LogLevel::TRACE),
@@ -20,7 +20,7 @@ Logger& Logger::instance()
 {
     if (!s_instance)
     {
-        s_instance = new Logger();
+        s_instance = std::make_unique<Logger>();
     }
     return *s_instance;
 }
@@ -30,8 +30,7 @@ void Logger::destroy()
     if (s_instance)
     {
         s_instance->shutdown();
-        delete s_instance;
-        s_instance = nullptr;
+        s_instance.reset();
     }
 }
 

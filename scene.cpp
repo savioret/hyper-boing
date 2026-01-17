@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cstring>
+#include <memory>
 #include "pang.h"
 #include "appdata.h"
 #include "appconsole.h"
@@ -11,8 +12,8 @@
 #define MAX_PATH 260
 #endif
 
-Scene::Scene(Stage* stg, StageClear* pstgclr)
-    : levelClear(false), pStageClear(pstgclr), gameOver(false), gameOverCount(-2),
+Scene::Scene(Stage* stg, std::unique_ptr<StageClear> pstgclr)
+    : levelClear(false), pStageClear(std::move(pstgclr)), gameOver(false), gameOverCount(-2),
       stage(stg), change(0), dSecond(0), timeRemaining(0), timeLine(0),
       moveTick(0), moveLastTick(0), moveCount(0),
       drawTick(0), drawLastTick(0), drawCount(0)
@@ -209,7 +210,7 @@ void Scene::win()
     PlayMusic();
     levelClear = true;
 
-    pStageClear = new StageClear(this);
+    pStageClear = std::make_unique<StageClear>(this);
 }
 
 void Scene::checkColisions()
@@ -301,7 +302,7 @@ void Scene::checkColisions()
             if (gameinf.player[i])
                 if (!gameinf.player[i]->isImmune() && !gameinf.player[i]->isDead())
                 {
-                    if (b->collision(gameinf.player[i]))
+                    if (b->collision(gameinf.player[i].get()))
                     {
                         gameinf.player[i]->kill();
                         gameinf.player[i]->setFrame(ANIM_DEAD);
@@ -428,16 +429,8 @@ void* Scene::moveAll()
                     }
                     else
                     {
-                        if (gameinf.getPlayers()[PLAYER1])
-                        {
-                            delete gameinf.getPlayers()[PLAYER1];
-                            gameinf.getPlayers()[PLAYER1] = nullptr;
-                        }
-                        if (gameinf.getPlayers()[PLAYER2])
-                        {
-                            delete gameinf.getPlayers()[PLAYER2];
-                            gameinf.getPlayers()[PLAYER2] = nullptr;
-                        }
+                        gameinf.player[PLAYER1].reset();
+                        gameinf.player[PLAYER2].reset();
                         return new Menu;
                     }
                 }
@@ -560,15 +553,14 @@ void* Scene::moveAll()
             if (stage->id < gameinf.getNumStages())
             {
                 gameinf.getCurrentStage() = stage->id + 1;
-                return new Scene(&gameinf.getStages()[stage->id], pStageClear);
+                return new Scene(&gameinf.getStages()[stage->id], std::move(pStageClear));
             }
             else
                 return new Menu();
         }
         if (res == 0)
         {
-            delete pStageClear;
-            pStageClear = nullptr;
+            pStageClear.reset();
         }
     }
     else checkSequence();

@@ -69,7 +69,7 @@ bool GameRunner::initialize()
     appData.preloadMenuMusic();
     
     // Create and initialize first screen (Menu)
-    appData.currentScreen = new Menu();
+    appData.currentScreen = std::make_unique<Menu>();
     appData.currentScreen->init();
     LOG_DEBUG("Menu screen created");
     
@@ -123,7 +123,7 @@ void GameRunner::processEvents()
                         
                     case SDLK_c:
                         // C key - open config screen
-                        appData.nextScreen = new ConfigScreen();
+                        appData.nextScreen = std::make_unique<ConfigScreen>();
                         if (appData.nextScreen)
                         {
                             handleStateTransition();
@@ -155,11 +155,12 @@ void GameRunner::update()
     
     // Execute current screen logic (update + render)
     // NOTE: AppConsole is now rendered inside each screen's drawAll() before flip()
-    appData.nextScreen = static_cast<GameState*>(appData.currentScreen->doTick());
+    auto newScreen = appData.currentScreen->doTick();
     
     // Check if state transition is needed
-    if (appData.nextScreen != nullptr)
+    if (newScreen != nullptr)
     {
+        appData.nextScreen.reset(static_cast<GameState*>(newScreen));
         handleStateTransition();
     }
 }
@@ -173,14 +174,12 @@ void GameRunner::handleStateTransition()
     
     // Cleanup old screen
     appData.currentScreen->release();
-    delete appData.currentScreen;
     
-    // Switch to new screen
-    appData.currentScreen = appData.nextScreen;
-    appData.nextScreen = nullptr;
+    // Switch to new screen (unique_ptr automatically deletes old screen)
+    appData.currentScreen = std::move(appData.nextScreen);
     
     // Initialize new screen
-    appData.setCurrent(appData.currentScreen);
+    appData.setCurrent(appData.currentScreen.get());
     appData.currentScreen->init();
 }
 

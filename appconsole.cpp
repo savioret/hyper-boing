@@ -8,7 +8,7 @@
 #include <sstream>
 
 // Initialize static singleton instance
-AppConsole* AppConsole::s_instance = nullptr;
+std::unique_ptr<AppConsole> AppConsole::s_instance = nullptr;
 
 AppConsole::AppConsole()
     : graph(nullptr), fontLoader(nullptr), fontTexture(nullptr), fontRenderer(nullptr),
@@ -23,7 +23,7 @@ AppConsole& AppConsole::instance()
 {
     if (!s_instance)
     {
-        s_instance = new AppConsole();
+        s_instance = std::make_unique<AppConsole>();
     }
     return *s_instance;
 }
@@ -33,8 +33,7 @@ void AppConsole::destroy()
     if (s_instance)
     {
         s_instance->release();
-        delete s_instance;
-        s_instance = nullptr;
+        s_instance.reset();
     }
 }
 
@@ -46,7 +45,7 @@ bool AppConsole::init(Graph* gr)
     graph = gr;
     
     // Load our own monospace font
-    fontLoader = new BMFontLoader();
+    fontLoader = std::make_unique<BMFontLoader>();
     if (!fontLoader->load("graph/font/monospaced_10.fnt"))
     {
         LOG_WARNING("AppConsole: Could not load monospaced_10.fnt, trying default font");
@@ -55,20 +54,19 @@ bool AppConsole::init(Graph* gr)
         if (!fontLoader->load("graph/font/thickfont_grad_64.fnt"))
         {
             LOG_ERROR("AppConsole: Failed to load any font");
-            delete fontLoader;
-            fontLoader = nullptr;
+            fontLoader.reset();
             return false;
         }
     }
     
     // Load font texture
-    fontTexture = new Sprite();
+    fontTexture = std::make_unique<Sprite>();
     std::string fontTexturePath = "graph/font/" + fontLoader->getFontTexture();
     fontTexture->init(graph, fontTexturePath.c_str(), 0, 0);
     
     // Create font renderer
-    fontRenderer = new BMFontRenderer();
-    fontRenderer->init(graph, fontLoader, fontTexture);
+    fontRenderer = std::make_unique<BMFontRenderer>();
+    fontRenderer->init(graph, fontLoader.get(), fontTexture.get());
     fontRenderer->setScale(1.0f);
     
     fontOwned = true;
@@ -88,12 +86,12 @@ bool AppConsole::initWithFont(Graph* gr, BMFontLoader* font, Sprite* texture)
         return true;
     
     graph = gr;
-    fontLoader = font;
-    fontTexture = texture;
+    fontLoader.reset();  // Don't own external font
+    fontTexture.reset();  // Don't own external texture
     
-    // Create font renderer
-    fontRenderer = new BMFontRenderer();
-    fontRenderer->init(graph, fontLoader, fontTexture);
+    // Create font renderer with external resources
+    fontRenderer = std::make_unique<BMFontRenderer>();
+    fontRenderer->init(graph, font, texture);
     fontRenderer->setScale(1.0f);
     
     fontOwned = false;  // We don't own the font resources
@@ -114,22 +112,18 @@ void AppConsole::release()
         if (fontRenderer)
         {
             fontRenderer->release();
-            delete fontRenderer;
         }
         if (fontTexture)
         {
             fontTexture->release();
-            delete fontTexture;
         }
-        if (fontLoader)
-        {
-            delete fontLoader;
-        }
+        // BMFontLoader doesn't need explicit release
+        // unique_ptrs will auto-delete everything
     }
     
-    fontRenderer = nullptr;
-    fontTexture = nullptr;
-    fontLoader = nullptr;
+    fontRenderer.reset();
+    fontTexture.reset();
+    fontLoader.reset();
     graph = nullptr;
     
     commands.clear();
@@ -217,7 +211,7 @@ void AppConsole::cmdNext(const std::string& args)
     AppData& appData = AppData::instance();
     
     // Check if we're in a Scene (gameplay screen)
-    Scene* currentScene = dynamic_cast<Scene*>(appData.currentScreen);
+    Scene* currentScene = dynamic_cast<Scene*>(appData.currentScreen.get());
     
     if (!currentScene)
     {

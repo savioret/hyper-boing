@@ -87,7 +87,7 @@ void GameState::initSharedBackground()
     
     if (!appData.backgroundInitialized)
     {
-        appData.sharedBackground = new Sprite();
+        appData.sharedBackground = std::make_unique<Sprite>();
         appData.sharedBackground->init(&appData.graph, "graph/titleback.png", 0, 0);
         appData.graph.setColorKey(appData.sharedBackground->getBmp(), 0xFF0000);
         appData.scrollX = 0.0f;
@@ -169,8 +169,7 @@ void GameState::releaseSharedBackground()
     if (appData.backgroundInitialized && appData.sharedBackground)
     {
         appData.sharedBackground->release();
-        delete appData.sharedBackground;
-        appData.sharedBackground = nullptr;
+        appData.sharedBackground.reset();
         appData.backgroundInitialized = false;
     }
 }

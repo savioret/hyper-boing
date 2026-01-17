@@ -1,6 +1,7 @@
 #ifndef _SCENE_H_
 #define _SCENE_H_
 
+#include <memory>
 #include "bmfont.h"
 #include "mlist.h"
 #include "player.h"
@@ -56,7 +57,7 @@ class Scene : public GameState
 {
 private:
     bool levelClear;
-    StageClear* pStageClear;
+    std::unique_ptr<StageClear> pStageClear;
     bool gameOver;
     int gameOverCount;
     Stage* stage;
@@ -83,7 +84,7 @@ public:
     MList lsFloor;
     MList lsShoots;
 
-    Scene(Stage* stg, StageClear* pstgclr = nullptr);
+    Scene(Stage* stg, std::unique_ptr<StageClear> pstgclr = nullptr);
     virtual ~Scene() {}
     
     void addBall(int x = 250, int y = -20, int size = 0, int top = 0, int dirX = 1, int dirY = 1, int id = 0);
