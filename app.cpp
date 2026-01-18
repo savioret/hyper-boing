@@ -41,7 +41,7 @@ void GameState::drawDebugOverlay()
     
     if (!appData.debugMode) return;
     
-    char cadena[256];
+    char txt[256];
     int y = 20;
     int lineHeight = 20;
     int width = 400;
@@ -53,14 +53,14 @@ void GameState::drawDebugOverlay()
     SDL_RenderFillRect(appData.graph.getRenderer(), &bgRect);
     SDL_SetRenderDrawBlendMode(appData.graph.getRenderer(), SDL_BLENDMODE_NONE);
     
-    sprintf(cadena, "FPS = %d  FPSVIRT = %d", fps, fpsv);
-    appData.graph.text(cadena, 20, y);
+    std::snprintf(txt, sizeof(txt), "FPS = %d  FPSVIRT = %d", fps, fpsv);
+    appData.graph.text(txt, 20, y);
     y += lineHeight;
     
-    sprintf(cadena, "Paused = %s  Active = %s", 
+    std::snprintf(txt, sizeof(txt), "Paused = %s  Active = %s", 
             pause ? "YES" : "NO",
             active ? "YES" : "NO");
-    appData.graph.text(cadena, 20, y);
+    appData.graph.text(txt, 20, y);
 }
 
 /**

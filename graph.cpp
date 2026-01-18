@@ -173,7 +173,7 @@ void Graph::drawClipped(Sprite* spr, int x, int y) {
 
 void Graph::draw(BmNumFont* font, int num, int x, int y) {
     char cad[16];
-    sprintf(cad, "%d", num);
+    std::snprintf(cad, sizeof(cad), "%d", num);
     draw(font, cad, x, y);
 }
 

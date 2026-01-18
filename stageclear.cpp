@@ -51,7 +51,7 @@ void StageClear::drawAll()
     int i, j;
     char cad[10];
     
-    std::sprintf(cad, "%2d", gameinf.getCurrentStage());
+    std::snprintf(cad, sizeof(cad), "%2d", gameinf.getCurrentStage());
     for (i = 0; i < (int)std::strlen(cad); i++)
         if (cad[i] == ' ') cad[i] = '0';
 
@@ -187,7 +187,7 @@ int StageClear::moveAll()
             xt1 += 4;
         else a = true;
 
-        if (xt2 > 175)
+        if (xt2 > 135)
             xt2 -= 5;
         else b = true;
 

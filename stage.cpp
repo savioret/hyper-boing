@@ -17,13 +17,13 @@ void Stage::reset()
 void Stage::setBack(const char* backFile)
 {
     if (backFile)
-        std::strncpy(back, backFile, sizeof(back) - 1);
+        std::snprintf(back, sizeof(back), "%s", backFile);
 }
 
 void Stage::setMusic(const char* musicFile)
 {
     if (musicFile)
-        std::strncpy(music, musicFile, sizeof(music) - 1);
+        std::snprintf(music, sizeof(music), "%s", musicFile);
 }
 
 void Stage::add(int idObject, int start)

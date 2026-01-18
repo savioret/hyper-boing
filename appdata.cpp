@@ -38,7 +38,6 @@ AppData::AppData()
 #define quit AppData::instance().quit
 #define goback AppData::instance().goBack
 #define globalmode AppData::instance().renderMode
-#define appGraph graph
 
 AppData& AppData::instance()
 {

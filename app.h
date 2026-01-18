@@ -31,12 +31,12 @@ protected:
     int fps, fpsv;
     bool active; // window active?
     bool pause;
-    short int difTime1, difTime2;
+    int difTime1, difTime2;
     long time1, time2;
     
     // Frame timing variables (previously static in doTick)
-    short frameStatus;
-    short frameCount;
+    int frameStatus;
+    int frameCount;
     long frameTick;
     long lastFrameTick;
     

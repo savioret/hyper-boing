@@ -234,11 +234,11 @@ void ConfigScreen::drawDebugOverlay()
     
     if (!appData.debugMode) return;
     GameState::drawDebugOverlay();
-    char cadena[256];
+    char txt[256];
     int y = 80;
-    std::sprintf(cadena, "Selected = %d  State = %d", 
+    std::snprintf(txt, sizeof(txt), "Selected = %d  State = %d", 
             selectedOption, (int)state);
-    appData.graph.text(cadena, 20, y);
+    appData.graph.text(txt, 20, y);
 }
 
 void ConfigScreen::drawKeyName(SDL_Scancode key, int x, int y)

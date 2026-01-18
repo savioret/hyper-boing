@@ -40,8 +40,8 @@ void ConfigData::loadDefaults()
 
 bool ConfigData::load()
 {
-    std::FILE* fp = std::fopen(configPath.c_str(), "r");
-    if (!fp)
+    FILE* fp = nullptr;
+    if (fopen_s(&fp, configPath.c_str(), "r") != 0)
     {
         loadDefaults();
         return false;
@@ -54,7 +54,7 @@ bool ConfigData::load()
             continue;
             
         char key[128], value[128];
-        if (std::sscanf(line, "%127[^=]=%127s", key, value) == 2)
+        if (sscanf_s(line, "%127[^=]=%127s", key, (unsigned)sizeof(key), value, (unsigned)sizeof(value)) == 2)
         {
             std::string skey(key);
             if (skey == "P1_Left")
@@ -80,8 +80,9 @@ bool ConfigData::load()
 
 bool ConfigData::save()
 {
-    std::FILE* fp = std::fopen(configPath.c_str(), "w");
-    if (!fp) return false;
+    FILE* fp = nullptr;
+    if (fopen_s(&fp, configPath.c_str(), "w") != 0)
+        return false;
 
     std::fprintf(fp, "# Pang Game Configuration\n");
     std::fprintf(fp, "# Generated automatically - Edit with care\n\n");

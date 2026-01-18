@@ -162,17 +162,17 @@ void Menu::drawDebugOverlay()
     
     if (!appData.debugMode) return;
     GameState::drawDebugOverlay();
-    char cadena[256];
+    char txt[256];
     int y = 80;
     int lineHeight = 20;
-    std::sprintf(cadena, "Title Boing Y = %d  Hyper X = %d  BG Alpha = %d", boingY, hyperX, bgAlpha);
-    appData.graph.text(cadena, 20, y);
+    std::snprintf(txt, sizeof(txt), "Title Boing Y = %d  Hyper X = %d  BG Alpha = %d", boingY, hyperX, bgAlpha);
+    appData.graph.text(txt, 20, y);
     y += lineHeight;
-    std::sprintf(cadena, "AnimComplete = %s  Selected = %d", animComplete ? "YES" : "NO", selectedOption);
-    appData.graph.text(cadena, 20, y);
+    std::snprintf(txt, sizeof(txt), "AnimComplete = %s  Selected = %d", animComplete ? "YES" : "NO", selectedOption);
+    appData.graph.text(txt, 20, y);
     y += lineHeight;
-    std::sprintf(cadena, "Scroll X=%d Y=%d", (int)appData.scrollX, (int)appData.scrollY);
-    appData.graph.text(cadena, 20, y);
+    std::snprintf(txt, sizeof(txt), "Scroll X=%d Y=%d", (int)appData.scrollX, (int)appData.scrollY);
+    appData.graph.text(txt, 20, y);
 }
 
 GameState* Menu::moveAll()

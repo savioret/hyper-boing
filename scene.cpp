@@ -26,7 +26,7 @@ int Scene::init()
 {
     GameState::init();
 
-    char cadena[MAX_PATH];
+    char txt[MAX_PATH];
 
     change = 0;
     levelClear = false;
@@ -44,8 +44,8 @@ int Scene::init()
 
     initBitmaps();
 
-    std::snprintf(cadena, sizeof(cadena), "music/%s", stage->music);
-    OpenMusic(cadena);
+    std::snprintf(txt, sizeof(txt), "music/%s", stage->music);
+    OpenMusic(txt);
     PlayMusic();
     return 1;
 }
@@ -57,7 +57,7 @@ int Scene::init()
 int Scene::initBitmaps()
 {
     int i = 0;
-    char cadena[MAX_PATH];
+    char txt[MAX_PATH];
 
     int offs[10] = { 0, 22, 44, 71, 93, 120, 148, 171, 198, 221 };
     int offs1[10] = { 0, 13, 18, 31, 44, 58, 70, 82, 93, 105 };
@@ -109,8 +109,8 @@ int Scene::initBitmaps()
     bmp.continu.init(&appGraph, "graph/continue.png", 16, 16);
     //appGraph.setColorKey(bmp.continu.getBmp(), 0x00FF00);
 
-    std::snprintf(cadena, sizeof(cadena), "graph/%s", stage->back);
-    bmp.back.init(&appGraph, cadena, 16, 16);
+    std::snprintf(txt, sizeof(txt), "graph/%s", stage->back);
+    bmp.back.init(&appGraph, txt, 16, 16);
     appGraph.setColorKey(bmp.back.getBmp(), 0x00FF00);
 
     bmp.fontnum[0].init(&appGraph, "graph/fontnum1.png", 0, 0);
@@ -702,45 +702,45 @@ void Scene::drawDebugOverlay()
     if (!appData.debugMode) return;
     GameState::drawDebugOverlay();
 
-    char cadena[256];
+    char txt[256];
     int y = 80;
     int lineHeight = 20;
     
     if (appData.getPlayers()[PLAYER1])
     {
-        std::sprintf(cadena, "P1: Score=%d Lives=%d Shoots=%d", 
+        std::snprintf(txt, sizeof(txt), "P1: Score=%d Lives=%d Shoots=%d", 
                 appData.getPlayers()[PLAYER1]->getScore(),
                 appData.getPlayers()[PLAYER1]->getLives(),
                 appData.getPlayers()[PLAYER1]->getNumShoots());
-        appData.graph.text(cadena, 20, y);
+        appData.graph.text(txt, 20, y);
         y += lineHeight;
     }
     
     if (!lsBalls.empty())
     {
         Ball* ptb = lsBalls.front();
-        std::sprintf(cadena, "Ball: y=%.1f size=%d diameter=%d", 
+        std::snprintf(txt, sizeof(txt), "Ball: y=%.1f size=%d diameter=%d", 
                 ptb->getY(), ptb->getSize(), ptb->getDiameter());
-        appData.graph.text(cadena, 20, y);
+        appData.graph.text(txt, 20, y);
         y += lineHeight;
     }
     
-    std::sprintf(cadena, "Objects: Balls=%d Shoots=%d Floors=%d", 
+    std::snprintf(txt, sizeof(txt), "Objects: Balls=%d Shoots=%d Floors=%d", 
             (int)lsBalls.size(),
             (int)lsShoots.size(),
             (int)lsFloor.size());
-    appData.graph.text(cadena, 20, y);
+    appData.graph.text(txt, 20, y);
     y += lineHeight;
     
-    std::sprintf(cadena, "Stage: %d  Time=%d  Timeline=%d", 
+    std::snprintf(txt, sizeof(txt), "Stage: %d  Time=%d  Timeline=%d", 
             stage->id, timeRemaining, timeLine);
-    appData.graph.text(cadena, 20, y);
+    appData.graph.text(txt, 20, y);
     y += lineHeight;
     
-    std::sprintf(cadena, "GameOver=%s  LevelClear=%s", 
+    std::snprintf(txt, sizeof(txt), "GameOver=%s  LevelClear=%s", 
             gameOver ? "YES" : "NO",
             levelClear ? "YES" : "NO");
-    appData.graph.text(cadena, 20, y);
+    appData.graph.text(txt, 20, y);
 }
 
 int Scene::drawAll()
@@ -766,7 +766,7 @@ int Scene::drawAll()
     drawMark();
     drawScore();
     appGraph.draw(&bmp.time, 320 - bmp.time.getWidth() / 2, MAX_Y + 3);
-    appGraph.draw(&fontNum[FONT_BIG], timeRemaining, 300, MAX_Y + 20);
+    appGraph.draw(&fontNum[FONT_BIG], timeRemaining, 300, MAX_Y + 25);
 
     if (gameinf.getPlayers()[PLAYER1]->isVisible() && gameinf.getPlayers()[PLAYER1]->isPlaying())
         draw(gameinf.getPlayers()[PLAYER1]);
