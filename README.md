@@ -21,9 +21,6 @@ To compile Hyper Boing, you need to set up the following **environment variables
 3. **`SDL_MIXER_ROOT`** - Path to your SDL2_mixer installation directory  
    Example: `C:\Libraries\SDL2_mixer-2.6.3`
 
-4. **`SDL_TTF_ROOT`** - Path to your SDL2_ttf installation directory  
-   Example: `C:\Libraries\SDL2_ttf-2.20.2`
-
 ### Compilation
 
 Once the environment variables are set, open the solution in Visual Studio and build the project.
@@ -122,11 +119,13 @@ Pop all the bouncing balls by shooting your harpoon! Each ball splits into small
 - [ ] Write unit tests for core systems (collision, motion, events)
 - [ ] Establish CI pipeline for automated builds and tests
 
+### Other
+- [ ] Port project to WebAssembly using Emscripten
 
 ## 📜 License
 
 This project is licensed under the **MIT License** - feel free to use, modify, and distribute it as you see fit.
-
+SDL2 is licensed under the zlib license. Copyright (C) Sam Lantinga et al.
 
 ## 🎨 Features
 
