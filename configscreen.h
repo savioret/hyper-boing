@@ -43,7 +43,7 @@ public:
     virtual ~ConfigScreen() {}
 
     int init() override;
-    void* moveAll() override;
+    GameState* moveAll() override;
     int drawAll() override;
     int release() override;
 

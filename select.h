@@ -42,7 +42,7 @@ public:
     void drawSelect();
     void drawBack();	
 
-    void* moveAll() override;
+    GameState* moveAll() override;
     int drawAll() override;
     int release() override;
 };

@@ -61,7 +61,7 @@ Pop all the bouncing balls by shooting your harpoon! Each ball splits into small
 - Added Makefile, and fixed paths to compile under Linux
 - Replaced MList class by a std::list
 
-### Version 0.3 – January 2025
+### Version 0.3 – January 2026
 - Added support for standard `.fnt` bitmap fonts
 - Full English localization
 - Redesigned logo and main menu

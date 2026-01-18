@@ -175,7 +175,7 @@ void Menu::drawDebugOverlay()
     appData.graph.text(cadena, 20, y);
 }
 
-void* Menu::moveAll()
+GameState* Menu::moveAll()
 {
     if (blinkCounter > 0) blinkCounter--;
     else blinkCounter = 30;

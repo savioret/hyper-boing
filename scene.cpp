@@ -222,14 +222,15 @@ void Scene::checkColisions()
     int i;
     SDL_Point col;
 
-    for (auto ptball : lsBalls)
+    for (Ball* ptball : lsBalls)
     {
         b = ptball;
 
-        for (auto pt : lsShoots)
+        for (Shoot* pt : lsShoots)
         {
             sh = pt;
-            if (!b->hitStatus && !sh->getPlayer()->isDead())
+            if (!b->isDead() && !sh->getPlayer()->isDead () )
+            {
                 if (b->collision(sh))
                 {
                     sh->kill();
@@ -237,13 +238,14 @@ void Scene::checkColisions()
                     sh->getPlayer()->addScore(objectScore(b->diameter));
                     b->kill();
                 }
+                }
         }
 
         FloorColision flc[2];
         int cont = 0;
         int moved = 0;
 
-        for (auto pt : lsFloor)
+        for (Floor* pt : lsFloor)
         {
             fl = pt;
             col = b->collision(fl);
@@ -305,11 +307,11 @@ void Scene::checkColisions()
         }
     }
 
-    for (auto ptshoot : lsShoots)
+    for (Shoot* ptshoot : lsShoots)
     {
         sh = ptshoot;
 
-        for (auto pt : lsFloor)
+        for (Floor* pt : lsFloor)
         {
             fl = pt;
             if (!sh->isDead())
@@ -373,7 +375,31 @@ void Scene::checkSequence()
     } while (obj.id != OBJ_NULL);
 }
 
-void* Scene::moveAll()
+void Scene::splitBall(Ball* ball)
+{
+    // Queue new smaller balls to be added after cleanup
+    if (ball->getSize() < 3)
+    {
+        pendingBalls.push_back(new Ball(this, ball));
+        pendingBalls.push_back(new Ball(this, ball));
+        pendingBalls.back()->setDirX(1);
+        pendingBalls[pendingBalls.size()-2]->setDirX(-1);
+    }
+    else if (lsBalls.size() == 1 && !stage->itemsleft)
+    {
+        win();
+    }
+}
+
+void Scene::processBallDivisions()
+{
+    // Add queued balls after cleanup
+    for (Ball* b : pendingBalls)
+        lsBalls.push_back(b);
+    pendingBalls.clear();
+}
+
+GameState* Scene::moveAll()
 {
     Ball* ptb;
     Shoot* pts;
@@ -476,50 +502,33 @@ void* Scene::moveAll()
 
     checkColisions();
 
-    // Move and mark balls for division (deferred processing)
-    for (auto pt : lsBalls)
+    // === PHASE 1: Movement ===
+    // Move all objects without modifying lists
+    for (Ball* pt : lsBalls)
     {
         ptb = pt;
         ptb->move();
-        // Mark is done via isHit(), actual division happens in cleanup phase
     }
 
-    // Cleanup phase: process hit balls and remove dead objects
-    for (auto it = lsBalls.begin(); it != lsBalls.end(); )
+    for (Shoot* pt : lsShoots)
     {
-        ptb = *it;
-        if (ptb->isHit())
-        {
-            divideBall(ptb);
-            it = lsBalls.begin(); // Restart after modification
-        }
-        else
-        {
-            ++it;
-        }
-    }
-
-    // Cleanup shoots using the same pattern for consistency
-    for (auto it = lsShoots.begin(); it != lsShoots.end(); )
-    {
-        pts = *it;
+        pts = pt;
         pts->move();
-        if (pts->isDead())
-        {
-            delete pts;
-            it = lsShoots.erase(it);
-        }
-        else
-        {
-            ++it;
-        }
     }
 
-    for (auto pt : lsFloor)
+    for (Floor* pt : lsFloor)
     {
         pfl = pt;
         pfl->update();
     }
+
+    // === PHASE 2: Cleanup ===
+    cleanupDeadObjects(lsBalls);  // Now using standard pattern!
+    cleanupDeadObjects(lsShoots);
+    cleanupDeadObjects(lsFloor);
+    
+    // Add new balls created from splits
+    processBallDivisions();
 
     if (dSecond < 60) dSecond++;
     else
@@ -574,15 +583,15 @@ void* Scene::moveAll()
 
 int Scene::release()
 {
-    for (auto ball : lsBalls)
+    for (Ball* ball : lsBalls)
         delete ball;
     lsBalls.clear();
     
-    for (auto shoot : lsShoots)
+    for (Shoot* shoot : lsShoots)
         delete shoot;
     lsShoots.clear();
     
-    for (auto floor : lsFloor)
+    for (Floor* floor : lsFloor)
         delete floor;
     lsFloor.clear();
 
@@ -742,13 +751,13 @@ int Scene::drawAll()
 
     drawBackground();
 
-    for (auto pt : lsFloor)
+    for (Floor* pt : lsFloor)
     {
         pfl = pt;
         draw(pfl);
     }
 
-    for (auto pt : lsShoots)
+    for (Shoot* pt : lsShoots)
     {
         pts = pt;
         draw(pts);
@@ -766,7 +775,7 @@ int Scene::drawAll()
         if (gameinf.getPlayers()[PLAYER2]->isVisible() && gameinf.getPlayers()[PLAYER2]->isPlaying())
             draw(gameinf.getPlayers()[PLAYER2]);
 
-    for (auto pt : lsBalls)
+    for (Ball* pt : lsBalls)
     {
         ptb = pt;
         draw(ptb);

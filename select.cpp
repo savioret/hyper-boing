@@ -86,7 +86,7 @@ int SelectSync::drawAll()
     return 1;
 }
 
-void* SelectSync::moveAll()
+GameState* SelectSync::moveAll()
 {
     if (xb < bmp.back.getWidth()) xb++;
     else xb = 0;

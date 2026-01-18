@@ -55,7 +55,7 @@ public:
     void drawTitleLayers();
     void drawMenu();
 
-    void* moveAll() override;
+    GameState* moveAll() override;
     int drawAll() override;
     void drawDebugOverlay() override;
     int release() override;

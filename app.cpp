@@ -184,7 +184,7 @@ void GameState::releaseSharedBackground()
  * on slower systems, we render only as many as possible, but the "virtual" speed
  * of the game remains 60 fps.
  */
-void* GameState::doTick()
+GameState* GameState::doTick()
 {
     AppData& appData = AppData::instance();
     
@@ -213,7 +213,7 @@ void* GameState::doTick()
             frameStatus = 2;
             return nullptr;
         }		
-        void* newscreen = (GameState*) moveAll();
+        GameState* newscreen = moveAll();
         difTime1 -= gameSpeed;
         return newscreen;
     }

@@ -38,7 +38,7 @@ int ConfigScreen::init()
     return 1;
 }
 
-void* ConfigScreen::moveAll()
+GameState* ConfigScreen::moveAll()
 {
     GameState::updateScrollingBackground();
     

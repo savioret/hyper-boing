@@ -1,7 +1,7 @@
 #include "pang.h"
 
 Floor::Floor(Scene* scene, int x, int y, int id)
-    : scene(scene), x(x), y(y), id(id), dead(false)
+    : scene(scene), x(x), y(y), id(id)
 {
     sprite = &scene->bmp.floor[id];
 

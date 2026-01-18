@@ -1,5 +1,7 @@
 #pragma once
 
+#include "gameobject.h"
+
 class Scene;
 class Player;
 class Sprite;
@@ -11,7 +13,7 @@ class Floor;
  * Represents the projectile object fired by players.
  * Manages its movement, animation, and collision detection logic.
  */
-class Shoot
+class Shoot : public IGameObject
 {
 private:
     Scene* scene;
@@ -30,17 +32,13 @@ private:
     int tailTime;
     int shotCounter;
 
-    bool deadStatus;
-
 public:
     Shoot(Scene* scene, Player* player);
     ~Shoot();
 
     void move();
     bool collision(Floor* floor);
-    void kill() { deadStatus = true; }
-    bool isDead() const { return deadStatus; }
-
+    
     // Getters for Scene and other classes
     float getX() const { return xPos; }
     float getY() const { return yPos; }

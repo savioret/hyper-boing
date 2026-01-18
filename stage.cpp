@@ -5,7 +5,7 @@
 
 void Stage::reset()
 {
-    for (auto obj : sequence)
+    for (StageObject* obj : sequence)
     {
         delete obj;
     }

@@ -15,7 +15,6 @@ Shoot::Shoot(Scene* scn, Player* pl)
     id = pl->idWeapon;
 
     speed = 5;
-    deadStatus = false;
     tail = 0;
 
     tailTime = shotCounter = 2;
@@ -48,12 +47,12 @@ void Shoot::move()
     }
     else shotCounter--;
 
-    if (!deadStatus)
+    if (!isDead())
     {
         if (yPos <= MIN_Y)
         {
             player->looseShoot();
-            deadStatus = true;
+            kill();
         }
         else yPos -= speed;
     }

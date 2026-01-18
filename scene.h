@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <list>
+#include <vector>
 #include "bmfont.h"
 #include "player.h"
 #include "ball.h"
@@ -55,6 +56,7 @@ struct SceneBitmaps
  */
 class Scene : public GameState
 {
+    friend class Ball;
 private:
     bool levelClear;
     std::unique_ptr<StageClear> pStageClear;
@@ -74,6 +76,21 @@ private:
     int drawTick;
     int drawLastTick;
     int drawCount;
+
+    std::vector<Ball*> pendingBalls;  // Buffer to hold new balls to be added
+
+    /**
+     * Generic cleanup helper for dead objects.
+     * Removes and deletes objects marked as dead from a list.
+     * 
+     * @tparam T Object type (must inherit from IGameObject)
+     * @param list The list to clean up
+     */
+    template<typename T>
+    void cleanupDeadObjects(std::list<T*>& list);
+    
+    void processBallDivisions(); // Handles ball divisions after collisions
+    void splitBall(Ball* ball); // Queue a ball to split into smaller balls
 
 public:
     SceneBitmaps bmp;
@@ -112,10 +129,28 @@ public:
     void drawMark();
     void drawDebugOverlay() override;
 
-    void* moveAll() override;
+    GameState* moveAll() override;
     void checkSequence();
 
     int release() override;
 };
+
+// Template implementation must be in header for C++14
+template<typename T>
+void Scene::cleanupDeadObjects(std::list<T*>& list)
+{
+    for (auto it = list.begin(); it != list.end(); )
+    {
+        if ((*it)->isDead())
+        {
+            delete *it;
+            it = list.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}
 
 #endif

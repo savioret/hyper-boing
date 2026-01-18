@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL.h>
+#include "gameobject.h"
 
 class Scene;
 class Shoot;
@@ -13,7 +14,7 @@ class Sprite;
  *
  * It is the game ball, which must be shot.
  */
-class Ball
+class Ball : public IGameObject
 {
 private:
     Sprite* sprite;
@@ -28,7 +29,6 @@ private:
     float y0; // initial space
     float gravity; // acceleration (acc)
     Scene* scene;
-    bool hitStatus;
 
 public:
     Ball(Scene* scene, Ball* oldBall);
@@ -39,7 +39,9 @@ public:
     void initTop();
     
     void move();
-    void kill();
+    
+    // IGameObject lifecycle hook
+    void onDeath() override;
     
     bool collision(Shoot* shoot);
     SDL_Point collision(Floor* floor);
@@ -57,7 +59,6 @@ public:
     int getDirY() const { return dirY; }
     int getSize() const { return size; }
     int getDiameter() const { return diameter; }
-    bool isHit() const { return hitStatus; }
     Sprite* getSprite() const { return sprite; }
 
     // Friend classes for easier refactoring transition

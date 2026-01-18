@@ -144,7 +144,7 @@
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>$(SDL_ROOT)\include;$(SDL_IMAGE_ROOT)\include;$(SDL_TTF_ROOT)\include;$(SDL_MIXER_ROOT)\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SDL_ROOT)\include;$(SDL_IMAGE_ROOT)\include;$(SDL_MIXER_ROOT)\include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -166,7 +166,7 @@
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalDependencies>SDL2.lib;SDL2_Image.lib;SDL2_mixer.lib;winmm.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SDL_ROOT)\lib\x64;$(SDL_IMAGE_ROOT)\lib\x64;$(SDL_TTF_ROOT)\lib\x64;$(SDL_MIXER_ROOT)\lib\x64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SDL_ROOT)\lib\x64;$(SDL_IMAGE_ROOT)\lib\x64;$(SDL_MIXER_ROOT)\lib\x64</AdditionalLibraryDirectories>
       <EntryPointSymbol>WinMainCRTStartup</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
@@ -259,7 +259,6 @@
     <ClCompile Include="logger.cpp" />
     <ClCompile Include="menu.cpp" />
     <ClCompile Include="minput.cpp" />
-    <ClCompile Include="mlist.cpp" />
     <ClCompile Include="pang.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="scene.cpp" />
@@ -278,13 +277,13 @@
     <ClInclude Include="bmfont.h" />
     <ClInclude Include="configscreen.h" />
     <ClInclude Include="floor.h" />
+    <ClInclude Include="gameobject.h" />
     <ClInclude Include="gamerunner.h" />
     <ClInclude Include="graph.h" />
     <ClInclude Include="item.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="menu.h" />
     <ClInclude Include="minput.h" />
-    <ClInclude Include="mlist.h" />
     <ClInclude Include="pang.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="scene.h" />
@@ -301,11 +300,7 @@
     <ResourceCompile Include="pang.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="graph\CREAR_FUENTE_BMFONT.txt" />
-    <Text Include="graph\CREAR_IMAGENES_MENU.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ARCHITECTURE.md" />
+    <None Include="docs\garbage-collection-design.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -154,7 +154,7 @@ void AppConsole::registerBuiltinCommands()
 void AppConsole::cmdHelp(const std::string& args)
 {
     LOG_INFO("=== Available Commands ===");
-    for (const auto& cmd : commands)
+    for (const ConsoleCommand& cmd : commands)
     {
         LOG_INFO("  /%s - %s", cmd.name.c_str(), cmd.description.c_str());
     }
@@ -234,7 +234,7 @@ void AppConsole::cmdNext(const std::string& args)
 void AppConsole::registerCommand(const std::string& name, const std::string& desc, CommandHandler handler)
 {
     // Check if command already exists
-    for (auto& cmd : commands)
+    for (ConsoleCommand& cmd : commands)
     {
         if (cmd.name == name)
         {
@@ -360,7 +360,7 @@ void AppConsole::handleKeyDown(SDL_Keycode key, SDL_Keymod mod)
             if (ctrlPressed)
             {
                 // Ctrl+Home: Scroll to top
-                const auto& entries = Logger::instance().getEntries();
+                const std::vector<LogEntry>& entries = Logger::instance().getEntries();
                 scrollOffset = std::max(0, (int)entries.size() - maxVisibleLines);
             }
             else
@@ -469,7 +469,7 @@ void AppConsole::executeCommand(const std::string& input)
     std::transform(cmdName.begin(), cmdName.end(), cmdName.begin(), ::tolower);
     
     // Find and execute command
-    for (const auto& cmd : commands)
+    for (const ConsoleCommand& cmd : commands)
     {
         if (cmd.name == cmdName)
         {
@@ -529,7 +529,7 @@ void AppConsole::renderLogs()
     if (!fontRenderer)
         return;
     
-    const auto& entries = Logger::instance().getEntries();
+    const std::vector<LogEntry>& entries = Logger::instance().getEntries();
     if (entries.empty())
         return;
     
@@ -620,7 +620,7 @@ void AppConsole::renderPrompt()
 
 void AppConsole::scrollUp(int lines)
 {
-    const auto& entries = Logger::instance().getEntries();
+    const std::vector<LogEntry>& entries = Logger::instance().getEntries();
     int maxScroll = std::max(0, (int)entries.size() - maxVisibleLines);
     scrollOffset = std::min(scrollOffset + lines, maxScroll);
 }

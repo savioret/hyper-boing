@@ -84,8 +84,6 @@ Ball::~Ball()
 
 void Ball::init()
 {		
-    hitStatus = false;
-
     gravity = 8 / ((float)(top - diameter) * (400.0f / top));	
     maxTime = std::sqrt((float)(2 * (top - diameter)) / (gravity));
 
@@ -115,11 +113,6 @@ void Ball::initTop()
         top = (int)(d * 0.26f);
     else
         top = (int)(d * 0.1f);
-}
-
-void Ball::kill()
-{
-    hitStatus = true;
 }
 
 void Ball::setDir(int dx, int dy)
@@ -260,4 +253,10 @@ void Ball::move()
             dirX = 1;
         }
     }
+}
+
+void Ball::onDeath()
+{
+    // Queue this ball to split into smaller balls
+    scene->splitBall(this);
 }

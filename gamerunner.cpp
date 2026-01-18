@@ -155,12 +155,12 @@ void GameRunner::update()
     
     // Execute current screen logic (update + render)
     // NOTE: AppConsole is now rendered inside each screen's drawAll() before flip()
-    auto newScreen = appData.currentScreen->doTick();
+    GameState* newScreen = appData.currentScreen->doTick();
     
     // Check if state transition is needed
     if (newScreen != nullptr)
     {
-        appData.nextScreen.reset(static_cast<GameState*>(newScreen));
+        appData.nextScreen.reset(newScreen);
         handleStateTransition();
     }
 }

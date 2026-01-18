@@ -48,7 +48,7 @@ public:
     GameState();
     virtual ~GameState() {}
 
-    void* doTick();
+    GameState* doTick();
     void doPause();
     void setGameSpeed(int speed);
     void setPause(bool b);
@@ -58,7 +58,7 @@ public:
 
     // Virtual methods for derived classes
     virtual int init();
-    virtual void* moveAll() = 0;
+    virtual GameState* moveAll() = 0;
     virtual int drawAll() = 0;
     virtual int release() = 0;
     
