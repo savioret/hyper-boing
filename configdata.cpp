@@ -1,3 +1,6 @@
+#pragma warning(push)
+#pragma warning(disable: 4996)
+
 #include "pang.h"
 #include "configdata.h"
 #include <SDL.h>
@@ -40,8 +43,8 @@ void ConfigData::loadDefaults()
 
 bool ConfigData::load()
 {
-    FILE* fp = nullptr;
-    if (fopen_s(&fp, configPath.c_str(), "r") != 0)
+    FILE* fp = fopen(configPath.c_str(), "r");
+    if (!fp)
     {
         loadDefaults();
         return false;
@@ -54,7 +57,7 @@ bool ConfigData::load()
             continue;
             
         char key[128], value[128];
-        if (sscanf_s(line, "%127[^=]=%127s", key, (unsigned)sizeof(key), value, (unsigned)sizeof(value)) == 2)
+        if (sscanf(line, "%127[^=]=%127s", key, value) == 2)
         {
             std::string skey(key);
             if (skey == "P1_Left")
@@ -80,8 +83,8 @@ bool ConfigData::load()
 
 bool ConfigData::save()
 {
-    FILE* fp = nullptr;
-    if (fopen_s(&fp, configPath.c_str(), "w") != 0)
+    FILE* fp = fopen(configPath.c_str(), "w");
+    if (!fp)
         return false;
 
     std::fprintf(fp, "# Pang Game Configuration\n");
@@ -102,3 +105,5 @@ bool ConfigData::save()
     std::fclose(fp);
     return true;
 }
+
+#pragma warning(pop)

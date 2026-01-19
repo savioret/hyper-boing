@@ -10,20 +10,68 @@
 
 ### Prerequisites
 
-To compile Hyper Boing, you need to set up the following **environment variables** for SDL 2:
+You need the following SDL2 libraries installed on your system:
 
-1. **`SDL_ROOT`** - Path to your SDL2 installation directory  
-   Example: `C:\Libraries\SDL2-2.28.0`
-
-2. **`SDL_IMAGE_ROOT`** - Path to your SDL2_image installation directory  
-   Example: `C:\Libraries\SDL2_image-2.6.3`
-
-3. **`SDL_MIXER_ROOT`** - Path to your SDL2_mixer installation directory  
-   Example: `C:\Libraries\SDL2_mixer-2.6.3`
+- **SDL2** (v2.25.0 or later)
+- **SDL2_image** (v2.6.0 or later)
+- **SDL2_mixer** (v2.6.0 or later)
 
 ### Compilation
 
-Once the environment variables are set, open the solution in Visual Studio and build the project.
+#### Windows with Visual Studio
+
+1. Create a build directory and navigate to it:
+   ```cmd
+   mkdir build
+   cd build
+   ```
+
+2. Configure CMake with the paths to your SDL2 installations:
+   ```cmd
+   cmake .. -DCMAKE_PREFIX_PATH="C:/path/to/SDL2;C:/path/to/SDL2_mixer;C:/path/to/SDL2_image"
+   ```
+
+3. Build the project:
+   ```cmd
+   cmake --build . --config Debug
+   ```
+   
+   Or for Release build:
+   ```cmd
+   cmake --build . --config Release
+   ```
+
+#### Linux
+
+1. Install SDL2 development libraries using your package manager:
+   
+   **Ubuntu/Debian:**
+   ```bash
+   sudo apt-get install libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev
+   ```
+
+2. Create a build directory and navigate to it:
+   ```bash
+   mkdir build
+   cd build
+   ```
+
+3. Configure and build:
+   ```bash
+   cmake ..
+   cmake --build .
+   ```
+   
+   Or for Release build:
+   ```bash
+   cmake .. -DCMAKE_BUILD_TYPE=Release
+   cmake --build .
+   ```
+
+4. Run the game:
+   ```bash
+   ./boing
+   ```
 
 ## 🎯 How to Play
 
