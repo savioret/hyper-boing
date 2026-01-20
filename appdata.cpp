@@ -124,18 +124,15 @@ void AppData::init()
 
 void AppData::initStages()
 {
-    StageExtra extra;
     numStages = 6;
 
     for (int i = 0; i < numStages; i++)
         stages[i].reset();
 
     /*************** START OF SCREENS ***********************/
-    /***** THE FOLLOWING CODE SHOULD BE DONE BY READING *****/
-    /***** FROM A FILE, BUT DUE TO LACK OF TIME         *****/
-    /***** WE ARE DOING IT BY HAND.                     *****/
+    /***** USING NEW CLEAN BUILDER API                  *****/
 
-    /* Stage 1 */
+    /* Stage 1 - Clean builder syntax */
     int i = 0;
     stages[i].xpos[PLAYER1] = 250;
     stages[i].xpos[PLAYER2] = 350;
@@ -143,40 +140,43 @@ void AppData::initStages()
     stages[i].setMusic("stage1.ogg");
     stages[i].timelimit = 100;
     stages[i].id = i + 1;
-    stages[i].add(OBJ_FLOOR, 550, 50, 0);		
-    stages[i].add(OBJ_FLOOR, 250, 250, 0);
-    extra.ex1 = 1;
-    stages[i].addX(OBJ_FLOOR, 350, 150, 0, extra);
-    stages[i].addX(OBJ_FLOOR, 550, 150, 0, extra);
-    extra.ex1 = 0; extra.ex2 = 0; extra.ex3 = 1; extra.ex4 = 1;
-    extra.ex1 = 0;
-    extra.ex2 = 0;
-    extra.ex3 = 1;
-    extra.ex4 = 1;
-    stages[i].add(OBJ_BALL, 1);
+    
+    // Floors using clean builder syntax
+    stages[i].spawn(StageObjectBuilder::floor().at(550, 50).withType(0).startsAt(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(250, 250).withType(0).startsAt(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(350, 150).withType(1).startsAt(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(550, 150).withType(1).startsAt(0));
+    
+    // Balls using convenience method
+    stages[i].spawnBallAtTop(1, 0, 1, 1);
+    stages[i].spawnBallAtTop(20);
 
-    extra.ex1 = 0;
-    extra.ex2 = 0;
-    extra.ex3 = 0;
-    extra.ex4 = 0;
-    stages[i].add(OBJ_BALL, 20);
-
-    /* Stage 2 */
+    /* Stage 2 - Complex formation */
     i = 1;
     stages[i].xpos[PLAYER1] = stages[i].xpos[PLAYER2] = 270;
     stages[i].setBack("fondo2.png");
     stages[i].setMusic("stage2.ogg");
     stages[i].timelimit = 100;
     stages[i].id = i + 1;
-    extra.ex1 = 3; extra.ex2 = 200; extra.ex3 = 0; extra.ex4 = 1;
+    
+    // Create small balls in formation
     for (int y = 0; y < 2; y++)
     {
-        extra.ex3 = (y == 0) ? -1 : 1;
-        for (int x = 0; x < 10; x++)		
-            stages[i].addX(OBJ_BALL, 128 + 300 * y + x * 16, 100, 1, extra);
+        int dirX = (y == 0) ? -1 : 1;
+        for (int x = 0; x < 10; x++)
+        {
+            stages[i].spawn(
+                StageObjectBuilder::ball()
+                    .at(128 + 300 * y + x * 16, 100)
+                    .startsAt(1)
+                    .withSize(3)
+                    .withTop(200)
+                    .withDirection(dirX, 1)
+            );
+        }
     }
 
-    /* Stage 3 */
+    /* Stage 3 - Mixed approaches */
     i = 2;
     stages[i].xpos[PLAYER1] = 200;
     stages[i].xpos[PLAYER2] = 350;
@@ -184,28 +184,49 @@ void AppData::initStages()
     stages[i].setMusic("stage3.ogg");
     stages[i].timelimit = 100;
     stages[i].id = i + 1;
-    stages[i].add(OBJ_FLOOR, 250, 70, 0);			
-    stages[i].add(OBJ_BALL, 1);  
-    stages[i].add(OBJ_BALL, 1);  
-    extra.ex1 = 2; extra.ex2 = 0; extra.ex3 = 1; extra.ex4 = 1;
-    stages[i].addX(OBJ_BALL, std::rand() % 600 + 32, 400, 1, extra);
-    extra.ex3 = -1;
-    stages[i].addX(OBJ_BALL, std::rand() % 600 + 32, 400, 1, extra);
+    
+    // Floor
+    stages[i].spawn(StageObjectBuilder::floor().at(250, 70).withType(0).startsAt(0));
+    
+    // Random top balls
+    stages[i].spawnBallAtTop(1);
+    stages[i].spawnBallAtTop(1);
+    
+    // Balls with random X at specific Y
+    BallParams ballParams;
+    ballParams.startTime = 1;
+    ballParams.size = 2;
+    ballParams.spawnMode = SpawnMode::RANDOM_X;
+    ballParams.y = 400;
+    ballParams.dirX = 1;
+    ballParams.dirY = 1;
+    stages[i].spawnBall(ballParams);
+    
+    ballParams.dirX = -1;
+    stages[i].spawnBall(ballParams);
 
-    /* Stage 4 */
+    /* Stage 4 - Now using new API */
     i = 3;
     stages[i].setBack("fondo4.png");
     stages[i].setMusic("stage4.ogg");
     stages[i].timelimit = 100;
     stages[i].id = i + 1;
-    extra.ex1 = 0;
-    stages[i].add(OBJ_FLOOR, 250, 70, 0);	
-    extra.ex1 = 3;
-    stages[i].addX(OBJ_BALL, 1, extra); 
-    stages[i].add(OBJ_BALL, 1); 
-    stages[i].add(OBJ_BALL, 20);
+    
+    stages[i].spawn(StageObjectBuilder::floor().at(250, 70).withType(0).startsAt(0));
+    
+    // Small ball
+    stages[i].spawn(
+        StageObjectBuilder::ball()
+            .atTop()
+            .startsAt(1)
+            .withSize(3)
+    );
+    
+    // Regular balls
+    stages[i].spawnBallAtTop(1);
+    stages[i].spawnBallAtTop(20);
 
-    /* Stage 5 */
+    /* Stage 5 - Staircases and side spawns */
     i = 4;
     stages[i].xpos[PLAYER1] = 250;
     stages[i].xpos[PLAYER2] = 350;
@@ -213,33 +234,50 @@ void AppData::initStages()
     stages[i].setMusic("stage5.ogg");
     stages[i].timelimit = 100;
     stages[i].id = i + 1;
-    stages[i].add(OBJ_FLOOR, 16, 100, 0);
-    stages[i].add(OBJ_FLOOR, 80, 164, 0);
-    extra.ex1 = 1;
-    stages[i].addX(OBJ_FLOOR, 144, 164, 0, extra);
-    stages[i].add(OBJ_FLOOR, 144, 228, 0);
-    extra.ex1 = 1;
-    stages[i].addX(OBJ_FLOOR, 208, 228, 0, extra);
-    stages[i].add(OBJ_FLOOR, 208, 292, 0);
-    stages[i].add(OBJ_FLOOR, RES_X - 80, 100, 0);
-    stages[i].add(OBJ_FLOOR, RES_X - 128, 164, 0);
-    extra.ex1 = 1;
-    stages[i].addX(OBJ_FLOOR, RES_X - 144, 164, 0, extra);
-    stages[i].add(OBJ_FLOOR, RES_X - 192, 228, 0);
-    extra.ex1 = 1;
-    stages[i].addX(OBJ_FLOOR, RES_X - 208, 228, 0, extra);
-    stages[i].add(OBJ_FLOOR, RES_X - 256, 292, 0);
-    extra.ex1 = 3; extra.ex3 = 1; extra.ex4 = 1;		
+    
+    // Left staircase
+    stages[i].spawn(StageObjectBuilder::floor().at(16, 100).withType(0).startsAt(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(80, 164).withType(0).startsAt(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(144, 164).withType(1).startsAt(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(144, 228).withType(0).startsAt(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(208, 228).withType(1).startsAt(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(208, 292).withType(0).startsAt(0));
+    
+    // Right staircase
+    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 80, 100).withType(0).startsAt(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 128, 164).withType(0).startsAt(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 144, 164).withType(1).startsAt(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 192, 228).withType(0).startsAt(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 208, 228).withType(1).startsAt(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 256, 292).withType(0).startsAt(0));
+    
+    // Small balls spawning from sides
     for (int x = 0; x < 15; x++)
     {
-        extra.ex2 = std::rand() % 150 + 150;
-        extra.ex3 = 1;
-        stages[i].addX(OBJ_BALL, 17, 50, 5 * x, extra);  		
-        extra.ex3 = -1;
-        stages[i].addX(OBJ_BALL, MAX_X - 30, 50, 5 * x, extra);  
+        int randomTop = std::rand() % 150 + 150;
+        
+        // Left side
+        stages[i].spawn(
+            StageObjectBuilder::ball()
+                .at(17, 50)
+                .startsAt(5 * x)
+                .withSize(3)
+                .withTop(randomTop)
+                .withDirection(1, 1)
+        );
+        
+        // Right side
+        stages[i].spawn(
+            StageObjectBuilder::ball()
+                .at(MAX_X - 30, 50)
+                .startsAt(5 * x)
+                .withSize(3)
+                .withTop(randomTop)
+                .withDirection(-1, 1)
+        );
     }
 
-    /* Stage 6 */
+    /* Stage 6 - Grid pattern */
     i = 5;
     stages[i].xpos[PLAYER1] = 250;
     stages[i].xpos[PLAYER2] = 350;
@@ -247,17 +285,40 @@ void AppData::initStages()
     stages[i].setMusic("stage6.ogg");
     stages[i].timelimit = 100;
     stages[i].id = i + 1;
-    extra.ex1 = 1;
+    
+    // Floor grid
     for (int x = 56; x < 600; x += 64)
+    {
         for (int y = 22; y < 288; y += 64)
-            stages[i].addX(OBJ_FLOOR, x, y, 0, extra);
-    extra.ex1 = 1; extra.ex2 = 395; extra.ex3 = 0; extra.ex4 = 1;
-    for (int x = 10; x < 650; x += 64)	
+        {
+            stages[i].spawn(StageObjectBuilder::floor().at(x, y).withType(1).startsAt(0));
+        }
+    }
+    
+    // Ball grid with gaps for players
+    for (int x = 10; x < 650; x += 64)
+    {
         if (x < 250 || x > 350)
         {
-            stages[i].addX(OBJ_BALL, x, 395, 1, extra);
-            stages[i].addX(OBJ_BALL, x, 150, 1, extra);
-        }	
+            stages[i].spawn(
+                StageObjectBuilder::ball()
+                    .at(x, 395)
+                    .startsAt(1)
+                    .withSize(1)
+                    .withTop(395)
+                    .withDirection(0, 1)
+            );
+            
+            stages[i].spawn(
+                StageObjectBuilder::ball()
+                    .at(x, 150)
+                    .startsAt(1)
+                    .withSize(1)
+                    .withTop(395)
+                    .withDirection(0, 1)
+            );
+        }
+    }
 }
 
 void AppData::setCurrent(GameState* state)

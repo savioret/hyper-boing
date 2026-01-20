@@ -373,13 +373,33 @@ void Scene::checkSequence()
         switch (obj.id)
         {
         case OBJ_BALL:
-            if (obj.extra.use)
-                addBall(obj.x, obj.y, obj.extra.ex1, obj.extra.ex2, obj.extra.ex3, obj.extra.ex4, obj.extra.ex5);
+            if (obj.params)
+            {
+                if (auto* ball = obj.getParams<BallParams>())
+                {
+                    addBall(obj.x, obj.y, ball->size, ball->top, ball->dirX, ball->dirY, ball->ballType);
+                }
+            }
             else
+            {
+                // Fallback: default ball (should not happen with new API)
                 addBall(obj.x, obj.y);
+            }
             break;
+            
         case OBJ_FLOOR:
-            addFloor(obj.x, obj.y, obj.extra.ex1);
+            if (obj.params)
+            {
+                if (auto* floor = obj.getParams<FloorParams>())
+                {
+                    addFloor(obj.x, obj.y, floor->floorType);
+                }
+            }
+            else
+            {
+                // Fallback: default floor (should not happen with new API)
+                addFloor(obj.x, obj.y, 0);
+            }
             break;
         }
     } while (obj.id != OBJ_NULL);
