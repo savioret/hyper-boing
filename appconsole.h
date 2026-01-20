@@ -58,9 +58,7 @@ private:
     
     // Rendering
     Graph* graph;
-    std::unique_ptr<BMFontLoader> fontLoader;
-    std::unique_ptr<Sprite> fontTexture;
-    std::unique_ptr<BMFontRenderer> fontRenderer;
+    std::unique_ptr<BMFontRenderer> fontRenderer;  // Manages font loading internally
     bool fontOwned;  // Whether we own the font resources
     
     // State

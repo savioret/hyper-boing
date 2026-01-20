@@ -3,7 +3,7 @@
 #include "appconsole.h"
 #include <SDL.h>
 
-int SelectSync::initBitmaps()
+int SelectPlayer::initBitmaps()
 {
     bmp.back.init(&appGraph, "graph/titleback.png", 0, 0);
     appGraph.setColorKey(bmp.back.getBmp(), 0xFF0000);
@@ -19,12 +19,12 @@ int SelectSync::initBitmaps()
     return 1;
 }
 
-SelectSync::SelectSync()
+SelectPlayer::SelectPlayer()
     : xb(0), yb(0), option(0), delay(13), delayCounter(0), initDelay(40)
 {
 }
 
-int SelectSync::init()
+int SelectPlayer::init()
 {
     gameinf.isMenu() = false;
     initBitmaps();
@@ -48,7 +48,7 @@ int SelectSync::init()
     return 1;
 }
 
-int SelectSync::release()
+int SelectPlayer::release()
 {
     bmp.select[PLAYER1].release();
     bmp.select[PLAYER2].release();
@@ -62,7 +62,7 @@ int SelectSync::release()
     return 1;
 }
 
-void SelectSync::drawSelect()
+void SelectPlayer::drawSelect()
 {
     SDL_SetRenderDrawColor(appGraph.getRenderer(), 255, 255, 255, 255);
     if ( option == 0 )
@@ -75,7 +75,7 @@ void SelectSync::drawSelect()
     appGraph.draw(&bmp.select[PLAYER2], 335, 210);
 }
 
-int SelectSync::drawAll()
+int SelectPlayer::drawAll()
 {
     GameState::drawScrollingBackground();
     drawSelect();
@@ -86,7 +86,7 @@ int SelectSync::drawAll()
     return 1;
 }
 
-GameState* SelectSync::moveAll()
+GameState* SelectPlayer::moveAll()
 {
     if (xb < bmp.back.getWidth()) xb++;
     else xb = 0;

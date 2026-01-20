@@ -11,7 +11,7 @@
 std::unique_ptr<AppConsole> AppConsole::s_instance = nullptr;
 
 AppConsole::AppConsole()
-    : graph(nullptr), fontLoader(nullptr), fontTexture(nullptr), fontRenderer(nullptr),
+    : graph(nullptr), fontRenderer(nullptr),
       fontOwned(false), visible(false), initialized(false), overlayAlpha(0.85f),
       cursorPosition(0), cursorVisible(true), cursorBlinkTime(0), historyIndex(-1),
       maxVisibleLines(20), scrollOffset(0), fontSize(10), lineHeight(12), 
@@ -44,32 +44,23 @@ bool AppConsole::init(Graph* gr)
     
     graph = gr;
     
-    // Load our own monospace font
-    fontLoader = std::make_unique<BMFontLoader>();
-    if (!fontLoader->load("graph/font/monospaced_10.fnt"))
+    // SIMPLIFIED: Load font with one call
+    fontRenderer = std::make_unique<BMFontRenderer>();
+    if (!fontRenderer->loadFont(graph, "graph/font/monospaced_10.fnt"))
     {
-        LOG_WARNING("AppConsole: Could not load monospaced_10.fnt, trying default font");
+        LOG_WARNING("AppConsole: Could not load monospaced_10.fnt, trying fallback");
         
         // Try fallback font
-        if (!fontLoader->load("graph/font/thickfont_grad_64.fnt"))
+        if (!fontRenderer->loadFont(graph, "graph/font/thickfont_grad_64.fnt"))
         {
-            LOG_ERROR("AppConsole: Failed to load any font");
-            fontLoader.reset();
-            return false;
+            LOG_ERROR("AppConsole: Failed to load any font, using system font");
+            // fontRenderer will use system font as fallback
         }
     }
     
-    // Load font texture
-    fontTexture = std::make_unique<Sprite>();
-    std::string fontTexturePath = "graph/font/" + fontLoader->getFontTexture();
-    fontTexture->init(graph, fontTexturePath.c_str(), 0, 0);
-    
-    // Create font renderer
-    fontRenderer = std::make_unique<BMFontRenderer>();
-    fontRenderer->init(graph, fontLoader.get(), fontTexture.get());
     fontRenderer->setScale(1.0f);
     
-    fontOwned = true;
+    fontOwned = true;  // We own the fontRenderer which manages everything internally
     initialized = true;
     
     // Register built-in commands
@@ -86,10 +77,8 @@ bool AppConsole::initWithFont(Graph* gr, BMFontLoader* font, Sprite* texture)
         return true;
     
     graph = gr;
-    fontLoader.reset();  // Don't own external font
-    fontTexture.reset();  // Don't own external texture
     
-    // Create font renderer with external resources
+    // Create font renderer with external resources (legacy API)
     fontRenderer = std::make_unique<BMFontRenderer>();
     fontRenderer->init(graph, font, texture);
     fontRenderer->setScale(1.0f);
@@ -107,23 +96,12 @@ bool AppConsole::initWithFont(Graph* gr, BMFontLoader* font, Sprite* texture)
 
 void AppConsole::release()
 {
-    if (fontOwned)
+    if (fontOwned && fontRenderer)
     {
-        if (fontRenderer)
-        {
-            fontRenderer->release();
-        }
-        if (fontTexture)
-        {
-            fontTexture->release();
-        }
-        // BMFontLoader doesn't need explicit release
-        // unique_ptrs will auto-delete everything
+        fontRenderer->release();
     }
     
     fontRenderer.reset();
-    fontTexture.reset();
-    fontLoader.reset();
     graph = nullptr;
     
     commands.clear();

@@ -3,10 +3,14 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <memory>
 #include <SDL.h>
 
-class Sprite;
+// Forward declarations
 class Graph;
+
+// Include Sprite for unique_ptr usage
+#include "sprite.h"
 
 /**
  * BmNumFont class
@@ -82,13 +86,29 @@ public:
 /**
  * BMFontRenderer class
  *
- * Renders text using the information loaded by BMFontLoader.
+ * Renders text using BMFont data or a built-in system font (5x7 bitmap).
+ * If no BMFont is loaded, it will use the integrated system font as fallback.
+ * 
+ * SIMPLIFIED USAGE:
+ * Just call loadFont() with a .fnt file path and it handles everything:
+ * - Loads the .fnt file
+ * - Auto-loads matching .png/.jpg texture
+ * - Initializes all resources
+ * 
+ * Example:
+ * ```cpp
+ * BMFontRenderer fontRenderer;
+ * if (fontRenderer.loadFont(&appGraph, "graph/font/myfont.fnt"))
+ * {
+ *     fontRenderer.text("Hello!", 10, 10);
+ * }
+ * ```
  */
 class BMFontRenderer
 {
 private:
-    BMFontLoader* font;
-    Sprite* fontTexture;
+    std::unique_ptr<BMFontLoader> fontLoader;
+    std::unique_ptr<Sprite> fontTexture;
     Graph* graph;
     
     // Text color (R, G, B, A)
@@ -96,10 +116,30 @@ private:
     
     // Text scale
     float scale;
+    
+    // System font rendering (fallback when no BMFont is loaded)
+    void renderSystemFont(const char* texto, int x, int y);
+    int getSystemFontTextWidth(const char* texto) const;
 
 public:
     BMFontRenderer();
-    void init(Graph* gr, BMFontLoader* bmFont, Sprite* texture);
+    ~BMFontRenderer() { release(); }
+    
+    /**
+     * SIMPLIFIED API: Load font from .fnt file (auto-loads texture)
+     * @param gr Graph context
+     * @param fntPath Path to .fnt file
+     * @param texturePath Optional path to texture (auto-detected if empty)
+     * @return true if successful, false otherwise
+     */
+    bool loadFont(Graph* gr, const char* fntPath, const char* texturePath = nullptr);
+    
+    /**
+     * LEGACY API: Manual initialization (for compatibility)
+     * @deprecated Use loadFont() instead
+     */
+    void init(Graph* gr, BMFontLoader* bmFont = nullptr, Sprite* texture = nullptr);
+    
     void setColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a = 255);
     void setScale(float s);
     void text(const char* texto, int x, int y);
@@ -108,6 +148,7 @@ public:
     void release();
 
     // Getters
-    BMFontLoader* getFont() const { return font; }
-    Sprite* getFontTexture() const { return fontTexture; }
+    BMFontLoader* getFont() const { return fontLoader.get(); }
+    Sprite* getFontTexture() const { return fontTexture.get(); }
+    bool isUsingSystemFont() const { return (fontLoader == nullptr); }
 };

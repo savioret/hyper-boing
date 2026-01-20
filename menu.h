@@ -13,7 +13,6 @@ struct MenuBitmaps
     Sprite title_boing;  // Front layer - drops from top
     Sprite title_hyper;  // Middle layer - slides from left
     Sprite title_bg;     // Back layer - fades in
-    Sprite menuFont;     // BMFont texture
 };
 
 /**

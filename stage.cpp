@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include "logger.h"
 
 void Stage::reset()
 {
@@ -87,7 +88,8 @@ StageObject Stage::pop(int time)
             res = *obj;
             delete obj;
             sequence.pop_front();
-            if (res.id == OBJ_BALL) itemsleft--;			
+            if (res.id == OBJ_BALL) itemsleft--;
+            LOG_DEBUG ( "New object id:%d start:%d x:%d y:%d (%d, %d, %d, %d, %d)", res.id, res.start, res.x, res.y, res.extra.ex1, res.extra.ex2, res.extra.ex3, res.extra.ex4 );
             return res;
         }
     }

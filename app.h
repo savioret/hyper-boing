@@ -1,9 +1,11 @@
 #pragma once
 
 #include <SDL.h>
+#include <memory>
 #include "bmfont.h"
 #include "appdata.h"
 #include "audiomanager.h"
+#include "textoverlay.h"
 
 class Sprite;
 
@@ -43,6 +45,12 @@ protected:
     // BMFont for the menu
     BMFontLoader fontLoader;
     BMFontRenderer fontRenderer;
+    
+    // Overlay font (simplified - only needs BMFontRenderer which manages everything)
+    std::unique_ptr<BMFontRenderer> overlayFontRenderer;
+    
+    // Text overlay system for debug info and system messages
+    TextOverlay textOverlay;
 
 public:
     GameState();
@@ -73,4 +81,7 @@ public:
     
     // Debug overlay - virtual so each screen can customize it
     virtual void drawDebugOverlay();
+    
+    // Access to text overlay
+    TextOverlay& getTextOverlay() { return textOverlay; }
 };

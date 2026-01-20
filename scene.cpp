@@ -126,6 +126,16 @@ int Scene::initBitmaps()
     fontNum[2].init(&bmp.fontnum[2]);
     fontNum[2].setValues(offs2);
 
+
+    // Configure ball-info section
+    TextSection& ballSection = textOverlay.getSection("ball-info");
+    ballSection.setPosition(300, 20)
+               .setLineHeight(8)
+               .setAlpha(200);
+    
+    // If custom overlay font is enabled in GameState, ball-info will inherit it
+    // Otherwise it uses system font (can be overridden here if needed)
+
     return 1;
 }
 
@@ -699,48 +709,64 @@ void Scene::drawDebugOverlay()
 {
     AppData& appData = AppData::instance();
     
-    if (!appData.debugMode) return;
-    GameState::drawDebugOverlay();
-
-    char txt[256];
-    int y = 80;
-    int lineHeight = 20;
+    if (!appData.debugMode)
+    {
+        // Clear overlay when debug mode is disabled
+        textOverlay.clear();
+        return;
+    }
     
+    // Call base class to populate default section with basic info
+    GameState::drawDebugOverlay();
+    
+    char txt[256];
+    
+    // Add player info to default section
     if (appData.getPlayers()[PLAYER1])
     {
         std::snprintf(txt, sizeof(txt), "P1: Score=%d Lives=%d Shoots=%d", 
                 appData.getPlayers()[PLAYER1]->getScore(),
                 appData.getPlayers()[PLAYER1]->getLives(),
                 appData.getPlayers()[PLAYER1]->getNumShoots());
-        appData.graph.text(txt, 20, y);
-        y += lineHeight;
+        textOverlay.addText(txt);
     }
     
+    // Show up to 10 balls with all info in one line per ball
     if (!lsBalls.empty())
     {
-        Ball* ptb = lsBalls.front();
-        std::snprintf(txt, sizeof(txt), "Ball: y=%.1f size=%d diameter=%d", 
-                ptb->getY(), ptb->getSize(), ptb->getDiameter());
-        appData.graph.text(txt, 20, y);
-        y += lineHeight;
+        int ballCount = 0;
+        for (Ball* ball : lsBalls)
+        {
+            if (ballCount >= 15) break; // Limit to 15 balls
+            
+            std::snprintf(txt, sizeof(txt), "Ball%d: x=%.0f y=%.0f sz=%d dia=%d dx=%d dy=%d", 
+                    ballCount,
+                    ball->getX(), 
+                    ball->getY(), 
+                    ball->getSize(), 
+                    ball->getDiameter(),
+                    ball->getDirX(),
+                    ball->getDirY());
+            textOverlay.addText(txt, "ball-info");
+            ballCount++;
+        }
     }
     
+    // Add game state info to default section
     std::snprintf(txt, sizeof(txt), "Objects: Balls=%d Shoots=%d Floors=%d", 
             (int)lsBalls.size(),
             (int)lsShoots.size(),
             (int)lsFloor.size());
-    appData.graph.text(txt, 20, y);
-    y += lineHeight;
+    textOverlay.addText(txt);
     
     std::snprintf(txt, sizeof(txt), "Stage: %d  Time=%d  Timeline=%d", 
             stage->id, timeRemaining, timeLine);
-    appData.graph.text(txt, 20, y);
-    y += lineHeight;
+    textOverlay.addText(txt);
     
     std::snprintf(txt, sizeof(txt), "GameOver=%s  LevelClear=%s", 
             gameOver ? "YES" : "NO",
             levelClear ? "YES" : "NO");
-    appData.graph.text(txt, 20, y);
+    textOverlay.addText(txt);
 }
 
 int Scene::drawAll()

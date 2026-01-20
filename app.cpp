@@ -7,6 +7,9 @@
 #include "graph.h"
 #include "pang.h"
 
+// Toggle overlay font: true = use custom font, false = use system font
+#define USE_CUSTOM_OVERLAY_FONT false
+
 GameState::GameState()
     : gameSpeed(0), fps(0), fpsv(0), active(true), pause(false), 
       difTime1(0), difTime2(0), time1(0), time2(0),
@@ -32,6 +35,24 @@ int GameState::init()
     frameTick = 0;
     lastFrameTick = 0;
     
+    // Initialize text overlay
+    textOverlay.init(&AppData::instance().graph);
+    
+    // Load custom overlay font if enabled
+#if USE_CUSTOM_OVERLAY_FONT
+    overlayFontRenderer = std::make_unique<BMFontRenderer>();
+    
+    // SIMPLIFIED: Just pass the .fnt file, texture is loaded automatically
+    if (overlayFontRenderer->loadFont(&AppData::instance().graph, "graph/font/monospaced_10.fnt"))
+    {
+        // Apply custom font to default section
+        textOverlay.getSection("default").setFont(overlayFontRenderer.get());
+    }
+#endif
+    
+    // Configure default section position (can be customized in derived classes)
+    textOverlay.getSection("default").setPosition(0, 300);
+    
     return 1;
 }
 
@@ -39,28 +60,25 @@ void GameState::drawDebugOverlay()
 {
     AppData& appData = AppData::instance();
     
-    if (!appData.debugMode) return;
+    if (!appData.debugMode)
+    {
+        // Clear overlay when debug mode is disabled
+        textOverlay.clear();
+        return;
+    }
+    
+    // Clear previous frame's debug text
+    textOverlay.clear();
     
     char txt[256];
-    int y = 20;
-    int lineHeight = 20;
-    int width = 400;
-    int height = 300;
-    
-    SDL_SetRenderDrawBlendMode(appData.graph.getRenderer(), SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(appData.graph.getRenderer(), 0, 0, 0, 180);
-    SDL_Rect bgRect = {10, 10, width, height};
-    SDL_RenderFillRect(appData.graph.getRenderer(), &bgRect);
-    SDL_SetRenderDrawBlendMode(appData.graph.getRenderer(), SDL_BLENDMODE_NONE);
     
     std::snprintf(txt, sizeof(txt), "FPS = %d  FPSVIRT = %d", fps, fpsv);
-    appData.graph.text(txt, 20, y);
-    y += lineHeight;
+    textOverlay.addText(txt);
     
     std::snprintf(txt, sizeof(txt), "Paused = %s  Active = %s", 
             pause ? "YES" : "NO",
             active ? "YES" : "NO");
-    appData.graph.text(txt, 20, y);
+    textOverlay.addText(txt);
 }
 
 /**
@@ -73,6 +91,9 @@ void GameState::finalizeRender()
     
     // Draw debug overlay if enabled
     drawDebugOverlay();
+    
+    // Render text overlay
+    textOverlay.render();
     
     // Render AppConsole overlay (always last, on top of everything)
     AppConsole::instance().render();

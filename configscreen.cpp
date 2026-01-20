@@ -232,13 +232,20 @@ void ConfigScreen::drawDebugOverlay()
 {
     AppData& appData = AppData::instance();
     
-    if (!appData.debugMode) return;
+    if (!appData.debugMode)
+    {
+        // Clear overlay when debug mode is disabled
+        textOverlay.clear();
+        return;
+    }
+    
+    // Call base class to populate default section
     GameState::drawDebugOverlay();
+    
     char txt[256];
-    int y = 80;
     std::snprintf(txt, sizeof(txt), "Selected = %d  State = %d", 
             selectedOption, (int)state);
-    appData.graph.text(txt, 20, y);
+    textOverlay.addText(txt);
 }
 
 void ConfigScreen::drawKeyName(SDL_Scancode key, int x, int y)

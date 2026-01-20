@@ -21,12 +21,8 @@ int Menu::initBitmaps()
     // Initialize shared background
     GameState::initSharedBackground();
 
-    // Load BMFont for menu
-    if (fontLoader.load("graph/font/thickfont_grad_64.fnt"))
-    {
-        bmp.menuFont.init(&appGraph, "graph/font/thickfont_grad_64.png", 0, 0);
-        fontRenderer.init(&appGraph, &fontLoader, &bmp.menuFont);
-    }
+    // SIMPLIFIED: Load BMFont with one call - texture auto-loaded
+    fontRenderer.loadFont(&appGraph, "graph/font/thickfont_grad_64.fnt");
 
     return 1;
 }
@@ -72,8 +68,7 @@ int Menu::release()
     bmp.title_boing.release();
     bmp.title_hyper.release();
     bmp.title_bg.release();
-    bmp.menuFont.release();
-    fontRenderer.release();
+    fontRenderer.release();  // BMFontRenderer handles its own cleanup
 
     CloseMusic();
     
@@ -160,19 +155,26 @@ void Menu::drawDebugOverlay()
 {
     AppData& appData = AppData::instance();
     
-    if (!appData.debugMode) return;
+    if (!appData.debugMode)
+    {
+        // Clear overlay when debug mode is disabled
+        textOverlay.clear();
+        return;
+    }
+    
+    // Call base class to populate default section
     GameState::drawDebugOverlay();
+    
     char txt[256];
-    int y = 80;
-    int lineHeight = 20;
+    
     std::snprintf(txt, sizeof(txt), "Title Boing Y = %d  Hyper X = %d  BG Alpha = %d", boingY, hyperX, bgAlpha);
-    appData.graph.text(txt, 20, y);
-    y += lineHeight;
+    textOverlay.addText(txt);
+    
     std::snprintf(txt, sizeof(txt), "AnimComplete = %s  Selected = %d", animComplete ? "YES" : "NO", selectedOption);
-    appData.graph.text(txt, 20, y);
-    y += lineHeight;
+    textOverlay.addText(txt);
+    
     std::snprintf(txt, sizeof(txt), "Scroll X=%d Y=%d", (int)appData.scrollX, (int)appData.scrollY);
-    appData.graph.text(txt, 20, y);
+    textOverlay.addText(txt);
 }
 
 GameState* Menu::moveAll()
@@ -250,7 +252,7 @@ GameState* Menu::moveAll()
             {
                 switch (selectedOption)
                 {
-                    case 0: return new SelectSync();
+                    case 0: return new SelectPlayer();
                     case 1: return new ConfigScreen();
                     case 2: quit = 1; return nullptr;
                 }

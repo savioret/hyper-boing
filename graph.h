@@ -3,6 +3,10 @@
 #include <SDL.h>
 #include <string>
 
+// Forward declarations
+class Sprite;
+class BmNumFont;
+
 /**
  * Render modes
  */
@@ -16,7 +20,6 @@ constexpr int RES_X = 640;
 constexpr int RES_Y = 480;
 
 class Graph;
-class BmNumFont;
 
 /**
  * Graph class

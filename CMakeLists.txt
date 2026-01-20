@@ -43,6 +43,7 @@ set(SOURCES
     sprite.cpp
     stage.cpp
     stageclear.cpp
+    textoverlay.cpp
 )
 
 # Headers
@@ -70,6 +71,7 @@ set(HEADERS
     sprite.h
     stage.h
     stageclear.h
+    textoverlay.h
     resource.h
 )
 
