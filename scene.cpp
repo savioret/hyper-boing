@@ -224,6 +224,29 @@ void Scene::win()
     pStageClear = std::make_unique<StageClear>(this);
 }
 
+void Scene::skipToStage(int stageNumber)
+{
+    AppData& appData = AppData::instance();
+    
+    // Validate stage number (1-indexed)
+    if (stageNumber < 1 || stageNumber > appData.numStages)
+    {
+        return;
+    }
+    
+    // Update current stage for display in StageClear
+    appData.currentStage = stageNumber;
+    
+    // Trigger win sequence with target stage specified
+    CloseMusic();
+    OpenMusic("music/win.ogg");
+    PlayMusic();
+    levelClear = true;
+    
+    // Create StageClear with target stage number
+    pStageClear = std::make_unique<StageClear>(this, stageNumber);
+}
+
 void Scene::checkColisions()
 {
     Ball* b;
@@ -593,10 +616,23 @@ GameState* Scene::moveAll()
         res = pStageClear->moveAll();
         if (res == -1)
         {
-            if (stage->id < gameinf.getNumStages())
+            // Check if this is a console-triggered skip to a specific stage
+            int nextStageId;
+            if (pStageClear->getTargetStage() > 0)
             {
-                gameinf.getCurrentStage() = stage->id + 1;
-                return new Scene(&gameinf.getStages()[stage->id], std::move(pStageClear));
+                // Console command specified a target stage
+                nextStageId = pStageClear->getTargetStage();
+            }
+            else
+            {
+                // Normal progression: advance to next stage
+                nextStageId = stage->id + 1;
+            }
+            
+            if (nextStageId <= gameinf.getNumStages())
+            {
+                gameinf.getCurrentStage() = nextStageId;
+                return new Scene(&gameinf.getStages()[nextStageId - 1], std::move(pStageClear));
             }
             else
                 return new Menu();
@@ -744,10 +780,14 @@ void Scene::drawDebugOverlay()
     // Add player info to default section
     if (appData.getPlayers()[PLAYER1])
     {
-        std::snprintf(txt, sizeof(txt), "P1: Score=%d Lives=%d Shoots=%d", 
-                appData.getPlayers()[PLAYER1]->getScore(),
-                appData.getPlayers()[PLAYER1]->getLives(),
-                appData.getPlayers()[PLAYER1]->getNumShoots());
+		Player* p = appData.getPlayers()[PLAYER1];
+        std::snprintf(txt, sizeof(txt), "P1: Score=%d Lives=%d Shoots=%d x=%.1f y=%.1f", 
+            p->getScore(),
+            p->getLives(),
+            p->getNumShoots(),
+			p->getX (),
+			p->getY ()
+        );
         textOverlay.addText(txt);
     }
     

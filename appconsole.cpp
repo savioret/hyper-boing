@@ -127,6 +127,9 @@ void AppConsole::registerBuiltinCommands()
     
     registerCommand("next", "Skip to next level (only in gameplay)", 
         [this](const std::string& args) { cmdNext(args); });
+
+    registerCommand ( "goto", "Skip to level number (only in gameplay)",
+        [this]( const std::string& args ) { cmdGoto ( args ); } );
 }
 
 void AppConsole::cmdHelp(const std::string& args)
@@ -208,6 +211,57 @@ void AppConsole::cmdNext(const std::string& args)
     LOG_SUCCESS("Skipping to next level...");
     currentScene->win();
 }
+
+void AppConsole::cmdGoto ( const std::string& args )
+{
+    AppData& appData = AppData::instance ();
+
+    // Check if we're in a Scene (gameplay screen)
+    Scene* currentScene = dynamic_cast<Scene*>( appData.currentScreen.get () );
+
+    if ( !currentScene )
+    {
+        LOG_WARNING ( "/goto can only be used during gameplay (Scene)" );
+        return;
+    }
+
+    // Parse level number from args
+    if ( args.empty() )
+    {
+        LOG_WARNING ( "Usage: /goto <level_number> (1-%d)", appData.numStages );
+        return;
+    }
+
+    int targetLevel = 0;
+    try
+    {
+        targetLevel = std::stoi( args );
+    }
+    catch ( const std::exception& )
+    {
+        LOG_WARNING ( "Invalid level number: %s (must be 1-%d)", args.c_str(), appData.numStages );
+        return;
+    }
+
+    // Validate level range [1..numStages]
+    if ( targetLevel < 1 || targetLevel > appData.numStages )
+    {
+        LOG_WARNING ( "Level %d is out of range (valid: 1-%d)", targetLevel, appData.numStages );
+        return;
+    }
+
+    // Check if already on target level
+    if ( targetLevel == appData.currentStage )
+    {
+        LOG_INFO ( "Already on level %d", targetLevel );
+        return;
+    }
+
+    // Use Scene's skipToStage method for proper state management
+    LOG_SUCCESS ( "Skipping to level %d...", targetLevel );
+    currentScene->skipToStage( targetLevel );
+}
+
 
 void AppConsole::registerCommand(const std::string& name, const std::string& desc, CommandHandler handler)
 {

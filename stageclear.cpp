@@ -3,7 +3,8 @@
 #include "pang.h"
 #include "appdata.h"
 
-StageClear::StageClear(Scene* scn)
+StageClear::StageClear(Scene* scn, int targetStageNum)
+    : targetStage(targetStageNum)
 {
     scene = scn;
     init();

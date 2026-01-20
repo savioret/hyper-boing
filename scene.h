@@ -116,6 +116,7 @@ public:
 
     int objectScore(int id);
     void win();
+    void skipToStage(int stageNumber);
     
     int init() override;
     int initBitmaps();

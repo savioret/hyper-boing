@@ -47,15 +47,19 @@ private:
     bool isClosing;
     bool isOpening;
     bool finish;
+    
+    int targetStage;  // For console-triggered level skips (0 = normal progression)
 
 public:
-    StageClear(Scene* scn);
+    StageClear(Scene* scn, int targetStageNum = 0);
     ~StageClear();
 
     void drawAll();
     int moveAll();
     int init();
     int release();
+    
+    int getTargetStage() const { return targetStage; }
 
     // Friend class to allow Scene to access private members if needed
     friend class Scene;
