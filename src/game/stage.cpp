@@ -41,7 +41,13 @@ void Stage::spawn(StageObject obj)
         newObj->y = newObj->params->y;
     }
     
-    sequence.push_back(newObj);
+    // Insert in sorted order by startTime to ensure pop() works correctly
+    // This allows objects to be added in any order but always processed chronologically
+    auto it = sequence.begin();
+    while (it != sequence.end() && (*it)->start <= newObj->start)
+        ++it;
+    
+    sequence.insert(it, newObj);
     
     if (newObj->id == OBJ_BALL)
         itemsleft++;
