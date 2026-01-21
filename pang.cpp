@@ -9,11 +9,12 @@ int main(int argc, char* argv[])
     // Initialize logger with console in Debug builds
 #ifdef _DEBUG
     Logger::instance().init(true, LogLevel::TRACE);
+    LOG_INFO ("Starting Hyper Boing (Debug Version)...");
 #else
     Logger::instance().init(false, LogLevel::INFO);
+    LOG_INFO("Starting Hyper Boing...");
 #endif
     
-    LOG_INFO("Starting Hyper Boing...");
     
     GameRunner runner;
     int result = runner.run();

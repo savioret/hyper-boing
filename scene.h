@@ -78,6 +78,16 @@ private:
     int drawCount;
 
     std::vector<Ball*> pendingBalls;  // Buffer to hold new balls to be added
+    
+    /**
+     * Check if ball position is valid (no collision with floors)
+     * Adjusts coordinates if collision detected (up to 10 attempts)
+     * Only recalculates INT_MAX coordinates (random positions)
+     * @param x Ball X coordinate (may be INT_MAX)
+     * @param y Ball Y coordinate (may be INT_MAX)
+     * @param ballDiameter Diameter of ball for collision check
+     */
+    void checkValidPosition(int& x, int& y, int ballDiameter);
 
     /**
      * Generic cleanup helper for dead objects.

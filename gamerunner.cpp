@@ -4,6 +4,8 @@
 #include "configscreen.h"
 #include "logger.h"
 #include "appconsole.h"
+#include <cstdlib>
+#include <ctime>
 
 GameRunner::GameRunner()
     : appData(AppData::instance()), isInitialized(false)
@@ -21,6 +23,10 @@ GameRunner::~GameRunner()
 bool GameRunner::initialize()
 {
     LOG_INFO("Initializing game...");
+    
+    // Initialize random number generator with current time as seed
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+    LOG_DEBUG("Random number generator initialized");
     
     // Load configuration
     appData.config.load();

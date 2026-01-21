@@ -142,14 +142,14 @@ void AppData::initStages()
     stages[i].id = i + 1;
     
     // Floors using clean builder syntax
-    stages[i].spawn(StageObjectBuilder::floor().at(550, 50).withType(0).startsAt(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(250, 250).withType(0).startsAt(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(350, 150).withType(1).startsAt(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(550, 150).withType(1).startsAt(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(550, 50).type(0).time(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(250, 250).type(0).time(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(350, 150).type(1).time(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(550, 150).type(1).time(0));
     
-    // Balls using convenience method
-    stages[i].spawnBallAtTop(1, 0, 1, 1);
-    stages[i].spawnBallAtTop(20);
+    // Balls at top with random X
+    stages[i].spawn(StageObjectBuilder::ball().time(1).atMaxY());
+    stages[i].spawn(StageObjectBuilder::ball().time(20).atMaxY());
 
     /* Stage 2 - Complex formation */
     i = 1;
@@ -159,7 +159,7 @@ void AppData::initStages()
     stages[i].timelimit = 100;
     stages[i].id = i + 1;
     
-    // Create small balls in formation
+    // Create small balls in formation (fixed positions)
     for (int y = 0; y < 2; y++)
     {
         int dirX = (y == 0) ? -1 : 1;
@@ -168,10 +168,10 @@ void AppData::initStages()
             stages[i].spawn(
                 StageObjectBuilder::ball()
                     .at(128 + 300 * y + x * 16, 100)
-                    .startsAt(1)
-                    .withSize(3)
-                    .withTop(200)
-                    .withDirection(dirX, 1)
+                    .time(1)
+                    .size(3)
+                    .top(200)
+                    .dir(dirX, 1)
             );
         }
     }
@@ -186,24 +186,15 @@ void AppData::initStages()
     stages[i].id = i + 1;
     
     // Floor
-    stages[i].spawn(StageObjectBuilder::floor().at(250, 70).withType(0).startsAt(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(250, 70).type(0).time(0));
     
     // Random top balls
-    stages[i].spawnBallAtTop(1);
-    stages[i].spawnBallAtTop(1);
+    stages[i].spawn(StageObjectBuilder::ball().time(1).atMaxY());
+    stages[i].spawn(StageObjectBuilder::ball().time(1).atMaxY());
     
     // Balls with random X at specific Y
-    BallParams ballParams;
-    ballParams.startTime = 1;
-    ballParams.size = 2;
-    ballParams.spawnMode = SpawnMode::RANDOM_X;
-    ballParams.y = 400;
-    ballParams.dirX = 1;
-    ballParams.dirY = 1;
-    stages[i].spawnBall(ballParams);
-    
-    ballParams.dirX = -1;
-    stages[i].spawnBall(ballParams);
+    stages[i].spawn(StageObjectBuilder::ball().time(1).size(2).atY(400));
+    stages[i].spawn(StageObjectBuilder::ball().time(1).size(2).atY(400).dir(-1, 1));
 
     /* Stage 4 - Now using new API */
     i = 3;
@@ -212,19 +203,14 @@ void AppData::initStages()
     stages[i].timelimit = 100;
     stages[i].id = i + 1;
     
-    stages[i].spawn(StageObjectBuilder::floor().at(250, 70).withType(0).startsAt(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(250, 70).type(0).time(0));
     
-    // Small ball
-    stages[i].spawn(
-        StageObjectBuilder::ball()
-            .atTop()
-            .startsAt(1)
-            .withSize(3)
-    );
+    // Small ball at random top position
+    stages[i].spawn(StageObjectBuilder::ball().time(1).size(3).atMaxY());
     
-    // Regular balls
-    stages[i].spawnBallAtTop(1);
-    stages[i].spawnBallAtTop(20);
+    // Regular balls at random top positions
+    stages[i].spawn(StageObjectBuilder::ball().time(1).atMaxY());
+    stages[i].spawn(StageObjectBuilder::ball().time(20).atMaxY());
 
     /* Stage 5 - Staircases and side spawns */
     i = 4;
@@ -236,22 +222,22 @@ void AppData::initStages()
     stages[i].id = i + 1;
     
     // Left staircase
-    stages[i].spawn(StageObjectBuilder::floor().at(16, 100).withType(0).startsAt(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(80, 164).withType(0).startsAt(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(144, 164).withType(1).startsAt(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(144, 228).withType(0).startsAt(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(208, 228).withType(1).startsAt(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(208, 292).withType(0).startsAt(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(16, 100).type(0).time(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(80, 164).type(0).time(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(144, 164).type(1).time(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(144, 228).type(0).time(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(208, 228).type(1).time(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(208, 292).type(0).time(0));
     
     // Right staircase
-    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 80, 100).withType(0).startsAt(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 128, 164).withType(0).startsAt(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 144, 164).withType(1).startsAt(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 192, 228).withType(0).startsAt(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 208, 228).withType(1).startsAt(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 256, 292).withType(0).startsAt(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 80, 100).type(0).time(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 128, 164).type(0).time(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 144, 164).type(1).time(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 192, 228).type(0).time(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 208, 228).type(1).time(0));
+    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 256, 292).type(0).time(0));
     
-    // Small balls spawning from sides
+    // Small balls spawning from sides (fixed X positions)
     for (int x = 0; x < 15; x++)
     {
         int randomTop = std::rand() % 150 + 150;
@@ -260,20 +246,20 @@ void AppData::initStages()
         stages[i].spawn(
             StageObjectBuilder::ball()
                 .at(17, 50)
-                .startsAt(5 * x)
-                .withSize(3)
-                .withTop(randomTop)
-                .withDirection(1, 1)
+                .time(5 * x)
+                .size(3)
+                .top(randomTop)
+                .dir(1, 1)
         );
         
         // Right side
         stages[i].spawn(
             StageObjectBuilder::ball()
                 .at(MAX_X - 30, 50)
-                .startsAt(5 * x)
-                .withSize(3)
-                .withTop(randomTop)
-                .withDirection(-1, 1)
+                .time(5 * x)
+                .size(3)
+                .top(randomTop)
+                .dir(-1, 1)
         );
     }
 
@@ -291,11 +277,11 @@ void AppData::initStages()
     {
         for (int y = 22; y < 288; y += 64)
         {
-            stages[i].spawn(StageObjectBuilder::floor().at(x, y).withType(1).startsAt(0));
+            stages[i].spawn(StageObjectBuilder::floor().at(x, y).type(1).time(0));
         }
     }
     
-    // Ball grid with gaps for players
+    // Ball grid with gaps for players (all fixed positions)
     for (int x = 10; x < 650; x += 64)
     {
         if (x < 250 || x > 350)
@@ -303,19 +289,19 @@ void AppData::initStages()
             stages[i].spawn(
                 StageObjectBuilder::ball()
                     .at(x, 395)
-                    .startsAt(1)
-                    .withSize(1)
-                    .withTop(395)
-                    .withDirection(0, 1)
+                    .time(1)
+                    .size(1)
+                    .top(395)
+                    .dir(0, 1)
             );
             
             stages[i].spawn(
                 StageObjectBuilder::ball()
                     .at(x, 150)
-                    .startsAt(1)
-                    .withSize(1)
-                    .withTop(395)
-                    .withDirection(0, 1)
+                    .time(1)
+                    .size(1)
+                    .top(395)
+                    .dir(0, 1)
             );
         }
     }

@@ -2,34 +2,23 @@
 
 #include <list>
 #include <memory>
-
-/**
- * SpawnMode enum
- *
- * Defines how objects are positioned when spawned:
- * - FIXED: Use explicit x, y coordinates
- * - RANDOM_X: Random X position (32-632 range), explicit Y
- * - TOP_RANDOM: Random X position at top of screen (y=22)
- */
-enum class SpawnMode
-{
-    FIXED,
-    RANDOM_X,
-    TOP_RANDOM
-};
+#include <climits>
 
 /**
  * StageObjectParams base class
  *
  * Base class for type-specific parameters of stage objects.
  * Contains common fields like position and spawn timing.
+ * 
+ * Coordinates initialized to INT_MAX indicate random positioning:
+ * - x = INT_MAX: Random X position (calculated at pop time)
+ * - y = INT_MAX: Random Y position (or default based on object type)
  */
 struct StageObjectParams
 {
-    int x = 0;
-    int y = 0;
+    int x = INT_MAX;
+    int y = INT_MAX;
     int startTime = 0;
-    SpawnMode spawnMode = SpawnMode::FIXED;
     
     StageObjectParams() = default;
     virtual ~StageObjectParams() = default;
@@ -124,13 +113,13 @@ struct StageObject
     std::unique_ptr<StageObjectParams> params;
 
     StageObject(int id = 0, int start = 0)
-        : id(id), start(start), x(0), y(0), params(nullptr)
+        : id(id), start(start), x(INT_MAX), y(INT_MAX), params(nullptr)
     {
     }
     
     // Constructor with typed params
     StageObject(int id, std::unique_ptr<StageObjectParams> p)
-        : id(id), start(p ? p->startTime : 0), x(p ? p->x : 0), y(p ? p->y : 0),
+        : id(id), start(p ? p->startTime : 0), x(p ? p->x : INT_MAX), y(p ? p->y : INT_MAX),
           params(std::move(p))
     {
     }
@@ -231,16 +220,6 @@ public:
     void spawn(StageObject obj);
     
     /**
-     * Spawn a ball at top of screen (random X position, y=22)
-     * Convenience method for common use case.
-     * @param startTime When to spawn the ball (in game ticks)
-     * @param size Ball size (0=largest, 3=smallest, default=0)
-     * @param dirX Horizontal direction (-1 or 1, default=1)
-     * @param dirY Vertical direction (-1 or 1, default=1)
-     */
-    void spawnBallAtTop(int startTime, int size = 0, int dirX = 1, int dirY = 1);
-    
-    /**
      * Spawn a ball with full control
      * @param params BallParams with all configuration
      */
@@ -254,6 +233,8 @@ public:
 
     /**
      * Pop next object from sequence if its start time has been reached
+     * Calculates random positions for INT_MAX coordinates
+     * Validates ball positions against floor collisions
      * @param time Current game time
      * @return StageObject (id=OBJ_NULL if nothing to pop)
      */
@@ -268,17 +249,24 @@ class StageObjectBuilder;
  *
  * Fluent builder API for creating stage objects with readable, chainable syntax.
  * 
- * Example usage:
- *   stage.spawn(StageObjectBuilder::ball()
- *                   .at(100, 200)
- *                   .startsAt(10)
- *                   .withSize(2)
- *                   .withDirection(-1, 1));
+ * Coordinates default to INT_MAX (random positioning):
+ * - Use .at(x, y) to set both coordinates explicitly
+ * - Use .atX(x) to set only X (Y remains random)
+ * - Use .atY(y) to set only Y (X remains random)
+ * - Leave both unset for fully random positioning
  * 
- *   stage.spawnFloor(StageObjectBuilder::floor()
- *                        .at(250, 100)
- *                        .withType(0)
- *                        .startsAt(0));
+ * Example usage:
+ *   // Fixed position
+ *   stage.spawn(StageObjectBuilder::ball().at(100, 200).time(1).size(2));
+ *   
+ *   // Random X, fixed Y
+ *   stage.spawn(StageObjectBuilder::ball().atY(400).time(1).size(2));
+ *   
+ *   // Fixed X, random Y
+ *   stage.spawn(StageObjectBuilder::ball().atX(300).time(1).size(2));
+ *   
+ *   // Fully random (default top for balls)
+ *   stage.spawn(StageObjectBuilder::ball().time(1).size(2));
  */
 class StageObjectBuilder
 {
@@ -309,7 +297,7 @@ public:
     }
     
     /**
-     * Set exact position
+     * Set exact position (both X and Y)
      * @param x X coordinate
      * @param y Y coordinate
      */
@@ -317,29 +305,36 @@ public:
     {
         objectParams->x = x;
         objectParams->y = y;
-        objectParams->spawnMode = SpawnMode::FIXED;
         return *this;
     }
     
     /**
-     * Spawn at random X position with specified Y
+     * Set only X coordinate (Y remains INT_MAX for random)
+     * @param x X coordinate
+     */
+    StageObjectBuilder& atX(int x)
+    {
+        objectParams->x = x;
+        return *this;
+    }
+    
+    /**
+     * Set only Y coordinate (X remains INT_MAX for random)
      * @param y Y coordinate
      */
-    StageObjectBuilder& atRandomX(int y)
+    StageObjectBuilder& atY(int y)
     {
         objectParams->y = y;
-        objectParams->spawnMode = SpawnMode::RANDOM_X;
         return *this;
     }
     
     /**
-     * Spawn at top of screen with random X (y=22)
-     * Common pattern for ball spawning.
+     * Set Y coordinate to screen top (22px), X remains random
+     * Convenience method for balls spawning at top with random X position
      */
-    StageObjectBuilder& atTop()
+    StageObjectBuilder& atMaxY()
     {
         objectParams->y = 22;
-        objectParams->spawnMode = SpawnMode::TOP_RANDOM;
         return *this;
     }
     
@@ -347,7 +342,7 @@ public:
      * Set spawn time
      * @param time Game tick when object should appear
      */
-    StageObjectBuilder& startsAt(int time)
+    StageObjectBuilder& time(int time)
     {
         objectParams->startTime = time;
         return *this;
@@ -359,7 +354,7 @@ public:
      * Set ball size (ball objects only)
      * @param size Ball size (0=largest, 3=smallest)
      */
-    StageObjectBuilder& withSize(int size)
+    StageObjectBuilder& size(int size)
     {
         if (auto* ball = dynamic_cast<BallParams*>(objectParams.get()))
         {
@@ -370,10 +365,9 @@ public:
     
     /**
      * Set ball maximum jump height (ball objects only)
-     * @param top Maximum jump height from floor (0=auto-calculate based on size)
-	 * @note only working for ball objects
+     * @param top Maximum height from floor (0=auto-calculate based on size)
      */
-    StageObjectBuilder& withTop(int top)
+    StageObjectBuilder& top(int top)
     {
         if (auto* ball = dynamic_cast<BallParams*>(objectParams.get()))
         {
@@ -387,7 +381,7 @@ public:
      * @param dirX Horizontal direction (-1=left, 1=right)
      * @param dirY Vertical direction (-1=up, 1=down)
      */
-    StageObjectBuilder& withDirection(int dirX, int dirY)
+    StageObjectBuilder& dir(int dirX, int dirY)
     {
         if (auto* ball = dynamic_cast<BallParams*>(objectParams.get()))
         {
@@ -398,39 +392,21 @@ public:
     }
     
     /**
-     * Set ball type/color (ball objects only)
-     * @param ballType Type identifier (default=0 for red)
+     * Set object type
+     * - For balls: ball type/color (default=0 for red)
+     * - For floors: floor type (0=horizontal, 1=vertical)
      */
-    StageObjectBuilder& withBallType(int ballType)
+    StageObjectBuilder& type(int typeValue)
     {
         if (auto* ball = dynamic_cast<BallParams*>(objectParams.get()))
         {
-            ball->ballType = ballType;
+            ball->ballType = typeValue;
         }
-        return *this;
-    }
-    
-    // Floor-specific methods
-    
-    /**
-     * Set floor type (floor objects only)
-     * @param floorType Floor type (0=horizontal, 1=vertical)
-     */
-    StageObjectBuilder& withType(int floorType)
-    {
-        if (auto* floor = dynamic_cast<FloorParams*>(objectParams.get()))
+        else if (auto* floor = dynamic_cast<FloorParams*>(objectParams.get()))
         {
-            floor->floorType = floorType;
+            floor->floorType = typeValue;
         }
         return *this;
-    }
-    
-    /**
-     * Alias for withType() - set floor type
-     */
-    StageObjectBuilder& withFloorType(int floorType)
-    {
-        return withType(floorType);
     }
     
     /**

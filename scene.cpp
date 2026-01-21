@@ -1,9 +1,12 @@
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
+#include <climits>
 #include <memory>
 #include "pang.h"
 #include "appdata.h"
 #include "appconsole.h"
+#include "logger.h"
 #include <SDL.h>
 #include <SDL_render.h>
 #include <SDL_image.h>
@@ -141,8 +144,102 @@ int Scene::initBitmaps()
 
 void Scene::addBall(int x, int y, int size, int top, int dirX, int dirY, int id)
 {
+    // Get ball diameter for collision check
+    const int diameters[] = { 64, 40, 24, 16 }; // size 0-3
+    int ballDiameter = (size >= 0 && size <= 3) ? diameters[size] : 40;
+    
+    // Validate position if either coordinate is random (INT_MAX)
+    if (x == INT_MAX || y == INT_MAX)
+    {
+        checkValidPosition(x, y, ballDiameter);
+    }
+    
     Ball* ball = new Ball(this, x, y, size, dirX, dirY, top, id);
     lsBalls.push_back(ball);
+}
+
+void Scene::checkValidPosition(int& x, int& y, int ballDiameter)
+{
+    // Track which coordinates were originally random (INT_MAX)
+    bool xWasRandom = (x == INT_MAX);
+    bool yWasRandom = (y == INT_MAX);
+
+    if (!xWasRandom && !yWasRandom)
+    {
+        // Both coordinates are fixed, no need to check
+        return;
+	}
+    
+    // Calculate initial positions for INT_MAX coordinates
+    if (xWasRandom)
+    {
+        x = std::rand() % 600 + 32; // Random X in range [32, 632)
+    }
+    
+    if (yWasRandom)
+    {
+        y = std::rand() % 394 + 22; // Random Y in range [22, 416) - playable area
+    }
+    
+    // Try to find valid position (up to 10 attempts)
+    bool validPosition = false;
+    int attempts = 0;
+    const int maxAttempts = 10;
+    
+    while (!validPosition && attempts < maxAttempts)
+    {
+        validPosition = true;
+        
+        // Create temporary ball for collision checking using existing Ball::collision() method
+        Ball tempBall(this, x, y, 0, 1, 1, 0, 0);
+        
+        // Check for collisions with existing floors in scene using Ball's collision method
+        for (Floor* floor : lsFloor)
+        {
+            // Skip dead floors
+            if (floor->isDead())
+                continue;
+            
+            // Use existing Ball::collision(Floor*) method
+            SDL_Point col = tempBall.collision(floor);
+            
+            // If any collision detected (x or y), position is invalid
+            if (col.x != 0 || col.y != 0)
+            {
+                // Collision detected! Generate new random position
+                validPosition = false;
+
+                LOG_DEBUG("Cannot spawn ball at (x=%d, y=%d) => (floor x=%d, y=%d, w=%d, h=%d) ## COL(%d, %d)", 
+                    x, y, floor->getX(), floor->getY(), floor->getWidth(), floor->getHeight(), col.x, col.y);
+                
+                // Regenerate ONLY the coordinates that were originally random
+                if (xWasRandom)
+                {
+                    x = std::rand() % 600 + 32;
+                }
+                
+                if (yWasRandom)
+                {
+                    y = std::rand() % 394 + 22;
+                }
+                
+                break;
+            }
+        }
+        
+        attempts++;
+    }
+    
+    if (!validPosition)
+    {
+        LOG_WARNING("Failed to find valid position for ball after %d attempts (x=%d, y=%d). Spawning anyway.",
+            maxAttempts, x, y);
+    }
+    else if (attempts > 1)
+    {
+        LOG_DEBUG("Found valid position for ball after %d attempts (x=%d, y=%d)", 
+            attempts, x, y);
+    }
 }
 
 void Scene::addItem(int x, int y, int id)
