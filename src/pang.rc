@@ -28,7 +28,7 @@ LANGUAGE LANG_SPANISH, SUBLANG_SPANISH_MEXICAN
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICONPANG            ICON    DISCARDABLE     "../graph/pang.ico"
+IDI_ICONPANG            ICON    DISCARDABLE     "../assets/graph/ui/pang.ico"
 
 #endif    // Spanish (Mexican) resources
 /////////////////////////////////////////////////////////////////////////////

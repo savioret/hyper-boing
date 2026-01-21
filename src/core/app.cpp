@@ -43,7 +43,7 @@ int GameState::init()
     overlayFontRenderer = std::make_unique<BMFontRenderer>();
     
     // SIMPLIFIED: Just pass the .fnt file, texture is loaded automatically
-    if (overlayFontRenderer->loadFont(&AppData::instance().graph, "graph/font/monospaced_10.fnt"))
+    if (overlayFontRenderer->loadFont(&AppData::instance().graph, "assets/fonts/monospaced_10.fnt"))
     {
         // Apply custom font to default section
         textOverlay.getSection("default").setFont(overlayFontRenderer.get());
@@ -109,7 +109,7 @@ void GameState::initSharedBackground()
     if (!appData.backgroundInitialized)
     {
         appData.sharedBackground = std::make_unique<Sprite>();
-        appData.sharedBackground->init(&appData.graph, "graph/titleback.png", 0, 0);
+        appData.sharedBackground->init(&appData.graph, "assets/graph/ui/titleback.png", 0, 0);
         appData.graph.setColorKey(appData.sharedBackground->getBmp(), 0xFF0000);
         appData.scrollX = 0.0f;
         appData.scrollY = (float)appData.sharedBackground->getHeight();

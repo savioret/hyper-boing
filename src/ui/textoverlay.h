@@ -122,8 +122,8 @@ struct TextSection
  * std::unique_ptr<BMFontRenderer> fontRenderer = std::make_unique<BMFontRenderer>();
  * std::unique_ptr<Sprite> fontTexture = std::make_unique<Sprite>();
  * 
- * fontLoader->load("graph/font/myfont.fnt");
- * fontTexture->init(&appGraph, "graph/font/myfont.png");
+ * fontLoader->load("assets/graph/font/myfont.fnt");
+ * fontTexture->init(&appGraph, "assets/graph/font/myfont.png");
  * fontRenderer->init(&appGraph, fontLoader.get(), fontTexture.get());
  * 
  * // Pass non-owning pointer to overlay

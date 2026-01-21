@@ -46,12 +46,12 @@ bool AppConsole::init(Graph* gr)
     
     // SIMPLIFIED: Load font with one call
     fontRenderer = std::make_unique<BMFontRenderer>();
-    if (!fontRenderer->loadFont(graph, "graph/font/monospaced_10.fnt"))
+    if (!fontRenderer->loadFont(graph, "assets/fonts/monospaced_10.fnt"))
     {
         LOG_WARNING("AppConsole: Could not load monospaced_10.fnt, trying fallback");
         
         // Try fallback font
-        if (!fontRenderer->loadFont(graph, "graph/font/thickfont_grad_64.fnt"))
+        if (!fontRenderer->loadFont(graph, "assets/fonts/thickfont_grad_64.fnt"))
         {
             LOG_ERROR("AppConsole: Failed to load any font, using system font");
             // fontRenderer will use system font as fallback

@@ -3,6 +3,7 @@
 #include "sprite.h"
 #include "player.h"
 #include "stage.h"
+#include "stageloader.h"
 #include "main.h"
 #include <cstdlib>
 
@@ -62,57 +63,57 @@ void AppData::init()
     inMenu = true;
 
     // Initialize Player 1 sprites
-    bitmaps.player[PLAYER1][0].init(&appGraph, "graph/p1k1l.png", 0, 3);
-    bitmaps.player[PLAYER1][1].init(&appGraph, "graph/p1k2l.png", 4, 3);
-    bitmaps.player[PLAYER1][2].init(&appGraph, "graph/p1k3l.png", 6, 3);
-    bitmaps.player[PLAYER1][3].init(&appGraph, "graph/p1k4l.png", 4, 3);
-    bitmaps.player[PLAYER1][4].init(&appGraph, "graph/p1k5l.png", 4, 3);
+    bitmaps.player[PLAYER1][0].init(&appGraph, "assets/graph/players/p1k1l.png", 0, 3);
+    bitmaps.player[PLAYER1][1].init(&appGraph, "assets/graph/players/p1k2l.png", 4, 3);
+    bitmaps.player[PLAYER1][2].init(&appGraph, "assets/graph/players/p1k3l.png", 6, 3);
+    bitmaps.player[PLAYER1][3].init(&appGraph, "assets/graph/players/p1k4l.png", 4, 3);
+    bitmaps.player[PLAYER1][4].init(&appGraph, "assets/graph/players/p1k5l.png", 4, 3);
     
-    bitmaps.player[PLAYER1][5].init(&appGraph, "graph/p1k1r.png", 0, 3);
-    bitmaps.player[PLAYER1][6].init(&appGraph, "graph/p1k2r.png", 0, 3);
-    bitmaps.player[PLAYER1][7].init(&appGraph, "graph/p1k3r.png", 0, 3);
-    bitmaps.player[PLAYER1][8].init(&appGraph, "graph/p1k4r.png", 0, 3);
-    bitmaps.player[PLAYER1][9].init(&appGraph, "graph/p1k5r.png", 0, 3);
+    bitmaps.player[PLAYER1][5].init(&appGraph, "assets/graph/players/p1k1r.png", 0, 3);
+    bitmaps.player[PLAYER1][6].init(&appGraph, "assets/graph/players/p1k2r.png", 0, 3);
+    bitmaps.player[PLAYER1][7].init(&appGraph, "assets/graph/players/p1k3r.png", 0, 3);
+    bitmaps.player[PLAYER1][8].init(&appGraph, "assets/graph/players/p1k4r.png", 0, 3);
+    bitmaps.player[PLAYER1][9].init(&appGraph, "assets/graph/players/p1k5r.png", 0, 3);
 
-    bitmaps.player[PLAYER1][10].init(&appGraph, "graph/p1shoot1.png", 13, 0);
-    bitmaps.player[PLAYER1][11].init(&appGraph, "graph/p1shoot2.png", 13, 3);
-    bitmaps.player[PLAYER1][12].init(&appGraph, "graph/p1win.png", 13, 4);
-    bitmaps.player[PLAYER1][13].init(&appGraph, "graph/p1dead.png");
-    bitmaps.player[PLAYER1][14].init(&appGraph, "graph/p1dead2.png");
-    bitmaps.player[PLAYER1][15].init(&appGraph, "graph/p1dead3.png");
-    bitmaps.player[PLAYER1][16].init(&appGraph, "graph/p1dead4.png");
-    bitmaps.player[PLAYER1][17].init(&appGraph, "graph/p1dead5.png");
-    bitmaps.player[PLAYER1][18].init(&appGraph, "graph/p1dead6.png");
-    bitmaps.player[PLAYER1][19].init(&appGraph, "graph/p1dead7.png");
-    bitmaps.player[PLAYER1][20].init(&appGraph, "graph/p1dead8.png");
+    bitmaps.player[PLAYER1][10].init(&appGraph, "assets/graph/players/p1shoot1.png", 13, 0);
+    bitmaps.player[PLAYER1][11].init(&appGraph, "assets/graph/players/p1shoot2.png", 13, 3);
+    bitmaps.player[PLAYER1][12].init(&appGraph, "assets/graph/players/p1win.png", 13, 4);
+    bitmaps.player[PLAYER1][13].init(&appGraph, "assets/graph/players/p1dead.png");
+    bitmaps.player[PLAYER1][14].init(&appGraph, "assets/graph/players/p1dead2.png");
+    bitmaps.player[PLAYER1][15].init(&appGraph, "assets/graph/players/p1dead3.png");
+    bitmaps.player[PLAYER1][16].init(&appGraph, "assets/graph/players/p1dead4.png");
+    bitmaps.player[PLAYER1][17].init(&appGraph, "assets/graph/players/p1dead5.png");
+    bitmaps.player[PLAYER1][18].init(&appGraph, "assets/graph/players/p1dead6.png");
+    bitmaps.player[PLAYER1][19].init(&appGraph, "assets/graph/players/p1dead7.png");
+    bitmaps.player[PLAYER1][20].init(&appGraph, "assets/graph/players/p1dead8.png");
 
     for (int i = 0; i < 21; i++)
         appGraph.setColorKey(bitmaps.player[PLAYER1][i].getBmp(), 0x00FF00);
 
     // Initialize Player 2 sprites
-    bitmaps.player[PLAYER2][0].init(&appGraph, "graph/p2k1l.png", 0, 3);
-    bitmaps.player[PLAYER2][1].init(&appGraph, "graph/p2k2l.png", 4, 3);
-    bitmaps.player[PLAYER2][2].init(&appGraph, "graph/p2k3l.png", 6, 3);
-    bitmaps.player[PLAYER2][3].init(&appGraph, "graph/p2k4l.png", 4, 3);
-    bitmaps.player[PLAYER2][4].init(&appGraph, "graph/p2k5l.png", 4, 3);
+    bitmaps.player[PLAYER2][0].init(&appGraph, "assets/graph/players/p2k1l.png", 0, 3);
+    bitmaps.player[PLAYER2][1].init(&appGraph, "assets/graph/players/p2k2l.png", 4, 3);
+    bitmaps.player[PLAYER2][2].init(&appGraph, "assets/graph/players/p2k3l.png", 6, 3);
+    bitmaps.player[PLAYER2][3].init(&appGraph, "assets/graph/players/p2k4l.png", 4, 3);
+    bitmaps.player[PLAYER2][4].init(&appGraph, "assets/graph/players/p2k5l.png", 4, 3);
     
-    bitmaps.player[PLAYER2][5].init(&appGraph, "graph/p2k1r.png", 0, 3);
-    bitmaps.player[PLAYER2][6].init(&appGraph, "graph/p2k2r.png", 0, 3);
-    bitmaps.player[PLAYER2][7].init(&appGraph, "graph/p2k3r.png", 0, 3);
-    bitmaps.player[PLAYER2][8].init(&appGraph, "graph/p2k4r.png", 0, 3);
-    bitmaps.player[PLAYER2][9].init(&appGraph, "graph/p2k5r.png", 0, 3);
+    bitmaps.player[PLAYER2][5].init(&appGraph, "assets/graph/players/p2k1r.png", 0, 3);
+    bitmaps.player[PLAYER2][6].init(&appGraph, "assets/graph/players/p2k2r.png", 0, 3);
+    bitmaps.player[PLAYER2][7].init(&appGraph, "assets/graph/players/p2k3r.png", 0, 3);
+    bitmaps.player[PLAYER2][8].init(&appGraph, "assets/graph/players/p2k4r.png", 0, 3);
+    bitmaps.player[PLAYER2][9].init(&appGraph, "assets/graph/players/p2k5r.png", 0, 3);
 
-    bitmaps.player[PLAYER2][10].init(&appGraph, "graph/p2shoot1.png", 13, 0);
-    bitmaps.player[PLAYER2][11].init(&appGraph, "graph/p2shoot2.png", 13, 3);
-    bitmaps.player[PLAYER2][12].init(&appGraph, "graph/p2win.png", 13, 4);
-    bitmaps.player[PLAYER2][13].init(&appGraph, "graph/p2dead.png");
-    bitmaps.player[PLAYER2][14].init(&appGraph, "graph/p2dead2.png");
-    bitmaps.player[PLAYER2][15].init(&appGraph, "graph/p2dead3.png");
-    bitmaps.player[PLAYER2][16].init(&appGraph, "graph/p2dead4.png");
-    bitmaps.player[PLAYER2][17].init(&appGraph, "graph/p2dead5.png");
-    bitmaps.player[PLAYER2][18].init(&appGraph, "graph/p2dead6.png");
-    bitmaps.player[PLAYER2][19].init(&appGraph, "graph/p2dead7.png");
-    bitmaps.player[PLAYER2][20].init(&appGraph, "graph/p2dead8.png");
+    bitmaps.player[PLAYER2][10].init(&appGraph, "assets/graph/players/p2shoot1.png", 13, 0);
+    bitmaps.player[PLAYER2][11].init(&appGraph, "assets/graph/players/p2shoot2.png", 13, 3);
+    bitmaps.player[PLAYER2][12].init(&appGraph, "assets/graph/players/p2win.png", 13, 4);
+    bitmaps.player[PLAYER2][13].init(&appGraph, "assets/graph/players/p2dead.png");
+    bitmaps.player[PLAYER2][14].init(&appGraph, "assets/graph/players/p2dead2.png");
+    bitmaps.player[PLAYER2][15].init(&appGraph, "assets/graph/players/p2dead3.png");
+    bitmaps.player[PLAYER2][16].init(&appGraph, "assets/graph/players/p2dead4.png");
+    bitmaps.player[PLAYER2][17].init(&appGraph, "assets/graph/players/p2dead5.png");
+    bitmaps.player[PLAYER2][18].init(&appGraph, "assets/graph/players/p2dead6.png");
+    bitmaps.player[PLAYER2][19].init(&appGraph, "assets/graph/players/p2dead7.png");
+    bitmaps.player[PLAYER2][20].init(&appGraph, "assets/graph/players/p2dead8.png");
 
     for (int i = 0; i < 21; i++)
         appGraph.setColorKey(bitmaps.player[PLAYER2][i].getBmp(), 0xFF0000);
@@ -140,13 +141,13 @@ void AppData::initStages()
     stages[i].setMusic("stage1.ogg");
     stages[i].timelimit = 100;
     stages[i].id = i + 1;
-    
+        
     // Floors using clean builder syntax
     stages[i].spawn(StageObjectBuilder::floor().at(550, 50).type(0).time(0));
     stages[i].spawn(StageObjectBuilder::floor().at(250, 250).type(0).time(0));
     stages[i].spawn(StageObjectBuilder::floor().at(350, 150).type(1).time(0));
     stages[i].spawn(StageObjectBuilder::floor().at(550, 150).type(1).time(0));
-    
+        
     // Balls at top with random X
     stages[i].spawn(StageObjectBuilder::ball().time(1).atMaxY());
     stages[i].spawn(StageObjectBuilder::ball().time(20).atMaxY());
@@ -338,15 +339,15 @@ void AppData::release()
 
 void AppData::preloadMenuMusic()
 {
-    AudioManager::instance().preloadMusic("music/menu.ogg");
+    AudioManager::instance().preloadMusic("assets/music/menu.ogg");
 }
 
 void AppData::preloadStageMusic()
 {
     // Preload all stage music tracks
-    AudioManager::instance().preloadMusic("music/stage1.ogg");
-    AudioManager::instance().preloadMusic("music/stage2.ogg");
-    AudioManager::instance().preloadMusic("music/stage3.ogg");
-    AudioManager::instance().preloadMusic("music/stage4.ogg");
-    AudioManager::instance().preloadMusic("music/stage5.ogg");
+    AudioManager::instance().preloadMusic("assets/music/stage1.ogg");
+    AudioManager::instance().preloadMusic("assets/music/stage2.ogg");
+    AudioManager::instance().preloadMusic("assets/music/stage3.ogg");
+    AudioManager::instance().preloadMusic("assets/music/stage4.ogg");
+    AudioManager::instance().preloadMusic("assets/music/stage5.ogg");
 }

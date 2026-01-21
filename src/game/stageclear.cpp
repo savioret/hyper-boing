@@ -17,11 +17,11 @@ StageClear::~StageClear()
 
 int StageClear::init()
 {
-    bmp.title1.init(&appGraph, "graph/nivel.png", 0, 0);
+    bmp.title1.init(&appGraph, "assets/graph/ui/nivel.png", 0, 0);
     appGraph.setColorKey(bmp.title1.getBmp(), 0x00FF00);
-    bmp.title2.init(&appGraph, "graph/completado.png", 0, 0);
+    bmp.title2.init(&appGraph, "assets/graph/ui/completado.png", 0, 0);
     appGraph.setColorKey(bmp.title2.getBmp(), 0x00FF00);
-    bmp.roof.init(&appGraph, "graph/ladrill4.png", 0, 0);
+    bmp.roof.init(&appGraph, "assets/graph/entities/ladrill4.png", 0, 0);
     appGraph.setColorKey(bmp.roof.getBmp(), 0x00FF00);
 
     xt1 = -bmp.title1.getWidth();

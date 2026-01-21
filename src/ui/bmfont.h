@@ -98,7 +98,7 @@ public:
  * Example:
  * ```cpp
  * BMFontRenderer fontRenderer;
- * if (fontRenderer.loadFont(&appGraph, "graph/font/myfont.fnt"))
+ * if (fontRenderer.loadFont(&appGraph, "assets/graph/font/myfont.fnt"))
  * {
  *     fontRenderer.text("Hello!", 10, 10);
  * }

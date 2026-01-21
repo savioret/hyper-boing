@@ -28,9 +28,9 @@ int ConfigScreen::init()
     
     tempRenderMode = globalmode;
 
-    if ( fontLoader.load ( "graph/font/monospaced_10.fnt" ) )
+    if ( fontLoader.load ( "assets/fonts/monospaced_10.fnt" ) )
     {
-        fontBmp.init ( &appGraph, "graph/font/monospaced_10.png", 0, 0 );
+        fontBmp.init ( &appGraph, "assets/fonts/monospaced_10.png", 0, 0 );
         fontRenderer.init ( &appGraph, &fontLoader, &fontBmp);
         fontRenderer.setScale(2.0f); // Scale 2x for readability
     }

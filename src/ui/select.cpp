@@ -5,15 +5,15 @@
 
 int SelectPlayer::initBitmaps()
 {
-    bmp.back.init(&appGraph, "graph/titleback.png", 0, 0);
+    bmp.back.init(&appGraph, "assets/graph/ui/titleback.png", 0, 0);
     appGraph.setColorKey(bmp.back.getBmp(), 0xFF0000);
 
-    bmp.mode.init(&appGraph, "graph/selecmodo.png", 0, 0);
+    bmp.mode.init(&appGraph, "assets/graph/ui/selecmodo.png", 0, 0);
     appGraph.setColorKey(bmp.mode.getBmp(), 0xFF0000);
     
-    bmp.select[PLAYER1].init(&appGraph, "graph/select1p.png", 0, 0);
+    bmp.select[PLAYER1].init(&appGraph, "assets/graph/ui/select1p.png", 0, 0);
     appGraph.setColorKey(bmp.select[PLAYER1].getBmp(), 0x00FF00);
-    bmp.select[PLAYER2].init(&appGraph, "graph/select2p.png", 0, 0);
+    bmp.select[PLAYER2].init(&appGraph, "assets/graph/ui/select2p.png", 0, 0);
     appGraph.setColorKey(bmp.select[PLAYER2].getBmp(), 0x969696);
 
     return 1;
