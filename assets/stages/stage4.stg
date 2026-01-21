@@ -1,0 +1,29 @@
+# Stage 4 Configuration
+stage_id: 4
+background: fondo4.png
+music: stage4.ogg
+time_limit: 100
+player1_x: 250
+player2_x: 350
+
+# Single floor platform
+floor:
+  start: 0
+  x: 250
+  y: 70
+  floor_type: 0
+
+# Small ball at random top position
+ball:
+  start: 1
+  y_max: true
+  size: 3
+
+# Regular balls at random top positions
+ball:
+  start: 1
+  y_max: true
+
+ball:
+  start: 20
+  y_max: true

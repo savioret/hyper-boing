@@ -1,0 +1,41 @@
+# Stage 1 Configuration
+stage_id: 1
+background: fondo1.png
+music: stage1.ogg
+time_limit: 100
+player1_x: 250
+player2_x: 350
+
+# Floor platforms
+floor:
+  start: 0
+  x: 550
+  y: 50
+  type: 0
+
+floor:
+  start: 0
+  x: 250
+  y: 250
+  type: 0
+
+floor:
+  start: 0
+  x: 350
+  y: 150
+  type: 1
+
+floor:
+  start: 0
+  x: 550
+  y: 150
+  type: 1
+
+# Balls spawning at top with random X position (equivalent to .atMaxY())
+ball:
+  start: 1
+  y_max: true
+
+ball:
+  start: 20
+  y_max: true

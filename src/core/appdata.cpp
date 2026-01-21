@@ -135,133 +135,153 @@ void AppData::initStages()
 
     /* Stage 1 - Clean builder syntax */
     int i = 0;
-    stages[i].xpos[PLAYER1] = 250;
-    stages[i].xpos[PLAYER2] = 350;
-    stages[i].setBack("fondo1.png");
-    stages[i].setMusic("stage1.ogg");
-    stages[i].timelimit = 100;
-    stages[i].id = i + 1;
+    if (!StageLoader::load(stages[i], "assets/stages/stage1.stg"))
+    {
+        // Fallback to programmatic definition if file loading fails
+        stages[i].xpos[PLAYER1] = 250;
+        stages[i].xpos[PLAYER2] = 350;
+        stages[i].setBack("fondo1.png");
+        stages[i].setMusic("stage1.ogg");
+        stages[i].timelimit = 100;
+        stages[i].id = i + 1;
         
-    // Floors using clean builder syntax
-    stages[i].spawn(StageObjectBuilder::floor().at(550, 50).type(0).time(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(250, 250).type(0).time(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(350, 150).type(1).time(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(550, 150).type(1).time(0));
+        // Floors using clean builder syntax
+        stages[i].spawn(StageObjectBuilder::floor().at(550, 50).type(0).time(0));
+        stages[i].spawn(StageObjectBuilder::floor().at(250, 250).type(0).time(0));
+        stages[i].spawn(StageObjectBuilder::floor().at(350, 150).type(1).time(0));
+        stages[i].spawn(StageObjectBuilder::floor().at(550, 150).type(1).time(0));
         
-    // Balls at top with random X
-    stages[i].spawn(StageObjectBuilder::ball().time(1).atMaxY());
-    stages[i].spawn(StageObjectBuilder::ball().time(20).atMaxY());
+        // Balls at top with random X
+        stages[i].spawn(StageObjectBuilder::ball().time(1).atMaxY());
+        stages[i].spawn(StageObjectBuilder::ball().time(20).atMaxY());
+    }
 
     /* Stage 2 - Complex formation */
     i = 1;
-    stages[i].xpos[PLAYER1] = stages[i].xpos[PLAYER2] = 270;
-    stages[i].setBack("fondo2.png");
-    stages[i].setMusic("stage2.ogg");
-    stages[i].timelimit = 100;
-    stages[i].id = i + 1;
-    
-    // Create small balls in formation (fixed positions)
-    for (int y = 0; y < 2; y++)
+    if (!StageLoader::load(stages[i], "assets/stages/stage2.stg"))
     {
-        int dirX = (y == 0) ? -1 : 1;
-        for (int x = 0; x < 10; x++)
+        // Fallback to programmatic definition if file loading fails
+        stages[i].xpos[PLAYER1] = stages[i].xpos[PLAYER2] = 270;
+        stages[i].setBack("fondo2.png");
+        stages[i].setMusic("stage2.ogg");
+        stages[i].timelimit = 100;
+        stages[i].id = i + 1;
+        
+        // Create small balls in formation (fixed positions)
+        for (int y = 0; y < 2; y++)
         {
-            stages[i].spawn(
-                StageObjectBuilder::ball()
-                    .at(128 + 300 * y + x * 16, 100)
-                    .time(1)
-                    .size(3)
-                    .top(200)
-                    .dir(dirX, 1)
-            );
+            int dirX = (y == 0) ? -1 : 1;
+            for (int x = 0; x < 10; x++)
+            {
+                stages[i].spawn(
+                    StageObjectBuilder::ball()
+                        .at(128 + 300 * y + x * 16, 100)
+                        .time(1)
+                        .size(3)
+                        .top(200)
+                        .dir(dirX, 1)
+                );
+            }
         }
     }
 
     /* Stage 3 - Mixed approaches */
     i = 2;
-    stages[i].xpos[PLAYER1] = 200;
-    stages[i].xpos[PLAYER2] = 350;
-    stages[i].setBack("fondo3.png");
-    stages[i].setMusic("stage3.ogg");
-    stages[i].timelimit = 100;
-    stages[i].id = i + 1;
-    
-    // Floor
-    stages[i].spawn(StageObjectBuilder::floor().at(250, 70).type(0).time(0));
-    
-    // Random top balls
-    stages[i].spawn(StageObjectBuilder::ball().time(1).atMaxY());
-    stages[i].spawn(StageObjectBuilder::ball().time(1).atMaxY());
-    
-    // Balls with random X at specific Y
-    stages[i].spawn(StageObjectBuilder::ball().time(1).size(2).atY(400));
-    stages[i].spawn(StageObjectBuilder::ball().time(1).size(2).atY(400).dir(-1, 1));
+    if (!StageLoader::load(stages[i], "assets/stages/stage3.stg"))
+    {
+        // Fallback to programmatic definition if file loading fails
+        stages[i].xpos[PLAYER1] = 200;
+        stages[i].xpos[PLAYER2] = 350;
+        stages[i].setBack("fondo3.png");
+        stages[i].setMusic("stage3.ogg");
+        stages[i].timelimit = 100;
+        stages[i].id = i + 1;
+        
+        // Floor
+        stages[i].spawn(StageObjectBuilder::floor().at(250, 70).type(0).time(0));
+        
+        // Random top balls
+        stages[i].spawn(StageObjectBuilder::ball().time(1).atMaxY());
+        stages[i].spawn(StageObjectBuilder::ball().time(1).atMaxY());
+        
+        // Balls with random X at specific Y
+        stages[i].spawn(StageObjectBuilder::ball().time(1).size(2).atY(400));
+        stages[i].spawn(StageObjectBuilder::ball().time(1).size(2).atY(400).dir(-1, 1));
+    }
 
     /* Stage 4 - Now using new API */
     i = 3;
-    stages[i].setBack("fondo4.png");
-    stages[i].setMusic("stage4.ogg");
-    stages[i].timelimit = 100;
-    stages[i].id = i + 1;
-    
-    stages[i].spawn(StageObjectBuilder::floor().at(250, 70).type(0).time(0));
-    
-    // Small ball at random top position
-    stages[i].spawn(StageObjectBuilder::ball().time(1).size(3).atMaxY());
-    
-    // Regular balls at random top positions
-    stages[i].spawn(StageObjectBuilder::ball().time(1).atMaxY());
-    stages[i].spawn(StageObjectBuilder::ball().time(20).atMaxY());
+    if (!StageLoader::load(stages[i], "assets/stages/stage4.stg"))
+    {
+        // Fallback to programmatic definition if file loading fails
+        stages[i].setBack("fondo4.png");
+        stages[i].setMusic("stage4.ogg");
+        stages[i].timelimit = 100;
+        stages[i].id = i + 1;
+        
+        stages[i].spawn(StageObjectBuilder::floor().at(250, 70).type(0).time(0));
+        
+        // Small ball at random top position
+        stages[i].spawn(StageObjectBuilder::ball().time(1).size(3).atMaxY());
+        
+        // Regular balls at random top positions
+        stages[i].spawn(StageObjectBuilder::ball().time(1).atMaxY());
+        stages[i].spawn(StageObjectBuilder::ball().time(20).atMaxY());
+    }
 
     /* Stage 5 - Staircases and side spawns */
     i = 4;
-    stages[i].xpos[PLAYER1] = 250;
-    stages[i].xpos[PLAYER2] = 350;
-    stages[i].setBack("fondo5.png");
-    stages[i].setMusic("stage5.ogg");
-    stages[i].timelimit = 100;
-    stages[i].id = i + 1;
-    
-    // Left staircase
-    stages[i].spawn(StageObjectBuilder::floor().at(16, 100).type(0).time(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(80, 164).type(0).time(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(144, 164).type(1).time(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(144, 228).type(0).time(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(208, 228).type(1).time(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(208, 292).type(0).time(0));
-    
-    // Right staircase
-    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 80, 100).type(0).time(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 128, 164).type(0).time(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 144, 164).type(1).time(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 192, 228).type(0).time(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 208, 228).type(1).time(0));
-    stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 256, 292).type(0).time(0));
-    
-    // Small balls spawning from sides (fixed X positions)
-    for (int x = 0; x < 15; x++)
+    if (!StageLoader::load(stages[i], "assets/stages/stage5.stg"))
     {
-        int randomTop = std::rand() % 150 + 150;
+        // Fallback to programmatic definition if file loading fails
+        stages[i].xpos[PLAYER1] = 250;
+        stages[i].xpos[PLAYER2] = 350;
+        stages[i].setBack("fondo5.png");
+        stages[i].setMusic("stage5.ogg");
+        stages[i].timelimit = 100;
+        stages[i].id = i + 1;
         
-        // Left side
-        stages[i].spawn(
-            StageObjectBuilder::ball()
-                .at(17, 50)
-                .time(5 * x)
-                .size(3)
-                .top(randomTop)
-                .dir(1, 1)
-        );
+        // Left staircase
+        stages[i].spawn(StageObjectBuilder::floor().at(16, 100).type(0).time(0));
+        stages[i].spawn(StageObjectBuilder::floor().at(80, 164).type(0).time(0));
+        stages[i].spawn(StageObjectBuilder::floor().at(144, 164).type(1).time(0));
+        stages[i].spawn(StageObjectBuilder::floor().at(144, 228).type(0).time(0));
+        stages[i].spawn(StageObjectBuilder::floor().at(208, 228).type(1).time(0));
+        stages[i].spawn(StageObjectBuilder::floor().at(208, 292).type(0).time(0));
         
-        // Right side
-        stages[i].spawn(
-            StageObjectBuilder::ball()
-                .at(MAX_X - 30, 50)
-                .time(5 * x)
-                .size(3)
-                .top(randomTop)
-                .dir(-1, 1)
-        );
+        // Right staircase
+        stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 80, 100).type(0).time(0));
+        stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 128, 164).type(0).time(0));
+        stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 144, 164).type(1).time(0));
+        stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 192, 228).type(0).time(0));
+        stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 208, 228).type(1).time(0));
+        stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 256, 292).type(0).time(0));
+        
+        // Small balls spawning from sides (fixed X positions)
+        for (int x = 0; x < 15; x++)
+        {
+            int randomTop = std::rand() % 150 + 150;
+            
+            // Left side
+            stages[i].spawn(
+                StageObjectBuilder::ball()
+                    .at(17, 50)
+                    .time(5 * x)
+                    .size(3)
+                    .top(randomTop)
+                    .dir(1, 1)
+            );
+            
+            // Right side
+            stages[i].spawn(
+                StageObjectBuilder::ball()
+                    .at(MAX_X - 30, 50)
+                    .time(5 * x)
+                    .size(3)
+                    .top(randomTop)
+                    .dir(-1, 1)
+            );
+        }
     }
 
     /* Stage 6 - Grid pattern */

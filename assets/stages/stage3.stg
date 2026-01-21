@@ -1,0 +1,36 @@
+# Stage 3 Configuration - Mixed Approaches
+stage_id: 3
+background: fondo3.png
+music: stage3.ogg
+time_limit: 100
+player1_x: 200
+player2_x: 350
+
+# Single floor platform
+floor:
+  start: 0
+  x: 250
+  y: 70
+  floor_type: 0
+
+# Random top balls (fully random X, Y at top)
+ball:
+  start: 1
+  y_max: true
+
+ball:
+  start: 1
+  y_max: true
+
+# Balls with random X at specific Y (size 2)
+ball:
+  start: 1
+  y: 400
+  size: 2
+
+ball:
+  start: 1
+  y: 400
+  size: 2
+  dirX: -1
+  dirY: 1
