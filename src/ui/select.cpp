@@ -1,4 +1,4 @@
-#include "pang.h"
+#include "main.h"
 #include "appdata.h"
 #include "appconsole.h"
 #include <SDL.h>

@@ -1,4 +1,4 @@
-#include "pang.h"
+#include "main.h"
 #include <cmath>
 
 #define ABSF(x) if((x)<0.0) (x)=-(x);

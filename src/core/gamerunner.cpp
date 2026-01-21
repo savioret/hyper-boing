@@ -1,5 +1,5 @@
 #include "gamerunner.h"
-#include "pang.h"
+#include "main.h"
 #include "menu.h"
 #include "configscreen.h"
 #include "logger.h"

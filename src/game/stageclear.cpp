@@ -1,6 +1,6 @@
 #include <cstdio>
 #include <cstring>
-#include "pang.h"
+#include "main.h"
 #include "appdata.h"
 
 StageClear::StageClear(Scene* scn, int targetStageNum)

@@ -3,7 +3,7 @@
 #include "sprite.h"
 #include "player.h"
 #include "stage.h"
-#include "pang.h"
+#include "main.h"
 #include <cstdlib>
 
 // Temporarily undefine macros that conflict with member names during construction

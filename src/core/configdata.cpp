@@ -1,7 +1,7 @@
 #pragma warning(push)
 #pragma warning(disable: 4996)
 
-#include "pang.h"
+#include "main.h"
 #include "configdata.h"
 #include <SDL.h>
 #include <cstdio>

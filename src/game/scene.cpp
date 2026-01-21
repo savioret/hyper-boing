@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <climits>
 #include <memory>
-#include "pang.h"
+#include "main.h"
 #include "appdata.h"
 #include "appconsole.h"
 #include "logger.h"

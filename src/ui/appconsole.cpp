@@ -3,7 +3,7 @@
 #include "sprite.h"
 #include "bmfont.h"
 #include "logger.h"
-#include "pang.h"
+#include "main.h"
 #include <algorithm>
 #include <sstream>
 

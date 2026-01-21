@@ -1,4 +1,4 @@
-#include "pang.h"
+#include "main.h"
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>

@@ -1,4 +1,4 @@
-#include "pang.h"
+#include "main.h"
 #include <cstring>
 
 Player::Player(int sx, int sy, int id)

@@ -32,68 +32,76 @@ endif()
 
 # Sources
 set(SOURCES
-    app.cpp
-    appconsole.cpp
-    appdata.cpp
-    audiomanager.cpp
-    ball.cpp
-    bmfont.cpp
-    configdata.cpp
-    configscreen.cpp
-    floor.cpp
-    gamerunner.cpp
-    graph.cpp
-    item.cpp
-    logger.cpp
-    menu.cpp
-    minput.cpp
-    pang.cpp
-    player.cpp
-    scene.cpp
-    select.cpp
-    shoot.cpp
-    sprite.cpp
-    stage.cpp
-    stageclear.cpp
-    textoverlay.cpp
+    src/main.cpp
+    src/core/app.cpp
+    src/ui/appconsole.cpp
+    src/core/appdata.cpp
+    src/core/audiomanager.cpp
+    src/entities/ball.cpp
+    src/ui/bmfont.cpp
+    src/core/configdata.cpp
+    src/ui/configscreen.cpp
+    src/game/floor.cpp
+    src/core/gamerunner.cpp
+    src/core/graph.cpp
+    src/game/item.cpp
+    src/core/logger.cpp
+    src/ui/menu.cpp
+    src/core/minput.cpp
+    src/entities/player.cpp
+    src/game/scene.cpp
+    src/ui/select.cpp
+    src/entities/shoot.cpp
+    src/core/sprite.cpp
+    src/game/stage.cpp
+    src/game/stageclear.cpp
+    src/game/stageloader.cpp
+    src/ui/textoverlay.cpp
 )
 
 # Headers
 set(HEADERS
-    app.h
-    appconsole.h
-    appdata.h
-    audiomanager.h
-    ball.h
-    bmfont.h
-    configscreen.h
-    floor.h
-    gameobject.h
-    gamerunner.h
-    graph.h
-    item.h
-    logger.h
-    menu.h
-    minput.h
-    pang.h
-    player.h
-    scene.h
-    select.h
-    shoot.h
-    sprite.h
-    stage.h
-    stageclear.h
-    textoverlay.h
-    resource.h
+    src/main.h
+    src/core/app.h
+    src/ui/appconsole.h
+    src/core/appdata.h
+    src/core/audiomanager.h
+    src/entities/ball.h
+    src/ui/bmfont.h
+    src/ui/configscreen.h
+    src/game/floor.h
+    src/core/gameobject.h
+    src/core/gamerunner.h
+    src/core/graph.h
+    src/game/item.h
+    src/core/logger.h
+    src/ui/menu.h
+    src/core/minput.h
+    src/entities/player.h
+    src/game/scene.h
+    src/ui/select.h
+    src/entities/shoot.h
+    src/core/sprite.h
+    src/game/stage.h
+    src/game/stageclear.h
+    src/game/stageloader.h
+    src/ui/textoverlay.h
+    src/resource.h
 )
 
 if(WIN32)
-    list(APPEND SOURCES pang.rc)
+    list(APPEND SOURCES src/pang.rc)
 endif()
 
 add_executable(boing ${SOURCES} ${HEADERS})
 
-target_include_directories(boing PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(boing PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/game
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/entities
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui
+)
 
 target_link_libraries(boing
     PRIVATE
