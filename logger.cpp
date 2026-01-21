@@ -146,6 +146,33 @@ void Logger::setConsoleColor(LogLevel level)
     }
     
     SetConsoleTextAttribute((HANDLE)consoleHandle, color);
+#else
+    // ANSI color codes for Unix/Linux
+    const char* ansiColor = "\033[0m"; // Default reset
+    
+    switch (level)
+    {
+        case LogLevel::TRACE:
+            ansiColor = "\033[90m"; // Dark gray
+            break;
+        case LogLevel::DEBUG:
+            ansiColor = "\033[96m"; // Bright cyan
+            break;
+        case LogLevel::INFO:
+            ansiColor = "\033[97m"; // Bright white
+            break;
+        case LogLevel::SUCCESS:
+            ansiColor = "\033[92m"; // Bright green
+            break;
+        case LogLevel::WARNING:
+            ansiColor = "\033[93m"; // Bright yellow
+            break;
+        case LogLevel::ERR:
+            ansiColor = "\033[91m"; // Bright red
+            break;
+    }
+    
+    printf("%s", ansiColor);
 #endif
 }
 
@@ -155,6 +182,9 @@ void Logger::resetConsoleColor()
     if (!consoleHandle) return;
     SetConsoleTextAttribute((HANDLE)consoleHandle, 
         FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+#else
+    // Reset ANSI color
+    printf("\033[0m");
 #endif
 }
 

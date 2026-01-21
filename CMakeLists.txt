@@ -4,6 +4,18 @@ project(boing VERSION 1.0)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Define _DEBUG for Debug builds and NDEBUG for Release builds
+# This ensures compatibility across platforms (Windows MSVC uses _DEBUG, but not GCC/Clang by default)
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_compile_definitions(_DEBUG)
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_compile_definitions(NDEBUG)
+endif()
+
 # Find dependencies
 find_package(SDL2 REQUIRED)
 find_package(SDL2_image REQUIRED)
