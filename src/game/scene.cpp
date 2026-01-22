@@ -871,23 +871,20 @@ void Scene::drawDebugOverlay()
     
     // Call base class to populate default section with basic info
     GameState::drawDebugOverlay();
-    
-    char txt[256];
-    
+
     // Add player info to default section
     if (appData.getPlayers()[PLAYER1])
     {
 		Player* p = appData.getPlayers()[PLAYER1];
-        std::snprintf(txt, sizeof(txt), "P1: Score=%d Lives=%d Shoots=%d x=%.1f y=%.1f", 
+        textOverlay.addTextF("P1: Score=%d Lives=%d Shoots=%d x=%.1f y=%.1f",
             p->getScore(),
             p->getLives(),
             p->getNumShoots(),
-			p->getX (),
-			p->getY ()
+			p->getX(),
+			p->getY()
         );
-        textOverlay.addText(txt);
     }
-    
+
     // Show up to 10 balls with all info in one line per ball
     if (!lsBalls.empty())
     {
@@ -895,35 +892,31 @@ void Scene::drawDebugOverlay()
         for (Ball* ball : lsBalls)
         {
             if (ballCount >= 15) break; // Limit to 15 balls
-            
-            std::snprintf(txt, sizeof(txt), "Ball%d: x=%.0f y=%.0f sz=%d dia=%d dx=%d dy=%d", 
+
+            textOverlay.addTextFS("ball-info", "Ball%d: x=%.0f y=%.0f sz=%d dia=%d dx=%d dy=%d",
                     ballCount,
-                    ball->getX(), 
-                    ball->getY(), 
-                    ball->getSize(), 
+                    ball->getX(),
+                    ball->getY(),
+                    ball->getSize(),
                     ball->getDiameter(),
                     ball->getDirX(),
                     ball->getDirY());
-            textOverlay.addText(txt, "ball-info");
             ballCount++;
         }
     }
-    
+
     // Add game state info to default section
-    std::snprintf(txt, sizeof(txt), "Objects: Balls=%d Shoots=%d Floors=%d", 
+    textOverlay.addTextF("Objects: Balls=%d Shoots=%d Floors=%d",
             (int)lsBalls.size(),
             (int)lsShoots.size(),
             (int)lsFloor.size());
-    textOverlay.addText(txt);
-    
-    std::snprintf(txt, sizeof(txt), "Stage: %d  Time=%d  Timeline=%d", 
+
+    textOverlay.addTextF("Stage: %d  Time=%d  Timeline=%d",
             stage->id, timeRemaining, timeLine);
-    textOverlay.addText(txt);
-    
-    std::snprintf(txt, sizeof(txt), "GameOver=%s  LevelClear=%s", 
+
+    textOverlay.addTextF("GameOver=%s  LevelClear=%s",
             gameOver ? "YES" : "NO",
             levelClear ? "YES" : "NO");
-    textOverlay.addText(txt);
 }
 
 int Scene::drawAll()

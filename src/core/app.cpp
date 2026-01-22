@@ -69,16 +69,12 @@ void GameState::drawDebugOverlay()
     
     // Clear previous frame's debug text
     textOverlay.clear();
-    
-    char txt[256];
-    
-    std::snprintf(txt, sizeof(txt), "FPS = %d  FPSVIRT = %d", fps, fpsv);
-    textOverlay.addText(txt);
-    
-    std::snprintf(txt, sizeof(txt), "Paused = %s  Active = %s", 
+
+    textOverlay.addTextF("FPS = %d  FPSVIRT = %d", fps, fpsv);
+
+    textOverlay.addTextF("Paused = %s  Active = %s",
             pause ? "YES" : "NO",
             active ? "YES" : "NO");
-    textOverlay.addText(txt);
 }
 
 /**

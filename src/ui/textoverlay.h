@@ -182,7 +182,41 @@ public:
      * @param sectionName Section to add to (defaults to "default")
      */
     void addText(const std::string& text, const std::string& sectionName = "default");
-    
+
+    /**
+     * Add formatted text to the default section (printf-style)
+     * @param format Format string (printf-style)
+     * @param args Format arguments
+     *
+     * Example:
+     *   textOverlay.addTextF("FPS = %d", fps);
+     *   textOverlay.addTextF("Ball%d: x=%.0f y=%.0f", count, x, y);
+     */
+    template<typename... Args>
+    void addTextF(const char* format, Args&&... args)
+    {
+        char buffer[512];
+        std::snprintf(buffer, sizeof(buffer), format, std::forward<Args>(args)...);
+        addText(buffer, "default");
+    }
+
+    /**
+     * Add formatted text to a named section (printf-style)
+     * @param sectionName Section to add to
+     * @param format Format string (printf-style)
+     * @param args Format arguments
+     *
+     * Example:
+     *   textOverlay.addTextFS("ball-info", "Ball%d: x=%.0f y=%.0f", count, x, y);
+     */
+    template<typename... Args>
+    void addTextFS(const char* sectionName, const char* format, Args&&... args)
+    {
+        char buffer[512];
+        std::snprintf(buffer, sizeof(buffer), format, std::forward<Args>(args)...);
+        addText(buffer, sectionName);
+    }
+
     /**
      * Clear all text from a specific section
      * @param sectionName Section to clear (empty = clear all sections)

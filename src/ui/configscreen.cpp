@@ -241,11 +241,9 @@ void ConfigScreen::drawDebugOverlay()
     
     // Call base class to populate default section
     GameState::drawDebugOverlay();
-    
-    char txt[256];
-    std::snprintf(txt, sizeof(txt), "Selected = %d  State = %d", 
+
+    textOverlay.addTextF("Selected = %d  State = %d",
             selectedOption, (int)state);
-    textOverlay.addText(txt);
 }
 
 void ConfigScreen::drawKeyName(SDL_Scancode key, int x, int y)

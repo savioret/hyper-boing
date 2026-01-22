@@ -180,19 +180,14 @@ void Menu::drawDebugOverlay()
     
     // Call base class to populate default section
     GameState::drawDebugOverlay();
-    
-    char txt[256];
 
-    std::snprintf(txt, sizeof(txt), "Title: boingY=%d hyperX=%d bgAlpha=%d ballAlpha=%d", 
+    textOverlay.addTextF("Title: boingY=%d hyperX=%d bgAlpha=%d ballAlpha=%d",
         boingY, hyperX, bgAlpha, ballAlpha);
-    textOverlay.addText(txt);
 
-    std::snprintf(txt, sizeof(txt), "AnimComplete=%s Selected=%d", 
+    textOverlay.addTextF("AnimComplete=%s Selected=%d",
         animComplete ? "YES" : "NO", selectedOption);
-    textOverlay.addText(txt);
-    
-    std::snprintf(txt, sizeof(txt), "Scroll X=%d Y=%d", (int)appData.scrollX, (int)appData.scrollY);
-    textOverlay.addText(txt);
+
+    textOverlay.addTextF("Scroll X=%d Y=%d", (int)appData.scrollX, (int)appData.scrollY);
 }
 
 GameState* Menu::moveAll()
