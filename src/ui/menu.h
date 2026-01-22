@@ -13,6 +13,9 @@ struct MenuBitmaps
     Sprite title_boing;  // Front layer - drops from top
     Sprite title_hyper;  // Middle layer - slides from left
     Sprite title_bg;     // Back layer - fades in
+    Sprite title_bg_redball;
+    Sprite title_bg_greenball;
+    Sprite title_bg_blueball;
 };
 
 /**
@@ -27,12 +30,13 @@ class Menu : public GameState
 {
 private:
     MenuBitmaps bmp;
-    int xPos, yPos; // legacy position variables
     
     // Animation state for layered title
     int boingY;        // title_boing drops from top
     int hyperX;        // title_hyper slides from left
     int bgAlpha;       // title_bg fades in (0-255)
+    int ballAlpha;     // colored balls fade in (0-255)
+
     bool animComplete; // true when all animations finished
     
     int selectedOption; // 0=PLAY, 1=CONFIGURATION, 2=EXIT

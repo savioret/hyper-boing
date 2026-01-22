@@ -8,7 +8,7 @@
 
 int Menu::initBitmaps()
 {
-    // Load three layered title images
+    // Load layered title images
     bmp.title_boing.init(&appGraph, "assets/graph/ui/title_boing.png", 0, 0);
     //appGraph.setColorKey(bmp.title_boing.getBmp(), 0x00FF00);
     
@@ -17,6 +17,10 @@ int Menu::initBitmaps()
     
     bmp.title_bg.init(&appGraph, "assets/graph/ui/title_bg.png", 0, 0);
     //appGraph.setColorKey(bmp.title_bg.getBmp(), 0x00FF00);
+
+    bmp.title_bg_redball.init(&appGraph, "assets/graph/ui/title_bg_redball.png", 0, 0);
+    bmp.title_bg_greenball.init(&appGraph, "assets/graph/ui/title_bg_greenball.png", 0, 0);
+    bmp.title_bg_blueball.init(&appGraph, "assets/graph/ui/title_bg_blueball.png", 0, 0);
     
     // Initialize shared background
     GameState::initSharedBackground();
@@ -28,9 +32,9 @@ int Menu::initBitmaps()
 }
 
 Menu::Menu()
-    : xPos(0), yPos(0), selectedOption(0), visible(false), blinkCounter(0),
+    : selectedOption(0), visible(false), blinkCounter(0),
       upPressed(false), downPressed(false), enterPressed(false),
-      boingY(-300), hyperX(-400), bgAlpha(0), animComplete(false)
+      boingY(-300), hyperX(-400), bgAlpha(0), ballAlpha(0), animComplete(false)
 {
 }
 
@@ -41,14 +45,12 @@ int Menu::init()
     gameinf.isMenu() = true;
     initBitmaps();
     
-    // Legacy position (kept for compatibility)
-    xPos = 180;
-    yPos = -300;
-    
     // Initialize layered title animation
     boingY = -300;      // Starts above screen
     hyperX = -400;      // Starts off-screen to the left
     bgAlpha = 0;        // Starts fully transparent
+    ballAlpha = 0;      // Balls fade in after background
+
     animComplete = false;
 
     selectedOption = 0; // PLAY
@@ -68,6 +70,9 @@ int Menu::release()
     bmp.title_boing.release();
     bmp.title_hyper.release();
     bmp.title_bg.release();
+    bmp.title_bg_redball.release();
+    bmp.title_bg_greenball.release();
+    bmp.title_bg_blueball.release();
     fontRenderer.release();  // BMFontRenderer handles its own cleanup
 
     CloseMusic();
@@ -77,28 +82,39 @@ int Menu::release()
 
 void Menu::drawTitleLayers()
 {
-    int centerX = (RES_X - bmp.title_bg.getWidth()) / 2;
-    int targetY = 40;
-    
-    // Layer 1 (back): title_bg - fades in
+    const int centerX = (RES_X - bmp.title_bg.getWidth()) / 2;
+    const int titleY = 5;
+
+    // Background layer - fades in
     if (bgAlpha > 0)
     {
         SDL_SetTextureAlphaMod(bmp.title_bg.getBmp(), (Uint8)bgAlpha);
-        appGraph.drawClipped(&bmp.title_bg, centerX, targetY);
+        appGraph.drawClipped(&bmp.title_bg, centerX, titleY + 60);
     }
 
-    // Layer 2 (front): title_boing - drops from top
+    // Colored balls - fade in at static positions
+    if (ballAlpha > 0)
+    {
+        SDL_SetTextureAlphaMod(bmp.title_bg_redball.getBmp(), (Uint8)ballAlpha);
+        SDL_SetTextureAlphaMod(bmp.title_bg_greenball.getBmp(), (Uint8)ballAlpha);
+        SDL_SetTextureAlphaMod(bmp.title_bg_blueball.getBmp(), (Uint8)ballAlpha);
+
+        appGraph.drawClipped(&bmp.title_bg_redball, centerX - 10, titleY + 80);
+        appGraph.drawClipped(&bmp.title_bg_blueball, centerX + 230, titleY + 180);
+        appGraph.drawClipped(&bmp.title_bg_greenball, centerX + 350, titleY + 65);
+    }
+
+    // "HYPER" text - slides from left
+    if (hyperX > -400)
+    {
+        appGraph.drawClipped(&bmp.title_hyper, hyperX - 30, titleY + 20);
+    }
+
+    // "BOING" text - drops from top
     if (boingY > -300)
     {
-        appGraph.drawClipped(&bmp.title_boing, centerX+30, boingY);
+        appGraph.drawClipped(&bmp.title_boing, centerX + 30, boingY);
     }
-
-    // Layer 3 (middle): title_hyper - slides from left
-    if ( hyperX > -400 )
-    {
-        appGraph.drawClipped ( &bmp.title_hyper, hyperX, targetY+30 );
-    }
-
 }
 
 void Menu::drawTitle()
@@ -166,11 +182,13 @@ void Menu::drawDebugOverlay()
     GameState::drawDebugOverlay();
     
     char txt[256];
-    
-    std::snprintf(txt, sizeof(txt), "Title Boing Y = %d  Hyper X = %d  BG Alpha = %d", boingY, hyperX, bgAlpha);
+
+    std::snprintf(txt, sizeof(txt), "Title: boingY=%d hyperX=%d bgAlpha=%d ballAlpha=%d", 
+        boingY, hyperX, bgAlpha, ballAlpha);
     textOverlay.addText(txt);
-    
-    std::snprintf(txt, sizeof(txt), "AnimComplete = %s  Selected = %d", animComplete ? "YES" : "NO", selectedOption);
+
+    std::snprintf(txt, sizeof(txt), "AnimComplete=%s Selected=%d", 
+        animComplete ? "YES" : "NO", selectedOption);
     textOverlay.addText(txt);
     
     std::snprintf(txt, sizeof(txt), "Scroll X=%d Y=%d", (int)appData.scrollX, (int)appData.scrollY);
@@ -180,23 +198,27 @@ void Menu::drawDebugOverlay()
 GameState* Menu::moveAll()
 {
     if (blinkCounter > 0) blinkCounter--;
-    else blinkCounter = 30;
+    else 
+    {
+        blinkCounter = 30;
+        visible = !visible;
+    }
 
     GameState::updateScrollingBackground();
 
     // Animate layered title elements
     if (!animComplete)
     {
-        // Phase 1: title_boing drops from top (fast)
-        if (boingY < 120)
+        // Phase 1: title_boing drops from top
+        if (boingY < 85)
         {
             boingY += 10;
-            if (boingY >= 120 )
+            if (boingY >= 85)
             {
-                boingY = 120;
+                boingY = 85;
             }
         }
-        // Phase 2: title_hyper slides from left (after boing settles)
+        // Phase 2: title_hyper slides from left
         else if (hyperX < (RES_X - bmp.title_hyper.getWidth()) / 2)
         {
             hyperX += 15;
@@ -205,24 +227,26 @@ GameState* Menu::moveAll()
                 hyperX = (RES_X - bmp.title_hyper.getWidth()) / 2;
             }
         }
-        // Phase 3: title_bg fades in (after hyper arrives)
+        // Phase 3: title_bg fades in
         else if (bgAlpha < 255)
         {
-            bgAlpha += 5;
-            if (bgAlpha >= 255)
+            bgAlpha += 10;
+            if (bgAlpha > 255) bgAlpha = 255;
+        }
+        // Phase 4: balls fade in
+        else if (ballAlpha < 255)
+        {
+            ballAlpha += 10;
+            if (ballAlpha >= 255)
             {
-                bgAlpha = 255;
+                ballAlpha = 255;
                 animComplete = true;
             }
         }
     }
     
-    // Legacy animation (kept for compatibility)
-    if (yPos < 120) yPos += 10;
-    else if (!blinkCounter) visible = !visible;
-
     // Enable menu interaction only after animations complete
-    if (animComplete && yPos >= 50)
+    if (animComplete)
     {
         if (appInput.key(SDL_SCANCODE_UP) || appInput.key(gameinf.getKeys()[PLAYER1].left))
         {
@@ -234,7 +258,7 @@ GameState* Menu::moveAll()
             }
         }
         else upPressed = false;
-            
+
         if (appInput.key(SDL_SCANCODE_DOWN) || appInput.key(gameinf.getKeys()[PLAYER1].right))
         {
             if (!downPressed)
@@ -245,7 +269,7 @@ GameState* Menu::moveAll()
             }
         }
         else downPressed = false;
-        
+
         if (appInput.key(SDL_SCANCODE_RETURN) || appInput.key(gameinf.getKeys()[PLAYER1].shoot))
         {
             if (!enterPressed)
