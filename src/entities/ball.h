@@ -4,7 +4,7 @@
 #include "gameobject.h"
 
 class Scene;
-class Shoot;
+class Shot;
 class Player;
 class Floor;
 class Sprite;
@@ -43,7 +43,7 @@ public:
     // IGameObject lifecycle hook
     void onDeath() override;
     
-    bool collision(Shoot* shoot);
+    bool collision(Shot* shot);
     SDL_Point collision(Floor* floor);
     bool collision(Player* player);
     

@@ -52,10 +52,15 @@ set(SOURCES
     src/game/scene.cpp
     src/ui/select.cpp
     src/entities/shoot.cpp
+    src/entities/shot.cpp
+    src/entities/harpoonshot.cpp
+    src/entities/gunshot.cpp
     src/core/sprite.cpp
+    src/core/spritesheet.cpp
     src/game/stage.cpp
     src/game/stageclear.cpp
     src/game/stageloader.cpp
+    src/game/weapontype.cpp
     src/ui/textoverlay.cpp
 )
 
@@ -81,10 +86,15 @@ set(HEADERS
     src/game/scene.h
     src/ui/select.h
     src/entities/shoot.h
+    src/entities/shot.h
+    src/entities/harpoonshot.h
+    src/entities/gunshot.h
     src/core/sprite.h
+    src/core/spritesheet.h
     src/game/stage.h
     src/game/stageclear.h
     src/game/stageloader.h
+    src/game/weapontype.h
     src/ui/textoverlay.h
     src/resource.h
 )

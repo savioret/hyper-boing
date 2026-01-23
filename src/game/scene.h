@@ -8,6 +8,8 @@
 #include "player.h"
 #include "ball.h"
 #include "shoot.h"
+#include "shot.h"
+#include "spritesheet.h"
 #include "floor.h"
 #include "item.h"
 #include "stage.h"
@@ -37,7 +39,7 @@ struct SceneBitmaps
     Sprite back;
     Sprite redball[4];
     Sprite floor[2];
-    Sprite shoot[3];
+    Sprite shoot[3];  // Keep for backward compatibility during transition
     Sprite mark[5];
     Sprite fontnum[3];
     Sprite miniplayer[2];
@@ -45,6 +47,15 @@ struct SceneBitmaps
     Sprite gameover;
     Sprite continu;
     Sprite time;
+
+    // Weapon-specific sprites
+    struct
+    {
+        Sprite harpoonHead;
+        Sprite harpoonTail1;
+        Sprite harpoonTail2;
+        SpriteSheet gunBullet;
+    } weapons;
 };
 
 /**
@@ -109,7 +120,7 @@ public:
     std::list<Ball*> lsBalls;
     std::list<Item*> lsItems;
     std::list<Floor*> lsFloor;
-    std::list<Shoot*> lsShoots;
+    std::list<Shot*> lsShoots;  // Changed from Shoot* to Shot* for polymorphism
 
     Scene(Stage* stg, std::unique_ptr<StageClear> pstgclr = nullptr);
     virtual ~Scene() {}
@@ -119,6 +130,16 @@ public:
     void addShoot(Player* pl);
     void addFloor(int x, int y, int id);
     void shoot(Player* pl);
+    Player* getPlayer(int index);  // Get player by index (0 or 1)
+
+    /**
+     * Create a shot of the appropriate type based on weapon type
+     * @param pl Player firing the shot
+     * @param type Weapon type
+     * @param xOffset Horizontal offset for multi-projectile weapons
+     * @return Pointer to created Shot object
+     */
+    Shot* createShot(Player* pl, WeaponType type, int xOffset);
 
     int divideBall(Ball* b);
     void checkColisions();

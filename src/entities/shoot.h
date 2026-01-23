@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gameobject.h"
+#include "../game/weapontype.h"
 
 class Scene;
 class Player;
@@ -21,20 +22,23 @@ private:
     Sprite* sprites[3];
     float xPos, yPos;
     float xInit, yInit; // initial x and y
-    
-    int sx, sy;	
+
+    int sx, sy;
 
     int id;
-    int speed;
+    WeaponType weaponType;
+    int weaponSpeed;  // Store speed from config
     int frame;
-    
+
     int tail;  // defines the tail animation
     int tailTime;
     int shotCounter;
 
 public:
-    Shoot(Scene* scene, Player* player);
+    Shoot(Scene* scene, Player* player, WeaponType type, int xOffset = 0);
     ~Shoot();
+
+    WeaponType getWeaponType() const { return weaponType; }
 
     void move();
     bool collision(Floor* floor);

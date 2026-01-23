@@ -140,11 +140,11 @@ void Ball::setPos(int x, int y)
 /**
  * Collision detection functions for the ball with various game elements.
  */
-bool Ball::collision(Shoot* sh)
+bool Ball::collision(Shot* sh)
 {
     if (!sh->isDead())
-        if (sh->getX() > xPos && sh->getX() < xPos + diameter && yPos + diameter > sh->getY() && yPos < sh->getYInit())	
-            return true;		
+        if (sh->getX() > xPos && sh->getX() < xPos + diameter && yPos + diameter > sh->getY() && yPos < sh->getYInit())
+            return true;
 
     return false;
 }

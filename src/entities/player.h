@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../game/weapontype.h"
+
 class Scene;
 class Sprite;
 
@@ -20,7 +22,8 @@ private:
     int lives;
     int score;
     int id;  // 0 = player 1, 1 = player 2
-    int idWeapon;
+    int idWeapon;  // Kept for backward compatibility, not used
+    WeaponType currentWeapon;
     int maxShoots;
     int numShoots;
     int shotCounter;
@@ -53,6 +56,10 @@ public:
     void looseShoot();
     void kill();
     void revive();
+
+    // Weapon management
+    WeaponType getWeapon() const { return currentWeapon; }
+    void setWeapon(WeaponType type);
 
     // Getters
     float getX() const { return xPos; }

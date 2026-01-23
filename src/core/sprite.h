@@ -22,19 +22,23 @@ class Sprite
 {
 private:
     SDL_Texture* bmp;
-    int sx, sy;
-    int xoff, yoff; // relative displacement
+    int sx, sy;          // Width and height
+    int srcX, srcY;      // Source position in texture (for sprite sheets)
+    int xoff, yoff;      // Relative displacement
     Graph* graph;
 
 public:
-    Sprite() : bmp(nullptr), sx(0), sy(0), xoff(0), yoff(0), graph(nullptr) {}
+    Sprite() : bmp(nullptr), sx(0), sy(0), srcX(0), srcY(0), xoff(0), yoff(0), graph(nullptr) {}
 
     void init(Graph* gr, const std::string& file, int offx = 0, int offy = 0);
+    void init(SDL_Texture* sharedTexture, int x, int y, int w, int h, int offx, int offy);
     void release();
 
     SDL_Texture* getBmp() const { return bmp; }
     int getWidth() const { return sx; }
     int getHeight() const { return sy; }
+    int getSrcX() const { return srcX; }
+    int getSrcY() const { return srcY; }
     int getXOff() const { return xoff; }
     int getYOff() const { return yoff; }
 

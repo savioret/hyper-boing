@@ -7,6 +7,8 @@
 #include "appdata.h"
 #include "appconsole.h"
 #include "logger.h"
+#include "harpoonshot.h"
+#include "gunshot.h"
 #include <SDL.h>
 #include <SDL_render.h>
 #include <SDL_image.h>
@@ -88,6 +90,27 @@ int Scene::initBitmaps()
     bmp.shoot[2].init(&appGraph, "assets/graph/entities/weapon3.png");
     for (i = 0; i < 3; i++)
         appGraph.setColorKey(bmp.shoot[i].getBmp(), 0x00FF00);
+
+    // Load weapon-specific sprites
+    // HARPOON sprites
+    bmp.weapons.harpoonHead.init(&appGraph, "assets/graph/entities/weapon1.png");
+    bmp.weapons.harpoonTail1.init(&appGraph, "assets/graph/entities/weapon2.png");
+    bmp.weapons.harpoonTail2.init(&appGraph, "assets/graph/entities/weapon3.png");
+    appGraph.setColorKey(bmp.weapons.harpoonHead.getBmp(), 0x00FF00);
+    appGraph.setColorKey(bmp.weapons.harpoonTail1.getBmp(), 0x00FF00);
+    appGraph.setColorKey(bmp.weapons.harpoonTail2.getBmp(), 0x00FF00);
+
+    // GUN sprite sheet with 7 frames
+    bmp.weapons.gunBullet.init(&appGraph, "assets/graph/entities/gun_bullet.png");
+    // Frame data from gun_bullet.png specification
+    bmp.weapons.gunBullet.addFrame(4, 1, 4, 8, -2, 0);      // Frame 0
+    bmp.weapons.gunBullet.addFrame(16, 1, 8, 8, -4, 0);     // Frame 1
+    bmp.weapons.gunBullet.addFrame(32, 1, 12, 8, -6, 0);    // Frame 2
+    bmp.weapons.gunBullet.addFrame(52, 2, 16, 7, -8, 0);     // Frame 3
+    bmp.weapons.gunBullet.addFrame(76, 0, 14, 9, -7, 0);   // Frame 4
+    bmp.weapons.gunBullet.addFrame(98, 4, 10, 5, -5, -1);  // Frame 5 (impact)
+    bmp.weapons.gunBullet.addFrame(116, 4, 14, 5, -7, -1); // Frame 6 (impact)
+    appGraph.setColorKey(bmp.weapons.gunBullet.getTexture(), 0x00FF00);
 
     bmp.mark[0].init(&appGraph, "assets/graph/entities/ladrill1.png");
     bmp.mark[1].init(&appGraph, "assets/graph/entities/ladrill1u.png");
@@ -256,17 +279,77 @@ void Scene::addFloor(int x, int y, int id)
 
 void Scene::addShoot(Player* pl)
 {
-    Shoot* shootInstance = new Shoot(this, pl);
-    lsShoots.push_back(shootInstance);
+    Shot* shotInstance = createShot(pl, pl->getWeapon(), 0);
+    lsShoots.push_back(shotInstance);
+}
+
+/**
+ * Factory method to create appropriate Shot subclass based on weapon type
+ * @param pl Player firing the shot
+ * @param type Weapon type
+ * @param xOffset Horizontal offset for multi-projectile weapons
+ * @return Pointer to created Shot object
+ */
+Shot* Scene::createShot(Player* pl, WeaponType type, int xOffset)
+{
+    switch (type)
+    {
+    case WeaponType::HARPOON:
+    case WeaponType::HARPOON2:
+        return new HarpoonShot(this, pl, type, xOffset);
+
+    case WeaponType::GUN:
+        return new GunShot(this, pl, &bmp.weapons.gunBullet, xOffset);
+
+    default:
+        // Fallback to harpoon for unknown types
+        return new HarpoonShot(this, pl, WeaponType::HARPOON, xOffset);
+    }
 }
 
 void Scene::shoot(Player* pl)
 {
-    if (pl->canShoot())
+    if (!pl->canShoot()) return;
+
+    const WeaponConfig& config = WeaponConfig::get(pl->getWeapon());
+
+    // Create multiple projectiles based on weapon config
+    int projectileCount = config.projectileCount;
+    int spacing = config.projectileSpacing;
+
+    for (int i = 0; i < projectileCount; i++)
     {
-        pl->shoot();
-        addShoot(pl);
+        // Calculate horizontal offset for each projectile
+        // Center them around the player
+        int xOffset = 0;
+        if (projectileCount > 1)
+        {
+            xOffset = (int)((i - (projectileCount - 1) / 2.0f) * spacing);
+        }
+
+        Shot* shotInstance = createShot(pl, pl->getWeapon(), xOffset);
+        lsShoots.push_back(shotInstance);
     }
+
+    pl->shoot();  // Updates player state and animation
+}
+
+/**
+ * Get player by index for console commands and other external access
+ * @param index Player index (0 for player 1, 1 for player 2)
+ * @return Pointer to player if active and playing, nullptr otherwise
+ */
+Player* Scene::getPlayer(int index)
+{
+    if (index == 0 && gameinf.getPlayers()[0]->isPlaying())
+    {
+        return gameinf.getPlayers()[0];
+    }
+    else if (index == 1 && gameinf.getPlayers()[1]->isPlaying())
+    {
+        return gameinf.getPlayers()[1];
+    }
+    return nullptr;
 }
 
 /**
@@ -347,7 +430,7 @@ void Scene::skipToStage(int stageNumber)
 void Scene::checkColisions()
 {
     Ball* b;
-    Shoot* sh;
+    Shot* sh;
     Floor* fl;
     int i;
     SDL_Point col;
@@ -356,19 +439,18 @@ void Scene::checkColisions()
     {
         b = ptball;
 
-        for (Shoot* pt : lsShoots)
+        for (Shot* pt : lsShoots)
         {
             sh = pt;
-            if (!b->isDead() && !sh->getPlayer()->isDead () )
+            if (!b->isDead() && !sh->getPlayer()->isDead())
             {
                 if (b->collision(sh))
                 {
-                    sh->kill();
-                    sh->getPlayer()->looseShoot();
+                    sh->onBallHit(b);  // Polymorphic call - handles weapon-specific behavior
                     sh->getPlayer()->addScore(objectScore(b->diameter));
                     b->kill();
                 }
-                }
+            }
         }
 
         FloorColision flc[2];
@@ -437,7 +519,7 @@ void Scene::checkColisions()
         }
     }
 
-    for (Shoot* ptshoot : lsShoots)
+    for (Shot* ptshoot : lsShoots)
     {
         sh = ptshoot;
 
@@ -447,8 +529,7 @@ void Scene::checkColisions()
             if (!sh->isDead())
                 if (sh->collision(fl))
                 {
-                    sh->kill();
-                    sh->getPlayer()->looseShoot();
+                    sh->onFloorHit(fl);  // Polymorphic call - handles weapon-specific behavior
                 }
         }
     }
@@ -552,7 +633,7 @@ void Scene::processBallDivisions()
 GameState* Scene::moveAll()
 {
     Ball* ptb;
-    Shoot* pts;
+    Shot* pts;
     Floor* pfl;
     int i, res;
 
@@ -660,7 +741,7 @@ GameState* Scene::moveAll()
         ptb->move();
     }
 
-    for (Shoot* pt : lsShoots)
+    for (Shot* pt : lsShoots)
     {
         pts = pt;
         pts->move();
@@ -750,8 +831,8 @@ int Scene::release()
         delete ball;
     lsBalls.clear();
     
-    for (Shoot* shoot : lsShoots)
-        delete shoot;
+    for (Shot* shot : lsShoots)
+        delete shot;
     lsShoots.clear();
     
     for (Floor* floor : lsFloor)
@@ -922,7 +1003,7 @@ void Scene::drawDebugOverlay()
 int Scene::drawAll()
 {
     Ball* ptb;
-    Shoot* pts;
+    Shot* pts;
     Floor* pfl;
 
     drawBackground();
@@ -933,10 +1014,11 @@ int Scene::drawAll()
         draw(pfl);
     }
 
-    for (Shoot* pt : lsShoots)
+    // Draw shots using polymorphic draw() method
+    for (Shot* pt : lsShoots)
     {
         pts = pt;
-        draw(pts);
+        pts->draw(&appGraph);  // Polymorphic call
     }
 
     drawMark();

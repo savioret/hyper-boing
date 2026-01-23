@@ -130,6 +130,9 @@ void AppConsole::registerBuiltinCommands()
 
     registerCommand ( "goto", "Skip to level number (only in gameplay)",
         [this]( const std::string& args ) { cmdGoto ( args ); } );
+
+    registerCommand("weapon", "Switch weapon: /weapon <harpoon|harpoon2|gun> [player_num]",
+        [this](const std::string& args) { cmdWeapon(args); });
 }
 
 void AppConsole::cmdHelp(const std::string& args)
@@ -262,6 +265,83 @@ void AppConsole::cmdGoto ( const std::string& args )
     currentScene->skipToStage( targetLevel );
 }
 
+void AppConsole::cmdWeapon(const std::string& args)
+{
+    if (args.empty())
+    {
+        LOG_WARNING("Usage: /weapon <harpoon|gun> [player_number]");
+        LOG_INFO("  player_number: 1 or 2 (omit to change both players)");
+        return;
+    }
+
+    // Get current scene
+    AppData& appData = AppData::instance();
+    Scene* scene = dynamic_cast<Scene*>(appData.currentScreen.get());
+    if (!scene)
+    {
+        LOG_WARNING("Weapon switching only available during gameplay");
+        return;
+    }
+
+    // Parse arguments
+    std::istringstream iss(args);
+    std::string weaponName;
+    int playerNum = -1;  // -1 means both players
+    iss >> weaponName >> playerNum;
+
+    // Convert to lowercase for comparison
+    std::transform(weaponName.begin(), weaponName.end(), weaponName.begin(), ::tolower);
+
+    // Map string to WeaponType
+    WeaponType type;
+    if (weaponName == "harpoon")
+    {
+        type = WeaponType::HARPOON;
+    }
+    else if (weaponName == "harpoon2")
+    {
+        type = WeaponType::HARPOON2;
+    }
+    else if (weaponName == "gun")
+    {
+        type = WeaponType::GUN;
+    }
+    else
+    {
+        LOG_ERROR("Unknown weapon: %s", weaponName.c_str());
+        LOG_INFO("Available weapons: harpoon, harpoon2, gun");
+        return;
+    }
+
+    // Apply to specified player(s)
+    bool changed = false;
+    if (playerNum == -1 || playerNum == 1)
+    {
+        Player* p1 = scene->getPlayer(0);
+        if (p1)
+        {
+            p1->setWeapon(type);
+            LOG_SUCCESS("Player 1 weapon set to: %s", weaponName.c_str());
+            changed = true;
+        }
+    }
+    if (playerNum == -1 || playerNum == 2)
+    {
+        // TODO: This seems to crash when no player 2 exists
+        Player* p2 = scene->getPlayer(1);
+        if (p2)
+        {
+            p2->setWeapon(type);
+            LOG_SUCCESS("Player 2 weapon set to: %s", weaponName.c_str());
+            changed = true;
+        }
+    }
+
+    if (!changed)
+    {
+        LOG_WARNING("No active players found");
+    }
+}
 
 void AppConsole::registerCommand(const std::string& name, const std::string& desc, CommandHandler handler)
 {

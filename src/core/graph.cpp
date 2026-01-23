@@ -115,13 +115,13 @@ void Graph::release() {
 }
 
 void Graph::draw(Sprite* spr, int x, int y) {
-    SDL_Rect srcRect = { 0, 0, spr->sx, spr->sy };
+    SDL_Rect srcRect = { spr->srcX, spr->srcY, spr->sx, spr->sy };
     SDL_Rect dstRect = { x + spr->xoff, y + spr->yoff, spr->sx, spr->sy };
     SDL_RenderCopy(renderer, spr->bmp, &srcRect, &dstRect);
 }
 
 void Graph::drawScaled(Sprite* spr, int x, int y, int w, int h) {
-    SDL_Rect srcRect = { 0, 0, spr->sx, spr->sy };
+    SDL_Rect srcRect = { spr->srcX, spr->srcY, spr->sx, spr->sy };
     SDL_Rect dstRect = { x + spr->xoff, y + spr->yoff, w, h };
     SDL_RenderCopy(renderer, spr->bmp, &srcRect, &dstRect);
 }
@@ -158,10 +158,10 @@ void Graph::drawClipped(SDL_Texture* texture, const SDL_Rect* srcRect, int x, in
 }
 
 void Graph::drawClipped(Sprite* spr, int x, int y) {
-    SDL_Rect srcRect = { 0, 0, spr->sx, spr->sy };
+    SDL_Rect srcRect = { spr->srcX, spr->srcY, spr->sx, spr->sy };
 
     if (x < 0) {
-        srcRect.x = -x;
+        srcRect.x += -x;
         srcRect.w = spr->sx + x;
         x = 0;
     }
@@ -169,7 +169,7 @@ void Graph::drawClipped(Sprite* spr, int x, int y) {
         srcRect.w = 640 - x;
     }
     if (y < 0) {
-        srcRect.y = -y;
+        srcRect.y += -y;
         srcRect.h = spr->sy + y;
         y = 0;
     }

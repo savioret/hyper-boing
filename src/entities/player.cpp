@@ -35,6 +35,7 @@ void Player::init()
     dead = false;
     score = 0;
     frame = 0;
+    currentWeapon = WeaponType::HARPOON;  // Default weapon
     maxShoots = 2;
     numShoots = 0;
     lives = 3;
@@ -66,6 +67,7 @@ void Player::revive()
     immuneCounter = 350;
 
     frame = 0;
+    currentWeapon = WeaponType::HARPOON;  // Reset to default on death
     maxShoots = 2;
     numShoots = 0;
     playing = true;
@@ -75,7 +77,7 @@ void Player::revive()
     sprite = &gameinf.getBmp().player[id][ANIM_SHOOT];
     sx = sprite->getWidth();
     sy = sprite->getHeight();
-    
+
     xPos = 200.0f + 100.0f * id;
     yPos = (float)(MAX_Y - sy);
 
@@ -240,4 +242,16 @@ void Player::kill()
 {
     dead = true;
     animSpeed = 4;
+}
+
+/**
+ * Sets the player's weapon type and updates weapon-specific parameters.
+ * @param type The weapon type to switch to
+ */
+void Player::setWeapon(WeaponType type)
+{
+    currentWeapon = type;
+    const WeaponConfig& config = WeaponConfig::get(type);
+    maxShoots = config.maxShots;
+    shotInterval = config.cooldown;
 }

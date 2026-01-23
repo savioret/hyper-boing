@@ -18,6 +18,23 @@ void Sprite::init(Graph* gr, const std::string& file, int offx, int offy) {
     yoff = offy;
 }
 
+/**
+ * Initialize sprite from a shared texture (for sprite sheets)
+ *
+ * This doesn't load a new texture - instead it references a region
+ * within an existing texture. The sprite does NOT own this texture.
+ */
+void Sprite::init(SDL_Texture* sharedTexture, int x, int y, int w, int h, int offx, int offy) {
+    bmp = sharedTexture;
+    srcX = x;
+    srcY = y;
+    sx = w;
+    sy = h;
+    xoff = offx;
+    yoff = offy;
+    graph = nullptr;  // No Graph needed for shared texture
+}
+
 void Sprite::release() {
     if (bmp != nullptr) {
         SDL_DestroyTexture(bmp);
