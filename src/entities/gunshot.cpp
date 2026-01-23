@@ -24,11 +24,21 @@ GunShot::GunShot(Scene* scn, Player* pl, SpriteSheet* sheet, int xOffset)
     , frameCounter(frameDelay)
     , animState(AnimState::FLIGHT)
 {
+    // Calculate shot spawn position based on player facing direction
+    float centerOffset = pl->getWidth() / 2.0f;
+    float spriteOffset = pl->getSprite()->getXOff();
+
     // When facing left, spawn on left side; when facing right, spawn on right side
     if (pl->getFacing() == FacingDirection::LEFT)
     {
-        xPos += 12;
+        xPos = xInit = pl->getX() + spriteOffset + +5 + xOffset;
     }
+    else  // FacingDirection::RIGHT
+    {
+        xPos = xInit = pl->getX() + centerOffset + spriteOffset + 14 + xOffset;
+    }
+
+    yPos = yInit =  pl->getY() + 2.0f;  // Spawn slightly above player's Y position
 }
 
 GunShot::~GunShot()

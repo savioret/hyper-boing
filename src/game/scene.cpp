@@ -22,7 +22,8 @@ Scene::Scene(Stage* stg, std::unique_ptr<StageClear> pstgclr)
       stage(stg), change(0), dSecond(0), timeRemaining(0), timeLine(0),
       moveTick(0), moveLastTick(0), moveCount(0),
       drawTick(0), drawLastTick(0), drawCount(0),
-      boundingBoxes(false)
+      boundingBoxes(false),
+      readyActive(true), readyBlinkCount(0), readyBlinkTimer(0), readyVisible(true)
 {
     gameinf.isMenu() = false;
     if (pStageClear) pStageClear->scene = this;
@@ -41,6 +42,10 @@ int Scene::init()
     timeLine = 0;
     dSecond = 0;
     timeRemaining = stage->timelimit;
+    readyActive = true;
+    readyBlinkCount = 0;
+    readyBlinkTimer = 0;
+    readyVisible = true;
 
     gameinf.getPlayers()[PLAYER1]->setX((float)stage->xpos[PLAYER1]);
     if (gameinf.getPlayers()[PLAYER2])
@@ -135,6 +140,9 @@ int Scene::initBitmaps()
 
     bmp.continu.init(&appGraph, "assets/graph/ui/continue.png", 16, 16);
     //appGraph.setColorKey(bmp.continu.getBmp(), 0x00FF00);
+
+    bmp.ready.init(&appGraph, "assets/graph/ui/ready.png", 16, 16);
+    //appGraph.setColorKey(bmp.ready.getBmp(), 0x00FF00);
 
     std::snprintf(txt, sizeof(txt), "assets/graph/bg/%s", stage->back);
     bmp.back.init(&appGraph, txt, 16, 16);
@@ -666,6 +674,41 @@ GameState* Scene::moveAll()
         return new Menu;
     }
 
+    // Handle ready screen blinking sequence
+    if (readyActive)
+    {
+        if ( !readyBlinkCount && !readyBlinkTimer )
+        {
+            // Process time=0 objects now that ready screen is done
+            checkSequence();
+            LOG_DEBUG("Ready shown, processing time=0 stage objects.");
+        }
+
+        readyBlinkTimer++;
+
+        // 200ms per blink at ~60fps = 12 frames per toggle
+        if (readyBlinkTimer >= 12)
+        {
+            readyBlinkTimer = 0;
+            readyVisible = !readyVisible;
+
+            // Count a blink when going from visible to invisible
+            if (!readyVisible)
+            {
+                readyBlinkCount++;
+
+                // After 6 complete blinks, deactivate ready screen
+                if (readyBlinkCount >= 6)
+                {
+                    readyActive = false;
+                }
+            }
+        }
+
+        // During ready screen, skip all game logic but allow exit
+        return nullptr;
+    }
+
     if (gameOver)
     {
         for (i = 0; i < 2; i++)
@@ -818,7 +861,7 @@ GameState* Scene::moveAll()
                 // Normal progression: advance to next stage
                 nextStageId = stage->id + 1;
             }
-            
+
             if (nextStageId <= gameinf.getNumStages())
             {
                 gameinf.getCurrentStage() = nextStageId;
@@ -832,7 +875,10 @@ GameState* Scene::moveAll()
             pStageClear.reset();
         }
     }
-    else checkSequence();
+    else if (!readyActive) // Only check sequence after ready screen is done
+    {
+        checkSequence();
+    }
 
     return nullptr;
 }
@@ -863,6 +909,7 @@ int Scene::release()
     bmp.time.release();
     bmp.gameover.release();
     bmp.continu.release();
+    bmp.ready.release();
 
     for (int i = 0; i < 5; i++)
         bmp.mark[i].release();
@@ -1154,6 +1201,15 @@ int Scene::drawAll()
     }
 
     if (pStageClear) pStageClear->drawAll();
+
+    // Draw ready screen if active and visible (blinking)
+    if (readyActive && readyVisible)
+    {
+        // Center the ready sprite on screen
+        int x = (640 - bmp.ready.getWidth()) / 2;
+        int y = (416 - bmp.ready.getHeight()) / 2;
+        appGraph.draw(&bmp.ready, x, y);
+    }
 
     // Draw bounding boxes if debug mode is enabled
     if (boundingBoxes)

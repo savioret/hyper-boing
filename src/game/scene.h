@@ -46,6 +46,7 @@ struct SceneBitmaps
     Sprite gameover;
     Sprite continu;
     Sprite time;
+    Sprite ready;
 
     // Weapon-specific sprites
     struct
@@ -88,6 +89,12 @@ private:
     int drawCount;
 
     bool boundingBoxes;  // Debug mode: show bounding boxes for all collidable objects
+
+    // Ready screen state
+    bool readyActive;        // Whether ready screen is currently active
+    int readyBlinkCount;     // Number of blinks so far (0-6)
+    int readyBlinkTimer;     // Timer for blink intervals (200ms = ~12 frames at 60fps)
+    bool readyVisible;       // Current visibility state for blinking
 
     std::vector<Ball*> pendingBalls;  // Buffer to hold new balls to be added
     

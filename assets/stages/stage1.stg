@@ -13,9 +13,8 @@ at 0:
   floor: x=350, y=150, type=1
   floor: x=550, y=150, type=1
   /weapon gun 1
-  /boxes 1
+  #/boxes 1
 
-at 1:
   # Ball spawning at top with random X position
   ball: y_max
 

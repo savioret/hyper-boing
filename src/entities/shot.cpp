@@ -28,14 +28,15 @@ Shot::Shot(Scene* scn, Player* pl, WeaponType type, int xOffset)
     // When facing left, spawn on left side; when facing right, spawn on right side
     if (pl->getFacing() == FacingDirection::LEFT)
     {
-        xPos = xInit = pl->getX() + spriteOffset - 5.0f + xOffset;
+        xPos = xInit = pl->getX() + spriteOffset - 2.0f + xOffset;
     }
     else  // FacingDirection::RIGHT
     {
         xPos = xInit = pl->getX() + centerOffset + spriteOffset + 5.0f + xOffset;
     }
 
-    yPos = yInit = (float)MAX_Y;
+    yPos = yInit = ( float )MAX_Y;
+    //yPos = yInit =  pl->getY() + 2.0f;  // Spawn slightly above player's Y position
 }
 
 /**
