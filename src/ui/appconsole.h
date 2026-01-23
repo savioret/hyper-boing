@@ -97,7 +97,6 @@ private:
     void renderBackground();
     void renderLogs();
     void renderPrompt();
-    void executeCommand(const std::string& input);
     void processInput(const std::string& input);
     
     // Built-in commands
@@ -109,6 +108,7 @@ private:
     void cmdNext(const std::string& args);
     void cmdGoto(const std::string& args);
     void cmdWeapon(const std::string& args);
+    void cmdBoxes(const std::string& args);
 
 public:
     // Singleton accessor
@@ -138,6 +138,9 @@ public:
     // Commands
     void registerCommand(const std::string& name, const std::string& desc, CommandHandler handler);
     void unregisterCommand(const std::string& name);
+
+    // Execute a command programmatically (for stage actions)
+    void executeCommand(const std::string& input);
     
     // Configuration
     void setOverlayAlpha(float alpha) { overlayAlpha = alpha; }

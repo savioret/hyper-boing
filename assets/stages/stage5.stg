@@ -6,348 +6,79 @@ time_limit: 100
 player1_x: 250
 player2_x: 350
 
-# Left staircase
-floor:
-  start: 0
-  x: 16
-  y: 100
-  floor_type: 0
+at 0:
+  # Left staircase
+  floor: x=16, y=100, type=0
+  floor: x=80, y=164, type=0
+  floor: x=144, y=164, type=1
+  floor: x=144, y=228, type=0
+  floor: x=208, y=228, type=1
+  floor: x=208, y=292, type=0
 
-floor:
-  start: 0
-  x: 80
-  y: 164
-  floor_type: 0
+  # Right staircase
+  floor: x=560, y=100, type=0
+  floor: x=512, y=164, type=0
+  floor: x=496, y=164, type=1
+  floor: x=448, y=228, type=0
+  floor: x=432, y=228, type=1
+  floor: x=384, y=292, type=0
 
-floor:
-  start: 0
-  x: 144
-  y: 164
-  floor_type: 1
+  # First wave - left and right
+  ball: x=17, y=50, size=3, top=186, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=186, dirX=-1, dirY=1
 
-floor:
-  start: 0
-  x: 144
-  y: 228
-  floor_type: 0
+at 5:
+  ball: x=17, y=50, size=3, top=229, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=229, dirX=-1, dirY=1
 
-floor:
-  start: 0
-  x: 208
-  y: 228
-  floor_type: 1
+at 10:
+  ball: x=17, y=50, size=3, top=163, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=163, dirX=-1, dirY=1
 
-floor:
-  start: 0
-  x: 208
-  y: 292
-  floor_type: 0
+at 15:
+  ball: x=17, y=50, size=3, top=268, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=268, dirX=-1, dirY=1
 
-# Right staircase
-floor:
-  start: 0
-  x: 560
-  y: 100
-  floor_type: 0
+at 20:
+  ball: x=17, y=50, size=3, top=223, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=223, dirX=-1, dirY=1
 
-floor:
-  start: 0
-  x: 512
-  y: 164
-  floor_type: 0
+at 25:
+  ball: x=17, y=50, size=3, top=195, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=195, dirX=-1, dirY=1
 
-floor:
-  start: 0
-  x: 496
-  y: 164
-  floor_type: 1
+at 30:
+  ball: x=17, y=50, size=3, top=276, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=276, dirX=-1, dirY=1
 
-floor:
-  start: 0
-  x: 448
-  y: 228
-  floor_type: 0
+at 35:
+  ball: x=17, y=50, size=3, top=170, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=170, dirX=-1, dirY=1
 
-floor:
-  start: 0
-  x: 432
-  y: 228
-  floor_type: 1
+at 40:
+  ball: x=17, y=50, size=3, top=241, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=241, dirX=-1, dirY=1
 
-floor:
-  start: 0
-  x: 384
-  y: 292
-  floor_type: 0
+at 45:
+  ball: x=17, y=50, size=3, top=209, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=209, dirX=-1, dirY=1
 
-# Left side balls (15 balls spawning from left)
-ball:
-  start: 0
-  x: 17
-  y: 50
-  size: 3
-  top: 186
-  dirX: 1
-  dirY: 1
+at 50:
+  ball: x=17, y=50, size=3, top=183, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=183, dirX=-1, dirY=1
 
-ball:
-  start: 5
-  x: 17
-  y: 50
-  size: 3
-  top: 229
-  dirX: 1
-  dirY: 1
+at 55:
+  ball: x=17, y=50, size=3, top=255, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=255, dirX=-1, dirY=1
 
-ball:
-  start: 10
-  x: 17
-  y: 50
-  size: 3
-  top: 163
-  dirX: 1
-  dirY: 1
+at 60:
+  ball: x=17, y=50, size=3, top=291, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=291, dirX=-1, dirY=1
 
-ball:
-  start: 15
-  x: 17
-  y: 50
-  size: 3
-  top: 268
-  dirX: 1
-  dirY: 1
+at 65:
+  ball: x=17, y=50, size=3, top=218, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=218, dirX=-1, dirY=1
 
-ball:
-  start: 20
-  x: 17
-  y: 50
-  size: 3
-  top: 223
-  dirX: 1
-  dirY: 1
-
-ball:
-  start: 25
-  x: 17
-  y: 50
-  size: 3
-  top: 195
-  dirX: 1
-  dirY: 1
-
-ball:
-  start: 30
-  x: 17
-  y: 50
-  size: 3
-  top: 276
-  dirX: 1
-  dirY: 1
-
-ball:
-  start: 35
-  x: 17
-  y: 50
-  size: 3
-  top: 170
-  dirX: 1
-  dirY: 1
-
-ball:
-  start: 40
-  x: 17
-  y: 50
-  size: 3
-  top: 241
-  dirX: 1
-  dirY: 1
-
-ball:
-  start: 45
-  x: 17
-  y: 50
-  size: 3
-  top: 209
-  dirX: 1
-  dirY: 1
-
-ball:
-  start: 50
-  x: 17
-  y: 50
-  size: 3
-  top: 183
-  dirX: 1
-  dirY: 1
-
-ball:
-  start: 55
-  x: 17
-  y: 50
-  size: 3
-  top: 255
-  dirX: 1
-  dirY: 1
-
-ball:
-  start: 60
-  x: 17
-  y: 50
-  size: 3
-  top: 291
-  dirX: 1
-  dirY: 1
-
-ball:
-  start: 65
-  x: 17
-  y: 50
-  size: 3
-  top: 218
-  dirX: 1
-  dirY: 1
-
-ball:
-  start: 70
-  x: 17
-  y: 50
-  size: 3
-  top: 162
-  dirX: 1
-  dirY: 1
-
-# Right side balls (15 balls spawning from right)
-ball:
-  start: 0
-  x: 610
-  y: 50
-  size: 3
-  top: 186
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 5
-  x: 610
-  y: 50
-  size: 3
-  top: 229
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 10
-  x: 610
-  y: 50
-  size: 3
-  top: 163
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 15
-  x: 610
-  y: 50
-  size: 3
-  top: 268
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 20
-  x: 610
-  y: 50
-  size: 3
-  top: 223
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 25
-  x: 610
-  y: 50
-  size: 3
-  top: 195
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 30
-  x: 610
-  y: 50
-  size: 3
-  top: 276
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 35
-  x: 610
-  y: 50
-  size: 3
-  top: 170
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 40
-  x: 610
-  y: 50
-  size: 3
-  top: 241
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 45
-  x: 610
-  y: 50
-  size: 3
-  top: 209
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 50
-  x: 610
-  y: 50
-  size: 3
-  top: 183
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 55
-  x: 610
-  y: 50
-  size: 3
-  top: 255
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 60
-  x: 610
-  y: 50
-  size: 3
-  top: 291
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 65
-  x: 610
-  y: 50
-  size: 3
-  top: 218
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 70
-  x: 610
-  y: 50
-  size: 3
-  top: 162
-  dirX: -1
-  dirY: 1
+at 70:
+  ball: x=17, y=50, size=3, top=162, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=162, dirX=-1, dirY=1

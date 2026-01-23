@@ -63,57 +63,45 @@ void AppData::init()
     inMenu = true;
 
     // Initialize Player 1 sprites
-    bitmaps.player[PLAYER1][0].init(&appGraph, "assets/graph/players/p1k1l.png", 0, 3);
-    bitmaps.player[PLAYER1][1].init(&appGraph, "assets/graph/players/p1k2l.png", 4, 3);
-    bitmaps.player[PLAYER1][2].init(&appGraph, "assets/graph/players/p1k3l.png", 6, 3);
-    bitmaps.player[PLAYER1][3].init(&appGraph, "assets/graph/players/p1k4l.png", 4, 3);
-    bitmaps.player[PLAYER1][4].init(&appGraph, "assets/graph/players/p1k5l.png", 4, 3);
-    
-    bitmaps.player[PLAYER1][5].init(&appGraph, "assets/graph/players/p1k1r.png", 0, 3);
-    bitmaps.player[PLAYER1][6].init(&appGraph, "assets/graph/players/p1k2r.png", 0, 3);
-    bitmaps.player[PLAYER1][7].init(&appGraph, "assets/graph/players/p1k3r.png", 0, 3);
-    bitmaps.player[PLAYER1][8].init(&appGraph, "assets/graph/players/p1k4r.png", 0, 3);
-    bitmaps.player[PLAYER1][9].init(&appGraph, "assets/graph/players/p1k5r.png", 0, 3);
+    bitmaps.player[PLAYER1][0].init(&appGraph, "assets/graph/players/p1k1r.png", 0, 3);
+    bitmaps.player[PLAYER1][1].init(&appGraph, "assets/graph/players/p1k2r.png", 4, 3);
+    bitmaps.player[PLAYER1][2].init(&appGraph, "assets/graph/players/p1k3r.png", 6, 3);
+    bitmaps.player[PLAYER1][3].init(&appGraph, "assets/graph/players/p1k4r.png", 4, 3);
+    bitmaps.player[PLAYER1][4].init(&appGraph, "assets/graph/players/p1k5r.png", 4, 3);
 
-    bitmaps.player[PLAYER1][10].init(&appGraph, "assets/graph/players/p1shoot1.png", 13, 0);
-    bitmaps.player[PLAYER1][11].init(&appGraph, "assets/graph/players/p1shoot2.png", 13, 3);
-    bitmaps.player[PLAYER1][12].init(&appGraph, "assets/graph/players/p1win.png", 13, 4);
-    bitmaps.player[PLAYER1][13].init(&appGraph, "assets/graph/players/p1dead.png");
-    bitmaps.player[PLAYER1][14].init(&appGraph, "assets/graph/players/p1dead2.png");
-    bitmaps.player[PLAYER1][15].init(&appGraph, "assets/graph/players/p1dead3.png");
-    bitmaps.player[PLAYER1][16].init(&appGraph, "assets/graph/players/p1dead4.png");
-    bitmaps.player[PLAYER1][17].init(&appGraph, "assets/graph/players/p1dead5.png");
-    bitmaps.player[PLAYER1][18].init(&appGraph, "assets/graph/players/p1dead6.png");
-    bitmaps.player[PLAYER1][19].init(&appGraph, "assets/graph/players/p1dead7.png");
-    bitmaps.player[PLAYER1][20].init(&appGraph, "assets/graph/players/p1dead8.png");
+    bitmaps.player[PLAYER1][5].init(&appGraph, "assets/graph/players/p1shoot1.png", 13, 0);
+    bitmaps.player[PLAYER1][6].init(&appGraph, "assets/graph/players/p1shoot2.png", 13, 3);
+    bitmaps.player[PLAYER1][7].init(&appGraph, "assets/graph/players/p1win.png", 13, 4);
+    bitmaps.player[PLAYER1][8].init(&appGraph, "assets/graph/players/p1dead.png");
+    bitmaps.player[PLAYER1][9].init(&appGraph, "assets/graph/players/p1dead2.png");
+    bitmaps.player[PLAYER1][10].init(&appGraph, "assets/graph/players/p1dead3.png");
+    bitmaps.player[PLAYER1][11].init(&appGraph, "assets/graph/players/p1dead4.png");
+    bitmaps.player[PLAYER1][12].init(&appGraph, "assets/graph/players/p1dead5.png");
+    bitmaps.player[PLAYER1][13].init(&appGraph, "assets/graph/players/p1dead6.png");
+    bitmaps.player[PLAYER1][14].init(&appGraph, "assets/graph/players/p1dead7.png");
+    bitmaps.player[PLAYER1][15].init(&appGraph, "assets/graph/players/p1dead8.png");
 
     for (int i = 0; i < 21; i++)
         appGraph.setColorKey(bitmaps.player[PLAYER1][i].getBmp(), 0x00FF00);
 
     // Initialize Player 2 sprites
-    bitmaps.player[PLAYER2][0].init(&appGraph, "assets/graph/players/p2k1l.png", 0, 3);
-    bitmaps.player[PLAYER2][1].init(&appGraph, "assets/graph/players/p2k2l.png", 4, 3);
-    bitmaps.player[PLAYER2][2].init(&appGraph, "assets/graph/players/p2k3l.png", 6, 3);
-    bitmaps.player[PLAYER2][3].init(&appGraph, "assets/graph/players/p2k4l.png", 4, 3);
-    bitmaps.player[PLAYER2][4].init(&appGraph, "assets/graph/players/p2k5l.png", 4, 3);
-    
-    bitmaps.player[PLAYER2][5].init(&appGraph, "assets/graph/players/p2k1r.png", 0, 3);
-    bitmaps.player[PLAYER2][6].init(&appGraph, "assets/graph/players/p2k2r.png", 0, 3);
-    bitmaps.player[PLAYER2][7].init(&appGraph, "assets/graph/players/p2k3r.png", 0, 3);
-    bitmaps.player[PLAYER2][8].init(&appGraph, "assets/graph/players/p2k4r.png", 0, 3);
-    bitmaps.player[PLAYER2][9].init(&appGraph, "assets/graph/players/p2k5r.png", 0, 3);
+    bitmaps.player[PLAYER2][0].init(&appGraph, "assets/graph/players/p2k1r.png", 0, 3);
+    bitmaps.player[PLAYER2][1].init(&appGraph, "assets/graph/players/p2k2r.png", 4, 3);
+    bitmaps.player[PLAYER2][2].init(&appGraph, "assets/graph/players/p2k3r.png", 6, 3);
+    bitmaps.player[PLAYER2][3].init(&appGraph, "assets/graph/players/p2k4r.png", 4, 3);
+    bitmaps.player[PLAYER2][4].init(&appGraph, "assets/graph/players/p2k5r.png", 4, 3);
 
-    bitmaps.player[PLAYER2][10].init(&appGraph, "assets/graph/players/p2shoot1.png", 13, 0);
-    bitmaps.player[PLAYER2][11].init(&appGraph, "assets/graph/players/p2shoot2.png", 13, 3);
-    bitmaps.player[PLAYER2][12].init(&appGraph, "assets/graph/players/p2win.png", 13, 4);
-    bitmaps.player[PLAYER2][13].init(&appGraph, "assets/graph/players/p2dead.png");
-    bitmaps.player[PLAYER2][14].init(&appGraph, "assets/graph/players/p2dead2.png");
-    bitmaps.player[PLAYER2][15].init(&appGraph, "assets/graph/players/p2dead3.png");
-    bitmaps.player[PLAYER2][16].init(&appGraph, "assets/graph/players/p2dead4.png");
-    bitmaps.player[PLAYER2][17].init(&appGraph, "assets/graph/players/p2dead5.png");
-    bitmaps.player[PLAYER2][18].init(&appGraph, "assets/graph/players/p2dead6.png");
-    bitmaps.player[PLAYER2][19].init(&appGraph, "assets/graph/players/p2dead7.png");
-    bitmaps.player[PLAYER2][20].init(&appGraph, "assets/graph/players/p2dead8.png");
+    bitmaps.player[PLAYER2][5].init(&appGraph, "assets/graph/players/p2shoot1.png", 13, 0);
+    bitmaps.player[PLAYER2][6].init(&appGraph, "assets/graph/players/p2shoot2.png", 13, 3);
+    bitmaps.player[PLAYER2][7].init(&appGraph, "assets/graph/players/p2win.png", 13, 4);
+    bitmaps.player[PLAYER2][8].init(&appGraph, "assets/graph/players/p2dead.png");
+    bitmaps.player[PLAYER2][9].init(&appGraph, "assets/graph/players/p2dead2.png");
+    bitmaps.player[PLAYER2][10].init(&appGraph, "assets/graph/players/p2dead3.png");
+    bitmaps.player[PLAYER2][11].init(&appGraph, "assets/graph/players/p2dead4.png");
+    bitmaps.player[PLAYER2][12].init(&appGraph, "assets/graph/players/p2dead5.png");
+    bitmaps.player[PLAYER2][13].init(&appGraph, "assets/graph/players/p2dead6.png");
+    bitmaps.player[PLAYER2][14].init(&appGraph, "assets/graph/players/p2dead7.png");
+    bitmaps.player[PLAYER2][15].init(&appGraph, "assets/graph/players/p2dead8.png");
 
     for (int i = 0; i < 21; i++)
         appGraph.setColorKey(bitmaps.player[PLAYER2][i].getBmp(), 0xFF0000);

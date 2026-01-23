@@ -7,7 +7,6 @@
 #include "bmfont.h"
 #include "player.h"
 #include "ball.h"
-#include "shoot.h"
 #include "shot.h"
 #include "spritesheet.h"
 #include "floor.h"
@@ -88,6 +87,8 @@ private:
     int drawLastTick;
     int drawCount;
 
+    bool boundingBoxes;  // Debug mode: show bounding boxes for all collidable objects
+
     std::vector<Ball*> pendingBalls;  // Buffer to hold new balls to be added
     
     /**
@@ -155,13 +156,17 @@ public:
     int drawAll() override;
     void draw(Ball* b);
     void draw(Player* pl);
-    void draw(Shoot* sht);
     void draw(Floor* fl);
     void drawScore();
     void drawMark();
+    void drawBoundingBoxes();
     void drawDebugOverlay() override;
 
     GameState* moveAll() override;
+
+    // Debug accessors
+    void setBoundingBoxes(bool enabled) { boundingBoxes = enabled; }
+    bool getBoundingBoxes() const { return boundingBoxes; }
     void checkSequence();
 
     int release() override;

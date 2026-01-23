@@ -21,7 +21,8 @@ Scene::Scene(Stage* stg, std::unique_ptr<StageClear> pstgclr)
     : levelClear(false), pStageClear(std::move(pstgclr)), gameOver(false), gameOverCount(-2),
       stage(stg), change(0), dSecond(0), timeRemaining(0), timeLine(0),
       moveTick(0), moveLastTick(0), moveCount(0),
-      drawTick(0), drawLastTick(0), drawCount(0)
+      drawTick(0), drawLastTick(0), drawCount(0),
+      boundingBoxes(false)
 {
     gameinf.isMenu() = false;
     if (pStageClear) pStageClear->scene = this;
@@ -296,10 +297,10 @@ Shot* Scene::createShot(Player* pl, WeaponType type, int xOffset)
     {
     case WeaponType::HARPOON:
     case WeaponType::HARPOON2:
-        return new HarpoonShot(this, pl, type, xOffset);
+        return new HarpoonShot(this, pl, type, 0);
 
     case WeaponType::GUN:
-        return new GunShot(this, pl, &bmp.weapons.gunBullet, xOffset);
+        return new GunShot(this, pl, &bmp.weapons.gunBullet, 0);
 
     default:
         // Fallback to harpoon for unknown types
@@ -345,7 +346,7 @@ Player* Scene::getPlayer(int index)
     {
         return gameinf.getPlayers()[0];
     }
-    else if (index == 1 && gameinf.getPlayers()[1]->isPlaying())
+    else if (index == 1 && gameinf.getPlayers()[1] && gameinf.getPlayers()[1]->isPlaying())
     {
         return gameinf.getPlayers()[1];
     }
@@ -600,6 +601,17 @@ void Scene::checkSequence()
             {
                 // Fallback: default floor (should not happen with new API)
                 addFloor(obj.x, obj.y, 0);
+            }
+            break;
+
+        case OBJ_ACTION:
+            if (obj.params)
+            {
+                if (auto* action = obj.getParams<ActionParams>())
+                {
+                    LOG_DEBUG("Executing stage action: /%s", action->command.c_str());
+                    CONSOLE.executeCommand(action->command);
+                }
             }
             break;
         }
@@ -876,15 +888,8 @@ void Scene::draw(Ball* b)
 
 void Scene::draw(Player* pl)
 {
-    appGraph.draw(pl->getSprite(), (int)pl->getX(), (int)pl->getY());
-}
-
-void Scene::draw(Shoot* sht)
-{
-    appGraph.draw(sht->getSprite(0), (int)sht->getX(), (int)sht->getY());
-
-    for (int i = (int)sht->getY() + sht->getSprite(0)->getHeight(); i < MAX_Y; i += sht->getSprite(1)->getHeight())
-        appGraph.draw(sht->getSprite(1 + sht->getTail()), (int)sht->getX(), i);
+    bool flipHorizontal = (pl->getFacing() == FacingDirection::LEFT);
+    appGraph.draw(pl->getSprite(), (int)pl->getX(), (int)pl->getY(), flipHorizontal);
 }
 
 void Scene::draw(Floor* fl)
@@ -939,6 +944,103 @@ void Scene::drawMark()
     appGraph.draw(&bmp.mark[0], MAX_X + 1, MAX_Y + 1);
 }
 
+/**
+ * Draw bounding boxes for all collidable objects
+ *
+ * Debug visualization showing collision boundaries matching actual collision detection logic.
+ * - Players: Uses sprite offset + 5-pixel horizontal margins + 3-pixel vertical offset
+ * - Balls: Full diameter box
+ * - Shots: Point collision (drawn as small cross for visibility)
+ * - Floors: Full rectangular bounds
+ */
+void Scene::drawBoundingBoxes()
+{
+    // Set draw color to black for bounding boxes
+    appGraph.setDrawColor(0, 0, 0, 255);
+
+    // Draw player bounding boxes matching Ball::collision(Player*) logic
+    // From ball.cpp:181-184:
+    //   xPos < pl->getX() + pl->getSprite()->getXOff() + pl->getWidth() - 5
+    //   xPos + diameter > pl->getX() + pl->getSprite()->getXOff() + 5
+    //   yPos + diameter > pl->getY() + pl->getSprite()->getYOff() + 3
+    for (int i = 0; i < 2; i++)
+    {
+        Player* pl = gameinf.getPlayers()[i];
+        if (pl && pl->isPlaying() && pl->isVisible())
+        {
+            Sprite* spr = pl->getSprite();
+            int xBase = (int)pl->getX() + spr->getXOff();
+            int yBase = (int)pl->getY() + spr->getYOff();
+
+            // Collision box has 5-pixel margins on sides, 3-pixel offset on top
+            int x = xBase + 5;
+            int y = yBase + 3;
+            int w = pl->getWidth() - 10;  // -5 on each side
+            int h = pl->getHeight() - 3;   // -3 from top
+
+            appGraph.rectangle(x, y, x + w, y + h);
+        }
+    }
+
+    // Draw ball bounding boxes (circles represented as bounding squares)
+    for (Ball* b : lsBalls)
+    {
+        int x = (int)b->getX();
+        int y = (int)b->getY();
+        int d = b->getDiameter();
+        appGraph.rectangle(x, y, x + d, y + d);
+    }
+
+    // Draw shot collision areas
+    // Different visualization for Harpoon vs Gun
+    for (Shot* s : lsShoots)
+    {
+        if (!s->isDead())
+        {
+            int xPos = (int)s->getX();
+            int yPos = (int)s->getY();
+            int yInit = (int)s->getYInit();
+
+            // Check if this is a GunShot
+            GunShot* gunShot = dynamic_cast<GunShot*>(s);
+
+            if (gunShot)
+            {
+                // Gun: Show sprite bounding box (no vertical line)
+                Sprite* sprite = gunShot->getCurrentSprite();
+                if (sprite)
+                {
+                    int spriteX = xPos + sprite->getXOff();
+                    int spriteY = yPos + sprite->getYOff();
+                    int w = sprite->getWidth();
+                    int h = sprite->getHeight();
+                    appGraph.rectangle(spriteX, spriteY, spriteX + w, spriteY + h);
+                }
+            }
+            else
+            {
+                // Harpoon: Show vertical chain line + collision point
+                // The chain collision is centered at xPos + 8
+                int chainX = xPos + 8;
+                appGraph.rectangle(chainX, yPos, chainX + 1, yInit);
+
+                // Mark the collision point
+                appGraph.rectangle(chainX - 2, yPos - 2, chainX + 2, yPos + 2);
+            }
+        }
+    }
+
+    // Draw floor bounding boxes
+    for (Floor* f : lsFloor)
+    {
+        int x = f->getX();
+        int y = f->getY();
+        int w = f->getWidth();
+        int h = f->getHeight();
+        appGraph.rectangle(x, y, x + w, y + h);
+    }
+}
+
 void Scene::drawDebugOverlay()
 {
     AppData& appData = AppData::instance();
@@ -957,10 +1059,12 @@ void Scene::drawDebugOverlay()
     if (appData.getPlayers()[PLAYER1])
     {
 		Player* p = appData.getPlayers()[PLAYER1];
-        textOverlay.addTextF("P1: Score=%d Lives=%d Shoots=%d x=%.1f y=%.1f",
+        textOverlay.addTextF("P1: Score=%d Lives=%d Shoots=%d Facing=%d Frame=%d x=%.1f y=%.1f",
             p->getScore(),
             p->getLives(),
             p->getNumShoots(),
+            p->getFacing(),
+            p->getFrame(),
 			p->getX(),
 			p->getY()
         );
@@ -1050,7 +1154,13 @@ int Scene::drawAll()
     }
 
     if (pStageClear) pStageClear->drawAll();
-    
+
+    // Draw bounding boxes if debug mode is enabled
+    if (boundingBoxes)
+    {
+        drawBoundingBoxes();
+    }
+
     // Finalize render (debug overlay, console, flip)
     finalizeRender();
 

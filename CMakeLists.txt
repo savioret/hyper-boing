@@ -51,7 +51,6 @@ set(SOURCES
     src/entities/player.cpp
     src/game/scene.cpp
     src/ui/select.cpp
-    src/entities/shoot.cpp
     src/entities/shot.cpp
     src/entities/harpoonshot.cpp
     src/entities/gunshot.cpp
@@ -85,7 +84,6 @@ set(HEADERS
     src/entities/player.h
     src/game/scene.h
     src/ui/select.h
-    src/entities/shoot.h
     src/entities/shot.h
     src/entities/harpoonshot.h
     src/entities/gunshot.h

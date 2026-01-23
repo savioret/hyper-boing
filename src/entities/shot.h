@@ -88,6 +88,8 @@ public:
      * Check collision with floor
      * @param fl Floor to check collision with
      * @return true if colliding, false otherwise
+     *
+     * Virtual to allow weapon-specific collision logic (e.g., gun vs harpoon)
      */
-    bool collision(Floor* fl);
+    virtual bool collision(Floor* fl);
 };

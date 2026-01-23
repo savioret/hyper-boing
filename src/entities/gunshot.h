@@ -48,6 +48,12 @@ public:
     void onCeilingHit() override;
     void onBallHit(Ball* b) override;
 
+    // Override collision detection to match bullet sprite center
+    bool collision(Floor* fl) override;
+
+    // Accessors for debug visualization
+    Sprite* getCurrentSprite() const;
+
 private:
     /**
      * Advance to next animation frame based on current state

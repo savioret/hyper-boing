@@ -21,16 +21,29 @@ Shot::Shot(Scene* scn, Player* pl, WeaponType type, int xOffset)
     const WeaponConfig& config = WeaponConfig::get(type);
     weaponSpeed = config.speed;
 
-    // Apply horizontal offset for multi-projectile weapons
-    xPos = xInit = (pl->getX() + pl->getWidth() / 2.0f) + pl->getSprite()->getXOff() + 5.0f + xOffset;
+    // Calculate shot spawn position based on player facing direction
+    float centerOffset = pl->getWidth() / 2.0f;
+    float spriteOffset = pl->getSprite()->getXOff();
+
+    // When facing left, spawn on left side; when facing right, spawn on right side
+    if (pl->getFacing() == FacingDirection::LEFT)
+    {
+        xPos = xInit = pl->getX() + spriteOffset - 5.0f + xOffset;
+    }
+    else  // FacingDirection::RIGHT
+    {
+        xPos = xInit = pl->getX() + centerOffset + spriteOffset + 5.0f + xOffset;
+    }
+
     yPos = yInit = (float)MAX_Y;
 }
 
 /**
- * Default ball hit behavior - just kill the shot
+ * Default ball hit behavior - decrement player shot count and kill
  */
 void Shot::onBallHit(Ball* b)
 {
+    player->looseShoot();
     kill();
 }
 

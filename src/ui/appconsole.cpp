@@ -133,6 +133,9 @@ void AppConsole::registerBuiltinCommands()
 
     registerCommand("weapon", "Switch weapon: /weapon <harpoon|harpoon2|gun> [player_num]",
         [this](const std::string& args) { cmdWeapon(args); });
+
+    registerCommand("boxes", "Toggle bounding boxes: /boxes <1|0>",
+        [this](const std::string& args) { cmdBoxes(args); });
 }
 
 void AppConsole::cmdHelp(const std::string& args)
@@ -340,6 +343,52 @@ void AppConsole::cmdWeapon(const std::string& args)
     if (!changed)
     {
         LOG_WARNING("No active players found");
+    }
+}
+
+/**
+ * Command: /boxes <1|0>
+ *
+ * Toggles bounding box debug visualization.
+ * Shows collision boundaries for all entities (players, balls, shots, floors).
+ */
+void AppConsole::cmdBoxes(const std::string& args)
+{
+    if (args.empty())
+    {
+        LOG_WARNING("Usage: /boxes <1|0>");
+        LOG_INFO("  1 = Enable bounding boxes, 0 = Disable bounding boxes");
+        return;
+    }
+
+    // Get current scene
+    AppData& appData = AppData::instance();
+    Scene* scene = dynamic_cast<Scene*>(appData.currentScreen.get());
+    if (!scene)
+    {
+        LOG_WARNING("Bounding boxes only available during gameplay");
+        return;
+    }
+
+    // Parse argument
+    int enable = std::atoi(args.c_str());
+
+    if (enable != 0 && enable != 1)
+    {
+        LOG_ERROR("Invalid value: %s (must be 0 or 1)", args.c_str());
+        return;
+    }
+
+    // Set the bounding box mode
+    scene->setBoundingBoxes(enable == 1);
+
+    if (enable)
+    {
+        LOG_SUCCESS("Bounding boxes enabled");
+    }
+    else
+    {
+        LOG_SUCCESS("Bounding boxes disabled");
     }
 }
 

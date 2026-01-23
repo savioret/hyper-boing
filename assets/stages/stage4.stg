@@ -6,24 +6,16 @@ time_limit: 100
 player1_x: 250
 player2_x: 350
 
-# Single floor platform
-floor:
-  start: 0
-  x: 250
-  y: 70
-  floor_type: 0
+at 0:
+  # Single floor platform
+  floor: x=250, y=70, type=0
 
-# Small ball at random top position
-ball:
-  start: 1
-  y_max: true
-  size: 3
+at 1:
+  # Small ball at random top position
+  ball: y_max, size=3
 
-# Regular balls at random top positions
-ball:
-  start: 1
-  y_max: true
+  # Regular ball at random top position
+  ball: y_max
 
-ball:
-  start: 20
-  y_max: true
+at 20:
+  ball: y_max

@@ -6,184 +6,27 @@ time_limit: 100
 player1_x: 270
 player2_x: 270
 
-# Left formation - small balls moving left
-ball:
-  start: 1
-  x: 128
-  y: 100
-  size: 3
-  top: 200
-  dirX: -1
-  dirY: 1
+at 1:
+  # Left formation - small balls moving left
+  ball: x=128, y=100, size=3, top=200, dirX=-1, dirY=1
+  ball: x=144, y=100, size=3, top=200, dirX=-1, dirY=1
+  ball: x=160, y=100, size=3, top=200, dirX=-1, dirY=1
+  ball: x=176, y=100, size=3, top=200, dirX=-1, dirY=1
+  ball: x=192, y=100, size=3, top=200, dirX=-1, dirY=1
+  ball: x=208, y=100, size=3, top=200, dirX=-1, dirY=1
+  ball: x=224, y=100, size=3, top=200, dirX=-1, dirY=1
+  ball: x=240, y=100, size=3, top=200, dirX=-1, dirY=1
+  ball: x=256, y=100, size=3, top=200, dirX=-1, dirY=1
+  ball: x=272, y=100, size=3, top=200, dirX=-1, dirY=1
 
-ball:
-  start: 1
-  x: 144
-  y: 100
-  size: 3
-  top: 200
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 1
-  x: 160
-  y: 100
-  size: 3
-  top: 200
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 1
-  x: 176
-  y: 100
-  size: 3
-  top: 200
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 1
-  x: 192
-  y: 100
-  size: 3
-  top: 200
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 1
-  x: 208
-  y: 100
-  size: 3
-  top: 200
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 1
-  x: 224
-  y: 100
-  size: 3
-  top: 200
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 1
-  x: 240
-  y: 100
-  size: 3
-  top: 200
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 1
-  x: 256
-  y: 100
-  size: 3
-  top: 200
-  dirX: -1
-  dirY: 1
-
-ball:
-  start: 1
-  x: 272
-  y: 100
-  size: 3
-  top: 200
-  dirX: -1
-  dirY: 1
-
-# Right formation - small balls moving right
-ball:
-  start: 1
-  x: 428
-  y: 100
-  size: 3
-  top: 200
-  dirX: 1
-  dirY: 1
-
-ball:
-  start: 1
-  x: 444
-  y: 100
-  size: 3
-  top: 200
-  dirX: 1
-  dirY: 1
-
-ball:
-  start: 1
-  x: 460
-  y: 100
-  size: 3
-  top: 200
-  dirX: 1
-  dirY: 1
-
-ball:
-  start: 1
-  x: 476
-  y: 100
-  size: 3
-  top: 200
-  dirX: 1
-  dirY: 1
-
-ball:
-  start: 1
-  x: 492
-  y: 100
-  size: 3
-  top: 200
-  dirX: 1
-  dirY: 1
-
-ball:
-  start: 1
-  x: 508
-  y: 100
-  size: 3
-  top: 200
-  dirX: 1
-  dirY: 1
-
-ball:
-  start: 1
-  x: 524
-  y: 100
-  size: 3
-  top: 200
-  dirX: 1
-  dirY: 1
-
-ball:
-  start: 1
-  x: 540
-  y: 100
-  size: 3
-  top: 200
-  dirX: 1
-  dirY: 1
-
-ball:
-  start: 1
-  x: 556
-  y: 100
-  size: 3
-  top: 200
-  dirX: 1
-  dirY: 1
-
-ball:
-  start: 1
-  x: 572
-  y: 100
-  size: 3
-  top: 200
-  dirX: 1
-  dirY: 1
+  # Right formation - small balls moving right
+  ball: x=428, y=100, size=3, top=200, dirX=1, dirY=1
+  ball: x=444, y=100, size=3, top=200, dirX=1, dirY=1
+  ball: x=460, y=100, size=3, top=200, dirX=1, dirY=1
+  ball: x=476, y=100, size=3, top=200, dirX=1, dirY=1
+  ball: x=492, y=100, size=3, top=200, dirX=1, dirY=1
+  ball: x=508, y=100, size=3, top=200, dirX=1, dirY=1
+  ball: x=524, y=100, size=3, top=200, dirX=1, dirY=1
+  ball: x=540, y=100, size=3, top=200, dirX=1, dirY=1
+  ball: x=556, y=100, size=3, top=200, dirX=1, dirY=1
+  ball: x=572, y=100, size=3, top=200, dirX=1, dirY=1

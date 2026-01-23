@@ -3,6 +3,7 @@
 #include <list>
 #include <memory>
 #include <climits>
+#include <string>
 
 /**
  * StageObjectParams base class
@@ -96,6 +97,31 @@ struct FloorParams : public StageObjectParams
     {
         if (floorType < 0 || floorType > 1) return false;
         return true;
+    }
+};
+
+/**
+ * ActionParams struct
+ *
+ * Parameters for action objects (console commands executed at spawn time).
+ *
+ * Fields:
+ * - command: Console command string to execute (without leading /)
+ */
+struct ActionParams : public StageObjectParams
+{
+    std::string command;
+
+    ActionParams() = default;
+
+    std::unique_ptr<StageObjectParams> clone() const override
+    {
+        return std::make_unique<ActionParams>(*this);
+    }
+
+    bool validate() const
+    {
+        return !command.empty();
     }
 };
 
@@ -295,7 +321,18 @@ public:
     {
         return StageObjectBuilder(3, std::make_unique<FloorParams>()); // 3 = OBJ_FLOOR
     }
-    
+
+    /**
+     * Create an action object builder
+     * @param command Console command to execute (without leading /)
+     */
+    static StageObjectBuilder action(const std::string& command)
+    {
+        auto params = std::make_unique<ActionParams>();
+        params->command = command;
+        return StageObjectBuilder(6, std::move(params)); // 6 = OBJ_ACTION
+    }
+
     /**
      * Set exact position (both X and Y)
      * @param x X coordinate

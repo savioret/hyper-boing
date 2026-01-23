@@ -16,7 +16,6 @@
 #include "ball.h"
 #include "player.h"
 #include "item.h"
-#include "shoot.h"
 #include "floor.h"
 #include "minput.h"
 #include "appdata.h"
@@ -29,13 +28,14 @@ constexpr int OBJ_SHOOT = 2;
 constexpr int OBJ_FLOOR = 3;
 constexpr int OBJ_ITEM = 4;
 constexpr int OBJ_PLAYER = 5;
+constexpr int OBJ_ACTION = 6;
 
 // Animation frames
-constexpr int ANIM_LEFT = 0;
-constexpr int ANIM_RIGHT = 5;
-constexpr int ANIM_SHOOT = 10;
-constexpr int ANIM_WIN = 12;
-constexpr int ANIM_DEAD = 13;
+constexpr int ANIM_WALK = 0;
+//constexpr int ANIM_RIGHT = 5;
+constexpr int ANIM_SHOOT = 5;
+constexpr int ANIM_WIN = 7;
+constexpr int ANIM_DEAD = 8;
 
 // Screen boundaries
 constexpr int MAX_Y = 415;

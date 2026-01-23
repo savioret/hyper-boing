@@ -6,6 +6,15 @@ class Scene;
 class Sprite;
 
 /**
+ * Player facing direction
+ */
+enum class FacingDirection
+{
+    RIGHT,  // Player is facing right
+    LEFT    // Player is facing left
+};
+
+/**
  * Player class
  *
  * Player, as its name suggests, contains information about the sprite
@@ -17,8 +26,8 @@ class Player
 private:
     Sprite* sprite;
     float xPos, yPos;
-    int sx, sy;
     int xDir, yDir; // used for death animation
+    FacingDirection facing;  // Direction player is facing
     int lives;
     int score;
     int id;  // 0 = player 1, 1 = player 2
@@ -38,7 +47,6 @@ private:
     bool visible;
 
 public:
-    Player(int sx, int sy, int id);
     Player(int id);
     ~Player();
 
@@ -64,8 +72,8 @@ public:
     // Getters
     float getX() const { return xPos; }
     float getY() const { return yPos; }
-    int getWidth() const { return sx; }
-    int getHeight() const { return sy; }
+    int getWidth() const { return sprite->getWidth(); }
+    int getHeight() const { return sprite->getHeight(); }
     int getId() const { return id; }
     int getScore() const { return score; }
     int getLives() const { return lives; }
@@ -76,6 +84,7 @@ public:
     int getIdWeapon() const { return idWeapon; }
     int getFrame() const { return frame; }
     Sprite* getSprite() const { return sprite; }
+    FacingDirection getFacing() const { return facing; }
 
     // Setters
     void setX(float x) { xPos = x; }

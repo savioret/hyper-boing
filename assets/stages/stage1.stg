@@ -6,36 +6,18 @@ time_limit: 100
 player1_x: 250
 player2_x: 350
 
-# Floor platforms
-floor:
-  start: 0
-  x: 550
-  y: 50
-  type: 0
+at 0:
+  # Floor platforms
+  floor: x=550, y=50, type=0
+  floor: x=250, y=250, type=0
+  floor: x=350, y=150, type=1
+  floor: x=550, y=150, type=1
+  /weapon gun 1
+  /boxes 1
 
-floor:
-  start: 0
-  x: 250
-  y: 250
-  type: 0
+at 1:
+  # Ball spawning at top with random X position
+  ball: y_max
 
-floor:
-  start: 0
-  x: 350
-  y: 150
-  type: 1
-
-floor:
-  start: 0
-  x: 550
-  y: 150
-  type: 1
-
-# Balls spawning at top with random X position (equivalent to .atMaxY())
-ball:
-  start: 1
-  y_max: true
-
-ball:
-  start: 20
-  y_max: true
+at 20:
+  ball: y_max

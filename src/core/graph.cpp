@@ -120,6 +120,20 @@ void Graph::draw(Sprite* spr, int x, int y) {
     SDL_RenderCopy(renderer, spr->bmp, &srcRect, &dstRect);
 }
 
+void Graph::draw(Sprite* spr, int x, int y, bool flipHorizontal) {
+    SDL_Rect srcRect = { spr->srcX, spr->srcY, spr->sx, spr->sy };
+    SDL_Rect dstRect = { x + spr->xoff, y + spr->yoff, spr->sx, spr->sy };
+
+    if (flipHorizontal) {
+        SDL_RenderCopyEx(renderer, spr->bmp, &srcRect, &dstRect,
+                        0.0,  // angle (no rotation)
+                        nullptr,  // center point (use default)
+                        SDL_FLIP_HORIZONTAL);
+    } else {
+        SDL_RenderCopy(renderer, spr->bmp, &srcRect, &dstRect);
+    }
+}
+
 void Graph::drawScaled(Sprite* spr, int x, int y, int w, int h) {
     SDL_Rect srcRect = { spr->srcX, spr->srcY, spr->sx, spr->sy };
     SDL_Rect dstRect = { x + spr->xoff, y + spr->yoff, w, h };
@@ -217,6 +231,10 @@ void Graph::text(const char texto[], int x, int y) {
 
     // Use the system font renderer (integrated 5x7 bitmap font)
     g_systemFontRenderer.text(texto, x, y);
+}
+
+void Graph::setDrawColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+    SDL_SetRenderDrawColor(renderer, r, g, b, a);
 }
 
 void Graph::rectangle(int a, int b, int c, int d) {

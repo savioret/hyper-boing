@@ -45,6 +45,7 @@ public:
     void release();
 
     void draw(Sprite* spr, int x, int y);
+    void draw(Sprite* spr, int x, int y, bool flipHorizontal);
     void drawScaled(Sprite* spr, int x, int y, int w, int h);
     void draw(SDL_Texture* texture, const SDL_Rect* srcRect, int x, int y);
     void drawClipped(SDL_Texture* texture, const SDL_Rect* srcRect, int x, int y);
@@ -57,6 +58,7 @@ public:
     void setFullScreen(bool fs);
 
     void text(const char texto[], int x, int y);
+    void setDrawColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a = 255);
     void rectangle(int a, int b, int c, int d);
     void filledRectangle(int a, int b, int c, int d);
 

@@ -1,6 +1,7 @@
 #include "main.h"
 #include "gunshot.h"
 #include "../game/scene.h"
+#include "../game/floor.h"
 #include "player.h"
 #include "../core/graph.h"
 #include "../core/spritesheet.h"
@@ -19,10 +20,15 @@ GunShot::GunShot(Scene* scn, Player* pl, SpriteSheet* sheet, int xOffset)
     : Shot(scn, pl, WeaponType::GUN, xOffset)
     , spriteSheet(sheet)
     , currentFrame(0)
-    , frameDelay(3)      // Change frames every 3 game ticks
+    , frameDelay(9)      // Change frames every 9 game ticks (~150ms at 60 FPS)
     , frameCounter(frameDelay)
     , animState(AnimState::FLIGHT)
 {
+    // When facing left, spawn on left side; when facing right, spawn on right side
+    if (pl->getFacing() == FacingDirection::LEFT)
+    {
+        xPos += 12;
+    }
 }
 
 GunShot::~GunShot()
@@ -128,7 +134,8 @@ void GunShot::triggerImpact()
 void GunShot::draw(Graph* graph)
 {
     Sprite* frame = spriteSheet->getFrame(currentFrame);
-    if (frame)
+
+    if ( frame )
     {
         graph->draw(frame, (int)xPos, (int)yPos);
     }
@@ -157,4 +164,33 @@ void GunShot::onBallHit(Ball* b)
 {
     player->looseShoot();
     kill();
+}
+
+/**
+ * Check collision with floor
+ *
+ * Overrides base Shot::collision() which uses xPos + 8.
+ * Gun bullets use centered sprites with negative offsets, so the collision
+ * point should be at xPos (the sprite's center), not xPos + 8.
+ */
+bool GunShot::collision(Floor* fl)
+{
+    // Use xPos directly as the collision point (sprite center)
+    // No +8 offset needed since gun bullet sprites are centered differently than harpoon
+    if (xPos > fl->getX() - 1 && xPos < fl->getX() + fl->getWidth() + 1 &&
+        fl->getY() + fl->getHeight() > yPos)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Get the current sprite frame
+ * Used for debug bounding box visualization
+ */
+Sprite* GunShot::getCurrentSprite() const
+{
+    return spriteSheet->getFrame(currentFrame);
 }

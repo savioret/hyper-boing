@@ -1,19 +1,6 @@
 #include "main.h"
 #include <cstring>
 
-Player::Player(int sx, int sy, int id)
-    : sx(sx), sy(sy), id(id)
-{
-    xPos = 200.0f + 100.0f * id;
-    yPos = (float)(MAX_Y - sy);	
-    maxShoots = 2;
-    numShoots = 0;
-    shotCounter = shotInterval = 20;
-    score = 0;
-
-    init();
-}
-
 Player::Player(int id)
     : id(id)
 {
@@ -47,11 +34,10 @@ void Player::init()
     animSpeed = shotCounter = 10;
     score = 0;
     moveIncrement = 3;
+    facing = FacingDirection::RIGHT;  // Default facing right
     sprite = &gameinf.getBmp().player[id][ANIM_SHOOT];
-    sx = sprite->getWidth();
-    sy = sprite->getHeight();
     xPos = 200.0f + 100.0f * id;
-    yPos = (float)(MAX_Y - sy);
+    yPos = (float)(MAX_Y - sprite->getHeight());
 
     xDir = 5;
     yDir = -4;
@@ -74,12 +60,11 @@ void Player::revive()
 
     shotInterval = 15;
     animSpeed = shotCounter = 10;
+    facing = FacingDirection::RIGHT;  // Reset facing on revive
     sprite = &gameinf.getBmp().player[id][ANIM_SHOOT];
-    sx = sprite->getWidth();
-    sy = sprite->getHeight();
 
     xPos = 200.0f + 100.0f * id;
-    yPos = (float)(MAX_Y - sy);
+    yPos = (float)(MAX_Y - sprite->getHeight());
 
     xDir = 5;
     yDir = -4;
@@ -87,19 +72,21 @@ void Player::revive()
 
 void Player::moveLeft()
 {
+    facing = FacingDirection::LEFT;  // Update facing direction
+
     if (xPos > MIN_X - 10)
         xPos -= moveIncrement;
-    
-    if (frame >= ANIM_RIGHT - 1)
+
+    if (frame >= ANIM_SHOOT - 1)
     {
-        frame = ANIM_LEFT;
+        frame = ANIM_WALK;
         sprite = &gameinf.getBmp().player[id][frame];
         shotCounter = animSpeed;
     }
     else if (!shotCounter)
     {
-        if (frame < ANIM_LEFT + 4) frame++;
-        else frame = ANIM_RIGHT;
+        if (frame < ANIM_WALK + 4) frame++;
+        else frame = ANIM_WALK;
         sprite = &gameinf.getBmp().player[id][frame];
         shotCounter = animSpeed;
     }
@@ -108,23 +95,25 @@ void Player::moveLeft()
 
 void Player::moveRight()
 {
-    if (xPos + sx < MAX_X - 5)
+    facing = FacingDirection::RIGHT;  // Update facing direction
+
+    if (xPos + sprite->getWidth() < MAX_X - 5)
         xPos += moveIncrement;
 
-    if (frame < ANIM_RIGHT || frame > ANIM_RIGHT + 4)
+    if (frame >= ANIM_SHOOT - 1)
     {
-        frame = ANIM_RIGHT;
+        frame = ANIM_WALK;
         sprite = &gameinf.getBmp().player[id][frame];
         shotCounter = animSpeed;
     }
     else if (!shotCounter)
     {
-        if (frame < ANIM_RIGHT + 4) frame++;
-        else frame = ANIM_RIGHT;
-
+        if (frame < ANIM_WALK + 4) frame++;
+        else frame = ANIM_WALK;
         sprite = &gameinf.getBmp().player[id][frame];
         shotCounter = animSpeed;
     }
+
     else shotCounter--;
 }
 
@@ -177,7 +166,7 @@ void Player::stop()
             sprite = &gameinf.getBmp().player[id][frame];
         }
     }
-    if (xPos + sx > MAX_X - 10) xPos = (float)(MAX_X - 16 - sx);
+    if (xPos + sprite->getWidth() > MAX_X - 10) xPos = (float)(MAX_X - 16 - sprite->getWidth());
 }
 
 void Player::update()
