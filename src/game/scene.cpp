@@ -7,6 +7,7 @@
 #include "appdata.h"
 #include "appconsole.h"
 #include "logger.h"
+#include "eventmanager.h"
 #include "harpoonshot.h"
 #include "gunshot.h"
 #include <SDL.h>
@@ -341,6 +342,14 @@ void Scene::shoot(Player* pl)
     }
 
     pl->shoot();  // Updates player state and animation
+
+    // Fire PLAYER_SHOOT event
+    GameEventData event;
+    event.type = GameEventType::PLAYER_SHOOT;
+    event.timestamp = SDL_GetTicks();
+    event.playerShoot.player = pl;
+    event.playerShoot.weapon = pl->getWeapon();
+    EVENT_MGR.trigger(event);
 }
 
 /**
@@ -410,6 +419,13 @@ void Scene::win()
     PlayMusic();
     levelClear = true;
 
+    // Fire LEVEL_CLEAR event
+    GameEventData event;
+    event.type = GameEventType::LEVEL_CLEAR;
+    event.timestamp = SDL_GetTicks();
+    event.levelClear.stageId = stage->id;
+    EVENT_MGR.trigger(event);
+
     pStageClear = std::make_unique<StageClear>(this);
 }
 
@@ -457,6 +473,16 @@ void Scene::checkColisions()
                 {
                     sh->onBallHit(b);  // Polymorphic call - handles weapon-specific behavior
                     sh->getPlayer()->addScore(objectScore(b->diameter));
+
+                    // Fire BALL_HIT event
+                    GameEventData event;
+                    event.type = GameEventType::BALL_HIT;
+                    event.timestamp = SDL_GetTicks();
+                    event.ballHit.ball = b;
+                    event.ballHit.shot = sh;
+                    event.ballHit.shooter = sh->getPlayer();
+                    EVENT_MGR.trigger(event);
+
                     b->kill();
                 }
             }
@@ -521,6 +547,14 @@ void Scene::checkColisions()
                 {
                     if (b->collision(gameinf.player[i].get()))
                     {
+                        // Fire PLAYER_HIT event
+                        GameEventData event;
+                        event.type = GameEventType::PLAYER_HIT;
+                        event.timestamp = SDL_GetTicks();
+                        event.playerHit.player = gameinf.player[i].get();
+                        event.playerHit.ball = b;
+                        EVENT_MGR.trigger(event);
+
                         gameinf.player[i]->kill();
                         gameinf.player[i]->setFrame(ANIM_DEAD);
                     }
@@ -588,6 +622,15 @@ void Scene::checkSequence()
                 if (auto* ball = obj.getParams<BallParams>())
                 {
                     addBall(obj.x, obj.y, ball->size, ball->top, ball->dirX, ball->dirY, ball->ballType);
+
+                    // Fire STAGE_OBJECT_SPAWNED event
+                    GameEventData event;
+                    event.type = GameEventType::STAGE_OBJECT_SPAWNED;
+                    event.timestamp = SDL_GetTicks();
+                    event.objectSpawned.objectType = 0;  // Ball
+                    event.objectSpawned.x = obj.x;
+                    event.objectSpawned.y = obj.y;
+                    EVENT_MGR.trigger(event);
                 }
             }
             else
@@ -603,6 +646,15 @@ void Scene::checkSequence()
                 if (auto* floor = obj.getParams<FloorParams>())
                 {
                     addFloor(obj.x, obj.y, floor->floorType);
+
+                    // Fire STAGE_OBJECT_SPAWNED event
+                    GameEventData event;
+                    event.type = GameEventType::STAGE_OBJECT_SPAWNED;
+                    event.timestamp = SDL_GetTicks();
+                    event.objectSpawned.objectType = 1;  // Floor
+                    event.objectSpawned.x = obj.x;
+                    event.objectSpawned.y = obj.y;
+                    EVENT_MGR.trigger(event);
                 }
             }
             else
@@ -701,6 +753,12 @@ GameState* Scene::moveAll()
                 if (readyBlinkCount >= 6)
                 {
                     readyActive = false;
+
+                    // Fire READY_SCREEN_COMPLETE event
+                    GameEventData event;
+                    event.type = GameEventType::READY_SCREEN_COMPLETE;
+                    event.timestamp = SDL_GetTicks();
+                    EVENT_MGR.trigger(event);
                 }
             }
         }
@@ -760,6 +818,14 @@ GameState* Scene::moveAll()
                 {
                     gameOver = true;
                     gameOverCount = 10;
+
+                    // Fire GAME_OVER event (reason: player 1 dead)
+                    GameEventData event;
+                    event.type = GameEventType::GAME_OVER;
+                    event.timestamp = SDL_GetTicks();
+                    event.gameOver.reason = 0;  // Player 1 dead
+                    EVENT_MGR.trigger(event);
+
                     CloseMusic();
                     OpenMusic("assets/music/gameover.ogg");
                     PlayMusic();
@@ -771,6 +837,14 @@ GameState* Scene::moveAll()
                 {
                     gameOver = true;
                     gameOverCount = 10;
+
+                    // Fire GAME_OVER event (reason: both players dead)
+                    GameEventData event;
+                    event.type = GameEventType::GAME_OVER;
+                    event.timestamp = SDL_GetTicks();
+                    event.gameOver.reason = 1;  // Both players dead
+                    EVENT_MGR.trigger(event);
+
                     CloseMusic();
                     OpenMusic("assets/music/gameover.ogg");
                     PlayMusic();
@@ -822,7 +896,19 @@ GameState* Scene::moveAll()
         dSecond = 0;
         if (timeRemaining > 0)
         {
-            if (!pStageClear && !gameOver) timeRemaining--;
+            if (!pStageClear && !gameOver)
+            {
+                int previousTime = timeRemaining;
+                timeRemaining--;
+
+                // Fire TIME_SECOND_ELAPSED event
+                GameEventData event;
+                event.type = GameEventType::TIME_SECOND_ELAPSED;
+                event.timestamp = SDL_GetTicks();
+                event.timeElapsed.previousTime = previousTime;
+                event.timeElapsed.newTime = timeRemaining;
+                EVENT_MGR.trigger(event);
+            }
         }
         else
         {
@@ -830,6 +916,14 @@ GameState* Scene::moveAll()
             {
                 gameOver = true;
                 gameOverCount = 10;
+
+                // Fire GAME_OVER event (reason: time expired)
+                GameEventData event;
+                event.type = GameEventType::GAME_OVER;
+                event.timestamp = SDL_GetTicks();
+                event.gameOver.reason = 2;  // Time expired
+                EVENT_MGR.trigger(event);
+
                 gameinf.player[PLAYER1]->setPlaying(false);
                 if (gameinf.player[PLAYER2])
                     gameinf.player[PLAYER2]->setPlaying(false);

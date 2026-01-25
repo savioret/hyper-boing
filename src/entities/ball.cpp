@@ -1,5 +1,7 @@
 #include "main.h"
+#include "eventmanager.h"
 #include <cmath>
+#include <SDL.h>
 
 #define ABSF(x) if((x)<0.0) (x)=-(x);
 
@@ -257,6 +259,17 @@ void Ball::move()
 
 void Ball::onDeath()
 {
+    // Fire BALL_SPLIT event if ball will split into smaller balls
+    if (size < 3)
+    {
+        GameEventData event;
+        event.type = GameEventType::BALL_SPLIT;
+        event.timestamp = SDL_GetTicks();
+        event.ballSplit.parentBall = this;
+        event.ballSplit.parentSize = size;
+        EVENT_MGR.trigger(event);
+    }
+
     // Queue this ball to split into smaller balls
     scene->splitBall(this);
 }

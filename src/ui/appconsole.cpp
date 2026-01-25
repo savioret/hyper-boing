@@ -4,6 +4,7 @@
 #include "bmfont.h"
 #include "logger.h"
 #include "main.h"
+#include "eventmanager.h"
 #include <algorithm>
 #include <sstream>
 
@@ -136,6 +137,9 @@ void AppConsole::registerBuiltinCommands()
 
     registerCommand("boxes", "Toggle bounding boxes: /boxes <1|0>",
         [this](const std::string& args) { cmdBoxes(args); });
+
+    registerCommand("events", "Toggle event logging: /events",
+        [this](const std::string& args) { cmdEvents(args); });
 }
 
 void AppConsole::cmdHelp(const std::string& args)
@@ -389,6 +393,30 @@ void AppConsole::cmdBoxes(const std::string& args)
     else
     {
         LOG_SUCCESS("Bounding boxes disabled");
+    }
+}
+
+/**
+ * /events command - Toggle event logging
+ *
+ * Enables or disables event system logging for debugging.
+ * When enabled, all fired events are logged to the console.
+ */
+void AppConsole::cmdEvents(const std::string& args)
+{
+    // Toggle event logging
+    bool currentState = EVENT_MGR.isLoggingEvents();
+    bool newState = !currentState;
+
+    EVENT_MGR.setLogEvents(newState);
+
+    if (newState)
+    {
+        LOG_SUCCESS("Event logging enabled");
+    }
+    else
+    {
+        LOG_SUCCESS("Event logging disabled");
     }
 }
 

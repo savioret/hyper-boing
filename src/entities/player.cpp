@@ -1,5 +1,7 @@
 #include "main.h"
+#include "eventmanager.h"
 #include <cstring>
+#include <SDL.h>
 
 Player::Player(int id)
     : id(id)
@@ -215,7 +217,18 @@ void Player::update()
 
 void Player::addScore(int num)
 {
+    int previousScore = score;
     score += num;
+
+    // Fire SCORE_CHANGED event
+    GameEventData event;
+    event.type = GameEventType::SCORE_CHANGED;
+    event.timestamp = SDL_GetTicks();
+    event.scoreChanged.player = this;
+    event.scoreChanged.scoreAdded = num;
+    event.scoreChanged.previousScore = previousScore;
+    event.scoreChanged.newScore = score;
+    EVENT_MGR.trigger(event);
 }
 
 void Player::looseShoot()

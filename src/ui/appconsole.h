@@ -109,6 +109,7 @@ private:
     void cmdGoto(const std::string& args);
     void cmdWeapon(const std::string& args);
     void cmdBoxes(const std::string& args);
+    void cmdEvents(const std::string& args);
 
 public:
     // Singleton accessor

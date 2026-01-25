@@ -4,6 +4,7 @@
 #include "configscreen.h"
 #include "logger.h"
 #include "appconsole.h"
+#include "eventmanager.h"
 #include <cstdlib>
 #include <ctime>
 
@@ -65,7 +66,11 @@ bool GameRunner::initialize()
     {
         LOG_SUCCESS("AppConsole initialized");
     }
-    
+
+    // Initialize EventManager (singleton - auto-creates on first access)
+    EventManager::instance();
+    LOG_DEBUG("EventManager initialized");
+
     // Initialize game data (player sprites, etc.)
     appData.init();
     LOG_DEBUG("Game data initialized");
@@ -200,7 +205,11 @@ void GameRunner::shutdown()
     // Release AppConsole
     AppConsole::destroy();
     LOG_DEBUG("AppConsole released");
-    
+
+    // Release EventManager
+    EventManager::destroy();
+    LOG_DEBUG("EventManager released");
+
     // Release graphics subsystem
     appData.graph.release();
     

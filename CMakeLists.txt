@@ -37,6 +37,7 @@ set(SOURCES
     src/ui/appconsole.cpp
     src/core/appdata.cpp
     src/core/audiomanager.cpp
+    src/core/eventmanager.cpp
     src/entities/ball.cpp
     src/ui/bmfont.cpp
     src/core/configdata.cpp
@@ -70,6 +71,8 @@ set(HEADERS
     src/ui/appconsole.h
     src/core/appdata.h
     src/core/audiomanager.h
+    src/core/eventmanager.h
+    src/core/gameevent.h
     src/entities/ball.h
     src/ui/bmfont.h
     src/ui/configscreen.h
