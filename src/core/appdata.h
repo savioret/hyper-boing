@@ -7,6 +7,7 @@
 #include "graph.h"
 #include "minput.h"
 #include "configdata.h"
+#include "oncehelper.h"
 
 // Forward declarations
 class Player;
@@ -74,6 +75,9 @@ private:
     // Friend declaration for make_unique
     friend std::unique_ptr<AppData> std::make_unique<AppData>();
 
+    // Game-level once helper (persists across stages)
+    OnceHelper gameOnceHelper;
+
 public:
     // Singleton accessor
     static AppData& instance();
@@ -128,4 +132,11 @@ public:
     int& getNumPlayers() { return numPlayers; }
     int& getNumStages() { return numStages; }
     bool& isMenu() { return inMenu; }
+
+    // Game-level "once" helper (persists across all stages)
+    bool gameOnce(const std::string& key) {
+        return gameOnceHelper.once(key);
+    }
+
+    OnceHelper& getGameOnceHelper() { return gameOnceHelper; }
 };

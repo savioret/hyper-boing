@@ -38,6 +38,7 @@ set(SOURCES
     src/core/appdata.cpp
     src/core/audiomanager.cpp
     src/core/eventmanager.cpp
+    src/core/oncehelper.cpp
     src/entities/ball.cpp
     src/ui/bmfont.cpp
     src/core/configdata.cpp
@@ -73,6 +74,7 @@ set(HEADERS
     src/core/audiomanager.h
     src/core/eventmanager.h
     src/core/gameevent.h
+    src/core/oncehelper.h
     src/entities/ball.h
     src/ui/bmfont.h
     src/ui/configscreen.h

@@ -59,6 +59,18 @@ int Scene::init()
     std::snprintf(txt, sizeof(txt), "assets/music/%s", stage->music);
     OpenMusic(txt);
     PlayMusic();
+
+    // Clear stage-level once helper (resets all stage flags)
+    stageOnceHelper.clear();
+
+    // Subscribe to time warning event (uses once() for cleaner pattern)
+    timeWarningHandle = EVENT_MGR.subscribe(GameEventType::TIME_SECOND_ELAPSED,
+        [this](const GameEventData& data) {
+            if (data.timeElapsed.newTime == 11 && once("last_seconds_warning")) {
+                appAudio.playSound("assets/music/last_seconds.ogg");
+            }
+        });
+
     return 1;
 }
 

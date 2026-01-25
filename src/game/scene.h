@@ -13,6 +13,8 @@
 #include "item.h"
 #include "stage.h"
 #include "app.h"
+#include "eventmanager.h"
+#include "oncehelper.h"
 
 class StageClear;
 
@@ -96,6 +98,12 @@ private:
     int readyBlinkTimer;     // Timer for blink intervals (200ms = ~12 frames at 60fps)
     bool readyVisible;       // Current visibility state for blinking
 
+    // Time warning (plays sound once when time reaches 11 seconds)
+    EventManager::ListenerHandle timeWarningHandle;
+
+    // Stage-level "once" helper (resets every stage)
+    OnceHelper stageOnceHelper;
+
     std::vector<Ball*> pendingBalls;  // Buffer to hold new balls to be added
     
     /**
@@ -175,6 +183,13 @@ public:
     void setBoundingBoxes(bool enabled) { boundingBoxes = enabled; }
     bool getBoundingBoxes() const { return boundingBoxes; }
     void checkSequence();
+
+    // Stage-level "once" helper (resets every stage)
+    bool once(const std::string& key) {
+        return stageOnceHelper.once(key);
+    }
+
+    OnceHelper& getOnceHelper() { return stageOnceHelper; }
 
     int release() override;
 };
