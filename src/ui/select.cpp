@@ -34,10 +34,10 @@ int SelectPlayer::init()
     option = 0;
     initDelay = 40;
 
-    setGameSpeed(GLOBAL_GAMESPEED);
+    setUpdateFrameRate(GLOBAL_UPDATE_FRAMERATE);
     difTime1 = 0; 
-    difTime2 = gameSpeed;
-    time1 = SDL_GetTicks() + gameSpeed;
+    difTime2 = msPerFrame;
+    time1 = SDL_GetTicks() + msPerFrame;
     time2 = SDL_GetTicks();
 
     delay = 13;
@@ -52,8 +52,6 @@ int SelectPlayer::release()
 {
     bmp.select[PLAYER1].release();
     bmp.select[PLAYER2].release();
-    // bmp.selText[PLAYER1].release();
-    // bmp.selText[PLAYER2].release();
     bmp.mode.release();
     bmp.back.release();
 
@@ -70,9 +68,13 @@ void SelectPlayer::drawSelect()
     else
         appGraph.filledRectangle(330, 205, 335 + bmp.select[PLAYER2].getWidth() + 5, 210 + bmp.select[PLAYER2].getHeight() + 5);
 
-    appGraph.draw(&bmp.mode, 38, 10);
-    appGraph.draw(&bmp.select[PLAYER1], 70, 210);
-    appGraph.draw(&bmp.select[PLAYER2], 335, 210);
+    bmp.mode.setPos(38, 10);
+    bmp.select[PLAYER1].setPos(70, 210);
+    bmp.select[PLAYER2].setPos(335, 210);
+
+    appGraph.draw(&bmp.mode);
+    appGraph.draw(&bmp.select[PLAYER1]);
+    appGraph.draw(&bmp.select[PLAYER2]);
 }
 
 int SelectPlayer::drawAll()
@@ -86,7 +88,7 @@ int SelectPlayer::drawAll()
     return 1;
 }
 
-GameState* SelectPlayer::moveAll()
+GameState* SelectPlayer::moveAll(float dt)
 {
     if (xb < bmp.back.getWidth()) xb++;
     else xb = 0;

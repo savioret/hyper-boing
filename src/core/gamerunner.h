@@ -22,7 +22,11 @@ class GameRunner
 private:
     AppData& appData;
     bool isInitialized;
-    
+
+    // Delta time tracking
+    Uint32 lastFrameTime;
+    float deltaTime;
+
     // Lifecycle methods
     bool initialize();
     void processEvents();
@@ -33,7 +37,7 @@ private:
 public:
     GameRunner();
     ~GameRunner();
-    
+
     // Main entry point - returns exit code
     int run();
 };

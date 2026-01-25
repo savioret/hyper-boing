@@ -73,16 +73,6 @@ void AppData::init()
     bitmaps.player[PLAYER1][6].init(&appGraph, "assets/graph/players/p1shoot2.png", 13, 3);
     bitmaps.player[PLAYER1][7].init(&appGraph, "assets/graph/players/p1win.png", 13, 4);
     bitmaps.player[PLAYER1][8].init(&appGraph, "assets/graph/players/p1dead.png");
-    bitmaps.player[PLAYER1][9].init(&appGraph, "assets/graph/players/p1dead2.png");
-    bitmaps.player[PLAYER1][10].init(&appGraph, "assets/graph/players/p1dead3.png");
-    bitmaps.player[PLAYER1][11].init(&appGraph, "assets/graph/players/p1dead4.png");
-    bitmaps.player[PLAYER1][12].init(&appGraph, "assets/graph/players/p1dead5.png");
-    bitmaps.player[PLAYER1][13].init(&appGraph, "assets/graph/players/p1dead6.png");
-    bitmaps.player[PLAYER1][14].init(&appGraph, "assets/graph/players/p1dead7.png");
-    bitmaps.player[PLAYER1][15].init(&appGraph, "assets/graph/players/p1dead8.png");
-
-    for (int i = 0; i < 21; i++)
-        appGraph.setColorKey(bitmaps.player[PLAYER1][i].getBmp(), 0x00FF00);
 
     // Initialize Player 2 sprites
     bitmaps.player[PLAYER2][0].init(&appGraph, "assets/graph/players/p2k1r.png", 0, 3);
@@ -95,16 +85,6 @@ void AppData::init()
     bitmaps.player[PLAYER2][6].init(&appGraph, "assets/graph/players/p2shoot2.png", 13, 3);
     bitmaps.player[PLAYER2][7].init(&appGraph, "assets/graph/players/p2win.png", 13, 4);
     bitmaps.player[PLAYER2][8].init(&appGraph, "assets/graph/players/p2dead.png");
-    bitmaps.player[PLAYER2][9].init(&appGraph, "assets/graph/players/p2dead2.png");
-    bitmaps.player[PLAYER2][10].init(&appGraph, "assets/graph/players/p2dead3.png");
-    bitmaps.player[PLAYER2][11].init(&appGraph, "assets/graph/players/p2dead4.png");
-    bitmaps.player[PLAYER2][12].init(&appGraph, "assets/graph/players/p2dead5.png");
-    bitmaps.player[PLAYER2][13].init(&appGraph, "assets/graph/players/p2dead6.png");
-    bitmaps.player[PLAYER2][14].init(&appGraph, "assets/graph/players/p2dead7.png");
-    bitmaps.player[PLAYER2][15].init(&appGraph, "assets/graph/players/p2dead8.png");
-
-    for (int i = 0; i < 21; i++)
-        appGraph.setColorKey(bitmaps.player[PLAYER2][i].getBmp(), 0xFF0000);
 
     // Initialize default key bindings
     playerKeys[PLAYER1].set(SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT, SDL_SCANCODE_SPACE);
@@ -324,7 +304,7 @@ void AppData::setCurrent(GameState* state)
 void AppData::release()
 {
     // Release player bitmaps
-    for (int i = 0; i < 21; i++)
+    for (int i = 0; i < 9; i++)
     {
         bitmaps.player[PLAYER1][i].release();
         bitmaps.player[PLAYER2][i].release();

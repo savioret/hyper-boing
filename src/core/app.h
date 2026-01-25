@@ -29,8 +29,8 @@ class Sprite;
 class GameState
 {
 protected:
-    int gameSpeed; // frames per second in milliseconds
-    int fps, fpsv;
+    float msPerFrame; // milliseconds per frame
+    int fps, fpsv; // stats for frames per second and virtual fps
     bool active; // window active?
     bool pause;
     int difTime1, difTime2;
@@ -56,9 +56,9 @@ public:
     GameState();
     virtual ~GameState() {}
 
-    GameState* doTick();
+    GameState* doTick(float deltaTime);
     void doPause();
-    void setGameSpeed(int speed);
+    void setUpdateFrameRate(int speed);
     void setPause(bool b);
     void setActive(bool b);
     bool isActive() const { return active; }
@@ -66,7 +66,7 @@ public:
 
     // Virtual methods for derived classes
     virtual int init();
-    virtual GameState* moveAll() = 0;
+    virtual GameState* moveAll(float dt) = 0;
     virtual int drawAll() = 0;
     virtual int release() = 0;
     

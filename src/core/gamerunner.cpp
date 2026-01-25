@@ -9,7 +9,7 @@
 #include <ctime>
 
 GameRunner::GameRunner()
-    : appData(AppData::instance()), isInitialized(false)
+    : appData(AppData::instance()), isInitialized(false), lastFrameTime(0), deltaTime(0.0f)
 {
 }
 
@@ -156,18 +156,34 @@ void GameRunner::update()
 {
     if (!appData.currentScreen)
         return;
-    
+
+    // Calculate delta time
+    Uint32 currentTime = SDL_GetTicks();
+    if (lastFrameTime == 0)
+    {
+        lastFrameTime = currentTime;
+        deltaTime = 0.016f;  // Assume 60 FPS for first frame
+    }
+    else
+    {
+        deltaTime = (currentTime - lastFrameTime) / 1000.0f;
+        lastFrameTime = currentTime;
+
+        // Clamp to prevent spiral of death
+        if (deltaTime > 0.1f) deltaTime = 0.1f;
+    }
+
     // Handle paused state
     if (appData.currentScreen->isPaused())
     {
         appData.currentScreen->doPause();
         return;
     }
-    
+
     // Execute current screen logic (update + render)
     // NOTE: AppConsole is now rendered inside each screen's drawAll() before flip()
-    GameState* newScreen = appData.currentScreen->doTick();
-    
+    GameState* newScreen = appData.currentScreen->doTick(deltaTime);
+
     // Check if state transition is needed
     if (newScreen != nullptr)
     {

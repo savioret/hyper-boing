@@ -33,11 +33,13 @@ endif()
 # Sources
 set(SOURCES
     src/main.cpp
+    src/core/action.cpp
     src/core/app.cpp
     src/ui/appconsole.cpp
     src/core/appdata.cpp
     src/core/audiomanager.cpp
     src/core/eventmanager.cpp
+    src/core/motion.cpp
     src/core/oncehelper.cpp
     src/entities/ball.cpp
     src/ui/bmfont.cpp
@@ -49,8 +51,10 @@ set(SOURCES
     src/game/item.cpp
     src/core/logger.cpp
     src/ui/menu.cpp
+    src/ui/menutitle.cpp
     src/core/minput.cpp
     src/entities/player.cpp
+    src/entities/playerdeadaction.cpp
     src/game/scene.cpp
     src/ui/select.cpp
     src/entities/shot.cpp
@@ -68,12 +72,14 @@ set(SOURCES
 # Headers
 set(HEADERS
     src/main.h
+    src/core/action.h
     src/core/app.h
     src/ui/appconsole.h
     src/core/appdata.h
     src/core/audiomanager.h
     src/core/eventmanager.h
     src/core/gameevent.h
+    src/core/motion.h
     src/core/oncehelper.h
     src/entities/ball.h
     src/ui/bmfont.h
@@ -85,8 +91,10 @@ set(HEADERS
     src/game/item.h
     src/core/logger.h
     src/ui/menu.h
+    src/ui/menutitle.h
     src/core/minput.h
     src/entities/player.h
+    src/entities/playerdeadaction.h
     src/game/scene.h
     src/ui/select.h
     src/entities/shot.h

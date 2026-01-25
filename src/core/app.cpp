@@ -11,7 +11,7 @@
 #define USE_CUSTOM_OVERLAY_FONT false
 
 GameState::GameState()
-    : gameSpeed(0), fps(0), fpsv(0), active(true), pause(false), 
+    : msPerFrame(0), fps(0), fpsv(0), active(true), pause(false), 
       difTime1(0), difTime2(0), time1(0), time2(0),
       frameStatus(0), frameCount(0), frameTick(0), lastFrameTick(0)
 {		
@@ -21,10 +21,10 @@ int GameState::init()
 {
     active = true;
     pause = false;
-    setGameSpeed(60);
+    setUpdateFrameRate(60);
     difTime1 = 0;
-    difTime2 = gameSpeed;
-    time1 = SDL_GetTicks() + gameSpeed;
+    difTime2 = msPerFrame;
+    time1 = SDL_GetTicks() + msPerFrame;
     time2 = SDL_GetTicks();
     fps = 0;
     fpsv = 0;
@@ -194,17 +194,17 @@ void GameState::releaseSharedBackground()
 /**
  * This function is central to the game.
  * It manages the number of times the screen is painted, up to the set maximum,
- * and calculations are performed as many times as specified (gameSpeed variable).
+ * and calculations are performed as many times as specified (msPerFrame variable).
  *
  * For example, if we want to render 60 frames per second using a counter,
  * we ensure that 60 calculations are performed. If time permits, we render 60 frames;
  * on slower systems, we render only as many as possible, but the "virtual" speed
  * of the game remains 60 fps.
  */
-GameState* GameState::doTick()
+GameState* GameState::doTick(float deltaTime)
 {
     AppData& appData = AppData::instance();
-    
+
     if (appData.goBack)
     {
         appData.goBack = false;
@@ -216,7 +216,7 @@ GameState* GameState::doTick()
     {
         time1 = SDL_GetTicks();
         difTime2 = time1 - time2;
-        if (difTime2 < gameSpeed) return nullptr;
+        if (difTime2 < msPerFrame) return nullptr;
         time2 = time1;
         difTime1 += difTime2;
         frameStatus = 1;
@@ -225,16 +225,19 @@ GameState* GameState::doTick()
 
     if (frameStatus == 1)
     {
-        if (difTime1 < gameSpeed)
+        if (difTime1 < msPerFrame)
         {
             frameStatus = 2;
             return nullptr;
-        }		
-        GameState* newscreen = moveAll();
-        difTime1 -= gameSpeed;
+        }
+        // Pass fixed timestep based on msPerFrame (milliseconds per frame)
+        // Convert msPerFrame to seconds for consistent simulation
+        float fixedDeltaTime = msPerFrame / 1000.0f;
+        GameState* newscreen = moveAll(fixedDeltaTime);
+        difTime1 -= msPerFrame;
         return newscreen;
     }
-    
+
     if (frameStatus == 2)
     {
         drawAll();
@@ -260,8 +263,8 @@ GameState* GameState::doTick()
 void GameState::doPause()
 {	
     difTime1 = 0; 
-    difTime2 = gameSpeed;
-    time1 = SDL_GetTicks() + gameSpeed;
+    difTime2 = msPerFrame;
+    time1 = SDL_GetTicks() + msPerFrame;
     time2 = SDL_GetTicks();
 }
 
@@ -269,9 +272,9 @@ void GameState::doPause()
  * Adjust the rendering speed in frames per second and convert it to 
  * the equivalent milliseconds per frame, which is the actual data needed.
  */
-void GameState::setGameSpeed(int speed)
+void GameState::setUpdateFrameRate(int speed)
 {
-    gameSpeed = 1000 / speed;
+    msPerFrame = 1000 / speed;
 }
 
 void GameState::setActive(bool b)

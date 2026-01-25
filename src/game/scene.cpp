@@ -48,9 +48,9 @@ int Scene::init()
     readyBlinkTimer = 0;
     readyVisible = true;
 
-    gameinf.getPlayers()[PLAYER1]->setX((float)stage->xpos[PLAYER1]);
-    if (gameinf.getPlayers()[PLAYER2])
-        gameinf.getPlayers()[PLAYER2]->setX((float)stage->xpos[PLAYER2]);
+    gameinf.getPlayer(PLAYER1)->setX((float)stage->xpos[PLAYER1]);
+    if (gameinf.getPlayer(PLAYER2))
+        gameinf.getPlayer(PLAYER2)->setX((float)stage->xpos[PLAYER2]);
 
     CloseMusic();
 
@@ -371,13 +371,13 @@ void Scene::shoot(Player* pl)
  */
 Player* Scene::getPlayer(int index)
 {
-    if (index == 0 && gameinf.getPlayers()[0]->isPlaying())
+    if (index == 0 && gameinf.getPlayer(0)->isPlaying())
     {
-        return gameinf.getPlayers()[0];
+        return gameinf.getPlayer(0);
     }
-    else if (index == 1 && gameinf.getPlayers()[1] && gameinf.getPlayers()[1]->isPlaying())
+    else if (index == 1 && gameinf.getPlayer(1) && gameinf.getPlayer(1)->isPlaying())
     {
-        return gameinf.getPlayers()[1];
+        return gameinf.getPlayer(1);
     }
     return nullptr;
 }
@@ -568,7 +568,7 @@ void Scene::checkColisions()
                         EVENT_MGR.trigger(event);
 
                         gameinf.player[i]->kill();
-                        gameinf.player[i]->setFrame(ANIM_DEAD);
+                        // Frame is now set by PlayerDeadAction via event subscription
                     }
                 }
         }
@@ -714,7 +714,7 @@ void Scene::processBallDivisions()
     pendingBalls.clear();
 }
 
-GameState* Scene::moveAll()
+GameState* Scene::moveAll(float dt)
 {
     Ball* ptb;
     Shot* pts;
@@ -783,15 +783,15 @@ GameState* Scene::moveAll()
     {
         for (i = 0; i < 2; i++)
         {
-            if (gameinf.getPlayers()[i])
+            if (gameinf.getPlayer(i))
             {
                 if (appInput.key(gameinf.getKeys()[i].shoot))
                 {
                     if (gameOverCount >= 0)
                     {
-                        gameinf.getPlayers()[PLAYER1]->init();
-                        if (gameinf.getPlayers()[PLAYER2])
-                            gameinf.getPlayers()[PLAYER2]->init();
+                        gameinf.getPlayer(PLAYER1)->init();
+                        if (gameinf.getPlayer(PLAYER2))
+                            gameinf.getPlayer(PLAYER2)->init();
                         gameinf.initStages();
                         return new Scene(stage);
                     }
@@ -810,23 +810,23 @@ GameState* Scene::moveAll()
     {
         for (i = 0; i < 2; i++)
         {
-            if (gameinf.getPlayers()[i])
+            if (gameinf.getPlayer(i))
             {
-                if (!gameinf.getPlayers()[i]->isDead() && gameinf.getPlayers()[i]->isPlaying())
+                if (!gameinf.getPlayer(i)->isDead() && gameinf.getPlayer(i)->isPlaying())
                 {
-                    if (appInput.key(gameinf.getKeys()[i].shoot)) { shoot(gameinf.getPlayers()[i]); }
-                    else if (appInput.key(gameinf.getKeys()[i].left)) gameinf.getPlayers()[i]->moveLeft();
-                    else if (appInput.key(gameinf.getKeys()[i].right)) gameinf.getPlayers()[i]->moveRight();
-                    else gameinf.getPlayers()[i]->stop();
+                    if (appInput.key(gameinf.getKeys()[i].shoot)) { shoot(gameinf.getPlayer(i)); }
+                    else if (appInput.key(gameinf.getKeys()[i].left)) gameinf.getPlayer(i)->moveLeft();
+                    else if (appInput.key(gameinf.getKeys()[i].right)) gameinf.getPlayer(i)->moveRight();
+                    else gameinf.getPlayer(i)->stop();
                 }
-                gameinf.getPlayers()[i]->update();
+                gameinf.getPlayer(i)->update(dt);
             }
         }
         if (gameOverCount == -2)
         {
-            if (gameinf.getPlayers()[PLAYER1] && !gameinf.getPlayers()[PLAYER2])
+            if (gameinf.getPlayer(PLAYER1) && !gameinf.getPlayer(PLAYER2))
             {
-                if (!gameinf.getPlayers()[PLAYER1]->isPlaying())
+                if (!gameinf.getPlayer(PLAYER1)->isPlaying())
                 {
                     gameOver = true;
                     gameOverCount = 10;
@@ -843,9 +843,9 @@ GameState* Scene::moveAll()
                     PlayMusic();
                 }
             }
-            else if (gameinf.getPlayers()[PLAYER1] && gameinf.getPlayers()[PLAYER2])
+            else if (gameinf.getPlayer(PLAYER1) && gameinf.getPlayer(PLAYER2))
             {
-                if (!gameinf.getPlayers()[PLAYER1]->isPlaying() && !gameinf.getPlayers()[PLAYER2]->isPlaying())
+                if (!gameinf.getPlayer(PLAYER1)->isPlaying() && !gameinf.getPlayer(PLAYER2)->isPlaying())
                 {
                     gameOver = true;
                     gameOverCount = 10;
@@ -867,9 +867,9 @@ GameState* Scene::moveAll()
     else
     {
         for (i = 0; i < 2; i++)
-            if (gameinf.getPlayers()[i])
-                if (gameinf.getPlayers()[i]->isPlaying())
-                    gameinf.getPlayers()[i]->setFrame(ANIM_WIN);
+            if (gameinf.getPlayer(i))
+                if (gameinf.getPlayer(i)->isPlaying())
+                    gameinf.getPlayer(i)->setFrame(ANIM_WIN);
     }
 
     checkColisions();
@@ -1031,7 +1031,8 @@ int Scene::release()
 
 void Scene::drawBackground()
 {
-    appGraph.draw(&bmp.back, 0, 0);
+    bmp.back.setPos(0, 0);
+    appGraph.draw(&bmp.back);
 }
 
 void Scene::draw(Ball* b)
@@ -1042,7 +1043,12 @@ void Scene::draw(Ball* b)
 void Scene::draw(Player* pl)
 {
     bool flipHorizontal = (pl->getFacing() == FacingDirection::LEFT);
-    appGraph.draw(pl->getSprite(), (int)pl->getX(), (int)pl->getY(), flipHorizontal);
+    // Create a temporary sprite with player position and flip state
+    Sprite tempSprite = *(pl->getSprite());
+    tempSprite.setPos((int)pl->getX(), (int)pl->getY());
+    tempSprite.setFlipH(flipHorizontal);
+
+    appGraph.draw(&tempSprite);//, ( int )pl->getX(), ( int )pl->getY(), flipHorizontal);
 }
 
 void Scene::draw(Floor* fl)
@@ -1052,22 +1058,24 @@ void Scene::draw(Floor* fl)
 
 void Scene::drawScore()
 {
-    if (gameinf.getPlayers()[PLAYER1]->isPlaying())
+    if (gameinf.getPlayer(PLAYER1)->isPlaying())
     {
-        appGraph.draw(&fontNum[1], gameinf.getPlayers()[PLAYER1]->getScore(), 80, RES_Y - 55);
-        appGraph.draw(&bmp.miniplayer[PLAYER1], 20, MAX_Y + 7);
-        for (int i = 0; i < gameinf.getPlayers()[PLAYER1]->getLives(); i++)
+        appGraph.draw(&fontNum[1], gameinf.getPlayer(PLAYER1)->getScore(), 80, RES_Y - 55);
+        bmp.miniplayer[PLAYER1].setPos(20, MAX_Y + 7);
+        appGraph.draw(&bmp.miniplayer[PLAYER1]);
+        for (int i = 0; i < gameinf.getPlayer(PLAYER1)->getLives(); i++)
         {
             appGraph.draw(&bmp.lives[PLAYER1], 80 + 26 * i, MAX_Y + 30);
         }
     }
 
-    if (gameinf.getPlayers()[PLAYER2])
-        if (gameinf.getPlayers()[PLAYER2]->isPlaying())
+    if (gameinf.getPlayer(PLAYER2))
+        if (gameinf.getPlayer(PLAYER2)->isPlaying())
         {
-            appGraph.draw(&bmp.miniplayer[PLAYER2], 400, MAX_Y + 7);
-            appGraph.draw(&fontNum[1], gameinf.getPlayers()[PLAYER2]->getScore(), 460, RES_Y - 55);
-            for (int i = 0; i < gameinf.getPlayers()[PLAYER2]->getLives(); i++)
+            bmp.miniplayer[PLAYER2].setPos(400, MAX_Y + 7);
+            appGraph.draw(&bmp.miniplayer[PLAYER2]);
+            appGraph.draw(&fontNum[1], gameinf.getPlayer(PLAYER2)->getScore(), 460, RES_Y - 55);
+            for (int i = 0; i < gameinf.getPlayer(PLAYER2)->getLives(); i++)
             {
                 appGraph.draw(&bmp.lives[PLAYER2], 460 + 26 * i, MAX_Y + 30);
             }
@@ -1118,7 +1126,7 @@ void Scene::drawBoundingBoxes()
     //   yPos + diameter > pl->getY() + pl->getSprite()->getYOff() + 3
     for (int i = 0; i < 2; i++)
     {
-        Player* pl = gameinf.getPlayers()[i];
+        Player* pl = gameinf.getPlayer(i);
         if (pl && pl->isPlaying() && pl->isVisible())
         {
             Sprite* spr = pl->getSprite();
@@ -1209,9 +1217,9 @@ void Scene::drawDebugOverlay()
     GameState::drawDebugOverlay();
 
     // Add player info to default section
-    if (appData.getPlayers()[PLAYER1])
+    if (appData.getPlayer(PLAYER1))
     {
-		Player* p = appData.getPlayers()[PLAYER1];
+		Player* p = appData.getPlayer(PLAYER1);
         textOverlay.addTextF("P1: Score=%d Lives=%d Shoots=%d Facing=%d Frame=%d x=%.1f y=%.1f",
             p->getScore(),
             p->getLives(),
@@ -1280,15 +1288,16 @@ int Scene::drawAll()
 
     drawMark();
     drawScore();
-    appGraph.draw(&bmp.time, 320 - bmp.time.getWidth() / 2, MAX_Y + 3);
+    bmp.time.setPos(320 - bmp.time.getWidth() / 2, MAX_Y + 3);
+    appGraph.draw(&bmp.time);
     appGraph.draw(&fontNum[FONT_BIG], timeRemaining, 300, MAX_Y + 25);
 
-    if (gameinf.getPlayers()[PLAYER1]->isVisible() && gameinf.getPlayers()[PLAYER1]->isPlaying())
-        draw(gameinf.getPlayers()[PLAYER1]);
+    if (gameinf.getPlayer(PLAYER1)->isVisible() && gameinf.getPlayer(PLAYER1)->isPlaying())
+        draw(gameinf.getPlayer(PLAYER1));
 
-    if (gameinf.getPlayers()[PLAYER2])
-        if (gameinf.getPlayers()[PLAYER2]->isVisible() && gameinf.getPlayers()[PLAYER2]->isPlaying())
-            draw(gameinf.getPlayers()[PLAYER2]);
+    if (gameinf.getPlayer(PLAYER2))
+        if (gameinf.getPlayer(PLAYER2)->isVisible() && gameinf.getPlayer(PLAYER2)->isPlaying())
+            draw(gameinf.getPlayer(PLAYER2));
 
     for (Ball* pt : lsBalls)
     {
@@ -1298,10 +1307,12 @@ int Scene::drawAll()
 
     if (gameOver)
     {
-        appGraph.draw(&bmp.gameover, 100, 125);
+        bmp.gameover.setPos(100, 125);
+        appGraph.draw(&bmp.gameover);
         if (gameOverCount >= 0)
         {
-            appGraph.draw(&bmp.continu, 130, 200);
+            bmp.continu.setPos(130, 200);
+            appGraph.draw(&bmp.continu);
             appGraph.draw(&fontNum[FONT_HUGE], gameOverCount, 315, 300);
         }
     }
@@ -1314,7 +1325,8 @@ int Scene::drawAll()
         // Center the ready sprite on screen
         int x = (640 - bmp.ready.getWidth()) / 2;
         int y = (416 - bmp.ready.getHeight()) / 2;
-        appGraph.draw(&bmp.ready, x, y);
+        bmp.ready.setPos(x, y);
+        appGraph.draw(&bmp.ready);
     }
 
     // Draw bounding boxes if debug mode is enabled

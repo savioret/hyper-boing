@@ -31,8 +31,6 @@ class Shot : public IGameObject
 protected:
     Scene* scene;
     Player* player;
-
-    float xPos, yPos;
     float xInit, yInit;
 
     WeaponType weaponType;
@@ -73,8 +71,6 @@ public:
     virtual void onCeilingHit();
 
     // Accessors
-    float getX() const { return xPos; }
-    float getY() const { return yPos; }
     float getXInit() const { return xInit; }
     float getYInit() const { return yInit; }
 

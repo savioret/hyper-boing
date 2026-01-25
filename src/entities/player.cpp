@@ -1,16 +1,27 @@
 #include "main.h"
 #include "eventmanager.h"
+#include "playerdeadaction.h"
 #include <cstring>
 #include <SDL.h>
 
 Player::Player(int id)
-    : id(id)
+    : id(id), deathAction(nullptr)
 {
     init();
+
+    // Subscribe to PLAYER_HIT events
+    playerDiedHandle = EVENT_MGR.subscribe(GameEventType::PLAYER_HIT, [this](const GameEventData& event) {
+        // Only respond if this is the player that was hit
+        if (event.playerHit.player == this)
+        {
+            onPlayerHit();
+        }
+    });
 }
 
 Player::~Player()
 {
+    // Unsubscribe from events (EventManager handles this automatically on destruction)
 }
 
 /**
@@ -75,7 +86,7 @@ void Player::revive()
 void Player::moveLeft()
 {
     facing = FacingDirection::LEFT;  // Update facing direction
-
+    sprite->setFlipH(true);
     if (xPos > MIN_X - 10)
         xPos -= moveIncrement;
 
@@ -98,7 +109,7 @@ void Player::moveLeft()
 void Player::moveRight()
 {
     facing = FacingDirection::RIGHT;  // Update facing direction
-
+    sprite->setFlipH(false);
     if (xPos + sprite->getWidth() < MAX_X - 5)
         xPos += moveIncrement;
 
@@ -171,41 +182,38 @@ void Player::stop()
     if (xPos + sprite->getWidth() > MAX_X - 10) xPos = (float)(MAX_X - 16 - sprite->getWidth());
 }
 
-void Player::update()
+void Player::update(float dt)
 {
     if (shotCounter > 0) shotCounter--;
-    
+
     if (dead)
     {
-        if (!shotCounter)
+        // Update death action (rotation + physics trajectory)
+        if (deathAction)
         {
-            if (frame < ANIM_DEAD + 7) setFrame(frame + 1);
-            else setFrame(ANIM_DEAD);
-            shotCounter = animSpeed;
-        }
-
-        if (xPos + sprite->getWidth() >= MAX_X)
-        {
-            xDir = -2;
-            yDir = 8;
-        }
-        if (yPos > RES_Y) 
-        {		
-            if (lives > 0)
+            bool running = deathAction->update(dt);
+            if (!running)
             {
-                lives--;
-                revive();
-                return;
-            }
-            else playing = false;			
-        }
+                // Death action complete (fallen below screen)
+                deathAction.reset();
 
-        xPos += xDir;
-        yPos += yDir;				
+                if (lives > 0)
+                {
+                    lives--;
+                    revive();
+                    return;
+                }
+                else
+                {
+                    playing = false;
+                }
+            }
+        }
     }
     else
     {
         // Handle immunity blinking effect
+        // TODO: handle this with a BlinkAction
         if (immuneCounter)
         {
             immuneCounter--;
@@ -244,6 +252,21 @@ void Player::kill()
 {
     dead = true;
     animSpeed = 4;
+}
+
+/**
+ * Event handler for PLAYER_HIT events.
+ * Creates and starts the death action when player is hit by a ball.
+ */
+void Player::onPlayerHit()
+{
+    if (dead || deathAction) return;  // Already dead or death action running
+
+    // Create death action with trajectory
+    // Thrown to the right with upward velocity
+    int xVel = (facing == FacingDirection::RIGHT) ? 5 : -5;
+    deathAction = std::make_unique<PlayerDeadAction>(this, xVel, -12.0f);
+    deathAction->start();
 }
 
 /**

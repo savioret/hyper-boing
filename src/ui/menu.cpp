@@ -8,20 +8,6 @@
 
 int Menu::initBitmaps()
 {
-    // Load layered title images
-    bmp.title_boing.init(&appGraph, "assets/graph/ui/title_boing.png", 0, 0);
-    //appGraph.setColorKey(bmp.title_boing.getBmp(), 0x00FF00);
-    
-    bmp.title_hyper.init(&appGraph, "assets/graph/ui/title_hyper.png", 0, 0);
-    //appGraph.setColorKey(bmp.title_hyper.getBmp(), 0x00FF00);
-    
-    bmp.title_bg.init(&appGraph, "assets/graph/ui/title_bg.png", 0, 0);
-    //appGraph.setColorKey(bmp.title_bg.getBmp(), 0x00FF00);
-
-    bmp.title_bg_redball.init(&appGraph, "assets/graph/ui/title_bg_redball.png", 0, 0);
-    bmp.title_bg_greenball.init(&appGraph, "assets/graph/ui/title_bg_greenball.png", 0, 0);
-    bmp.title_bg_blueball.init(&appGraph, "assets/graph/ui/title_bg_blueball.png", 0, 0);
-    
     // Initialize shared background
     GameState::initSharedBackground();
 
@@ -32,31 +18,26 @@ int Menu::initBitmaps()
 }
 
 Menu::Menu()
-    : selectedOption(0), visible(false), blinkCounter(0),
-      upPressed(false), downPressed(false), enterPressed(false),
-      boingY(-300), hyperX(-400), bgAlpha(0), ballAlpha(0), animComplete(false)
+    : selectedOption(0), visible(true),
+      upPressed(false), downPressed(false), enterPressed(false)
 {
 }
 
 int Menu::init()
 {
     GameState::init();
-    
+
     gameinf.isMenu() = true;
     initBitmaps();
-    
-    // Initialize layered title animation
-    boingY = -300;      // Starts above screen
-    hyperX = -400;      // Starts off-screen to the left
-    bgAlpha = 0;        // Starts fully transparent
-    ballAlpha = 0;      // Balls fade in after background
-
-    animComplete = false;
 
     selectedOption = 0; // PLAY
-    
-    visible = false;
-    blinkCounter = 30;
+
+    // Create and initialize MenuTitle
+    menuTitle = std::make_unique<MenuTitle>(&appGraph);
+    menuTitle->init();
+
+    // Create blink action for menu option (0.5 second intervals, infinite)
+    blinkAction = blink(&visible, 0.5f, 0);  // 0 = infinite
 
     CloseMusic();
     OpenMusic("assets/music/menu.ogg");
@@ -67,61 +48,14 @@ int Menu::init()
 
 int Menu::release()
 {
-    bmp.title_boing.release();
-    bmp.title_hyper.release();
-    bmp.title_bg.release();
-    bmp.title_bg_redball.release();
-    bmp.title_bg_greenball.release();
-    bmp.title_bg_blueball.release();
+    menuTitle.reset();  // MenuTitle destructor handles sprite cleanup
     fontRenderer.release();  // BMFontRenderer handles its own cleanup
 
     CloseMusic();
-    
+
     return 1;
 }
 
-void Menu::drawTitleLayers()
-{
-    const int centerX = (RES_X - bmp.title_bg.getWidth()) / 2;
-    const int titleY = 5;
-
-    // Background layer - fades in
-    if (bgAlpha > 0)
-    {
-        SDL_SetTextureAlphaMod(bmp.title_bg.getBmp(), (Uint8)bgAlpha);
-        appGraph.drawClipped(&bmp.title_bg, centerX, titleY + 60);
-    }
-
-    // Colored balls - fade in at static positions
-    if (ballAlpha > 0)
-    {
-        SDL_SetTextureAlphaMod(bmp.title_bg_redball.getBmp(), (Uint8)ballAlpha);
-        SDL_SetTextureAlphaMod(bmp.title_bg_greenball.getBmp(), (Uint8)ballAlpha);
-        SDL_SetTextureAlphaMod(bmp.title_bg_blueball.getBmp(), (Uint8)ballAlpha);
-
-        appGraph.drawClipped(&bmp.title_bg_redball, centerX - 10, titleY + 80);
-        appGraph.drawClipped(&bmp.title_bg_blueball, centerX + 230, titleY + 180);
-        appGraph.drawClipped(&bmp.title_bg_greenball, centerX + 350, titleY + 65);
-    }
-
-    // "HYPER" text - slides from left
-    if (hyperX > -400)
-    {
-        appGraph.drawClipped(&bmp.title_hyper, hyperX - 30, titleY + 20);
-    }
-
-    // "BOING" text - drops from top
-    if (boingY > -300)
-    {
-        appGraph.drawClipped(&bmp.title_boing, centerX + 30, boingY);
-    }
-}
-
-void Menu::drawTitle()
-{
-    // Legacy method - now calls drawTitleLayers
-    drawTitleLayers();
-}
 
 void Menu::drawMenu()
 {
@@ -158,90 +92,58 @@ void Menu::drawMenu()
 int Menu::drawAll()
 {
     GameState::drawScrollingBackground();
-    drawTitle();
+
+    if (menuTitle)
+    {
+        menuTitle->draw();
+    }
+
     drawMenu();
-    
+
     // Finalize render (debug overlay, console, flip)
     finalizeRender();
-    
+
     return 1;
 }
 
 void Menu::drawDebugOverlay()
 {
     AppData& appData = AppData::instance();
-    
+
     if (!appData.debugMode)
     {
         // Clear overlay when debug mode is disabled
         textOverlay.clear();
         return;
     }
-    
+
     // Call base class to populate default section
     GameState::drawDebugOverlay();
 
-    textOverlay.addTextF("Title: boingY=%d hyperX=%d bgAlpha=%d ballAlpha=%d",
-        boingY, hyperX, bgAlpha, ballAlpha);
-
     textOverlay.addTextF("AnimComplete=%s Selected=%d",
-        animComplete ? "YES" : "NO", selectedOption);
+        (menuTitle && menuTitle->isAnimationFinished()) ? "YES" : "NO", selectedOption);
 
     textOverlay.addTextF("Scroll X=%d Y=%d", (int)appData.scrollX, (int)appData.scrollY);
 }
 
-GameState* Menu::moveAll()
+GameState* Menu::moveAll(float dt)
 {
-    if (blinkCounter > 0) blinkCounter--;
-    else 
+    // Update blink animation
+    if (blinkAction)
     {
-        blinkCounter = 30;
-        visible = !visible;
+        blinkAction->update(dt);
     }
 
     GameState::updateScrollingBackground();
 
-    // Animate layered title elements
-    if (!animComplete)
+    // Update title animation
+    if (menuTitle)
     {
-        // Phase 1: title_boing drops from top
-        if (boingY < 85)
-        {
-            boingY += 10;
-            if (boingY >= 85)
-            {
-                boingY = 85;
-            }
-        }
-        // Phase 2: title_hyper slides from left
-        else if (hyperX < (RES_X - bmp.title_hyper.getWidth()) / 2)
-        {
-            hyperX += 15;
-            if (hyperX >= (RES_X - bmp.title_hyper.getWidth()) / 2)
-            {
-                hyperX = (RES_X - bmp.title_hyper.getWidth()) / 2;
-            }
-        }
-        // Phase 3: title_bg fades in
-        else if (bgAlpha < 255)
-        {
-            bgAlpha += 10;
-            if (bgAlpha > 255) bgAlpha = 255;
-        }
-        // Phase 4: balls fade in
-        else if (ballAlpha < 255)
-        {
-            ballAlpha += 10;
-            if (ballAlpha >= 255)
-            {
-                ballAlpha = 255;
-                animComplete = true;
-            }
-        }
+        menuTitle->update(dt);
     }
-    
+
     // Enable menu interaction only after animations complete
-    if (animComplete)
+    if (menuTitle && menuTitle->isAnimationFinished())
     {
         if (appInput.key(SDL_SCANCODE_UP) || appInput.key(gameinf.getKeys()[PLAYER1].left))
         {
@@ -280,6 +182,6 @@ GameState* Menu::moveAll()
         }
         else enterPressed = false;
     }
-    
+
     return nullptr;
 }

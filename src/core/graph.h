@@ -44,12 +44,18 @@ public:
     int initEx(const char* title);
     void release();
 
+    // Legacy draw methods (position passed explicitly)
     void draw(Sprite* spr, int x, int y);
     void draw(Sprite* spr, int x, int y, bool flipHorizontal);
     void drawScaled(Sprite* spr, int x, int y, int w, int h);
     void draw(SDL_Texture* texture, const SDL_Rect* srcRect, int x, int y);
     void drawClipped(SDL_Texture* texture, const SDL_Rect* srcRect, int x, int y);
     void drawClipped(Sprite* spr, int x, int y);
+
+    // New draw methods (uses sprite's internal properties: x, y, scale, rotation, pivot, flip, alpha)
+    void draw(Sprite* spr);
+    void drawClipped(Sprite* spr);
+
     void draw(BmNumFont* font, int num, int x, int y);
     void draw(BmNumFont* font, const std::string& cad, int x, int y);
     void drawClipped(BmNumFont* font, const std::string& cad, int x, int y);

@@ -18,7 +18,6 @@ class Ball : public IGameObject
 {
 private:
     Sprite* sprite;
-    float xPos, yPos; // top-left corner position
     int top; // maximum height from the floor
     int diameter;
     int size;
@@ -53,8 +52,6 @@ public:
     void setPos(int x, int y);
 
     // Getters
-    float getX() const { return xPos; }
-    float getY() const { return yPos; }
     int getDirX() const { return dirX; }
     int getDirY() const { return dirY; }
     int getSize() const { return size; }

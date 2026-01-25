@@ -51,50 +51,60 @@ void StageClear::drawAll()
 {
     int i, j;
     char cad[10];
-    
+
     std::snprintf(cad, sizeof(cad), "%2d", gameinf.getCurrentStage());
     for (i = 0; i < (int)std::strlen(cad); i++)
         if (cad[i] == ' ') cad[i] = '0';
 
     if (isClosing)
-    {			
+    {
         for (i = -16; i < (yr1 / 16) + 1; i++)
             for (j = 0; j < 40; j++)
-            {	
+            {
                 appGraph.drawClipped(&bmp.roof, j * 16, i * 16 - (i % 16));
                 appGraph.drawClipped(&bmp.roof, j * 16, 480 - (i * 16));
             }
-    }	
+    }
     else if (isOpening)
-    {			
+    {
         for (i = (yr1 / 16) + 1; i > -17; i--)
             for (j = 0; j < 40; j++)
-            {	
+            {
                 appGraph.drawClipped(&bmp.roof, j * 16, i * 16 - (i % 16));
                 appGraph.drawClipped(&bmp.roof, j * 16, 480 - (i * 16));
             }
-    }	
+    }
 
-    appGraph.drawClipped(&bmp.title1, xt1, yt1);
-    appGraph.drawClipped(&bmp.title2, xt2, yt2);
+    // Set sprite positions before drawing
+    bmp.title1.setPos(xt1, yt1);
+    bmp.title2.setPos(xt2, yt2);
+
+    appGraph.drawClipped(&bmp.title1);
+    appGraph.drawClipped(&bmp.title2);
     appGraph.drawClipped(&scene->fontNum[FONT_HUGE], cad, xnum, ynum);
-    
+
     if (finish) return;
     if (!isClosing)
     {
-        if (gameinf.getPlayers()[PLAYER1]->isPlaying())
-            appGraph.draw(&scene->bmp.miniplayer[PLAYER1], 40, 300);
-        if (gameinf.getPlayers()[PLAYER2])
-            if (gameinf.getPlayers()[PLAYER2]->isPlaying())
-                appGraph.draw(&scene->bmp.miniplayer[PLAYER2], 350, 300);
+        if (gameinf.getPlayer(PLAYER1)->isPlaying())
+        {
+            scene->bmp.miniplayer[PLAYER1].setPos(40, 300);
+            appGraph.draw(&scene->bmp.miniplayer[PLAYER1]);
+        }
+        if (gameinf.getPlayer(PLAYER2))
+            if (gameinf.getPlayer(PLAYER2)->isPlaying())
+            {
+                scene->bmp.miniplayer[PLAYER2].setPos(350, 300);
+                appGraph.draw(&scene->bmp.miniplayer[PLAYER2]);
+            }
     }
 
     if (endMove && !isClosing)
     {
-        if (gameinf.getPlayers()[PLAYER1]->isPlaying())
+        if (gameinf.getPlayer(PLAYER1)->isPlaying())
             appGraph.draw(&scene->fontNum[FONT_SMALL], cscore[PLAYER1], 105, 320);
-        if (gameinf.getPlayers()[PLAYER2])
-            if (gameinf.getPlayers()[PLAYER2]->isPlaying())
+        if (gameinf.getPlayer(PLAYER2))
+            if (gameinf.getPlayer(PLAYER2)->isPlaying())
                 appGraph.draw(&scene->fontNum[FONT_SMALL], cscore[PLAYER2], 450, 320);
     }
 }
@@ -114,22 +124,22 @@ int StageClear::moveAll()
         if (!endCount)
         {
             endCount = true;
-            cscore[PLAYER1] = gameinf.getPlayers()[PLAYER1]->getScore();
-            if (gameinf.getPlayers()[PLAYER2])
-                cscore[PLAYER2] = gameinf.getPlayers()[PLAYER2]->getScore();
+            cscore[PLAYER1] = gameinf.getPlayer(PLAYER1)->getScore();
+            if (gameinf.getPlayer(PLAYER2))
+                cscore[PLAYER2] = gameinf.getPlayer(PLAYER2)->getScore();
         }
         isClosing = true;
     }
-    else if (gameinf.getPlayers()[PLAYER2])
+    else if (gameinf.getPlayer(PLAYER2))
     {
         if (appInput.key(gameinf.getKeys()[PLAYER2].shoot))
         {
             if (!endCount)
             {
                 endCount = true;				
-                cscore[PLAYER1] = gameinf.getPlayers()[PLAYER1]->getScore();
-                if (gameinf.getPlayers()[PLAYER2])
-                    cscore[PLAYER2] = gameinf.getPlayers()[PLAYER2]->getScore();
+                cscore[PLAYER1] = gameinf.getPlayer(PLAYER1)->getScore();
+                if (gameinf.getPlayer(PLAYER2))
+                    cscore[PLAYER2] = gameinf.getPlayer(PLAYER2)->getScore();
             }
             isClosing = true;
         }
@@ -202,18 +212,18 @@ int StageClear::moveAll()
     {
         cscore[PLAYER1]++;			
 
-        if (gameinf.getPlayers()[PLAYER2])
+        if (gameinf.getPlayer(PLAYER2))
         {
-            if (cscore[PLAYER2] < gameinf.getPlayers()[PLAYER2]->getScore())
+            if (cscore[PLAYER2] < gameinf.getPlayer(PLAYER2)->getScore())
                 cscore[PLAYER2]++;
-            if (cscore[PLAYER1] >= gameinf.getPlayers()[PLAYER1]->getScore() &&
-                cscore[PLAYER2] >= gameinf.getPlayers()[PLAYER2]->getScore())
+            if (cscore[PLAYER1] >= gameinf.getPlayer(PLAYER1)->getScore() &&
+                cscore[PLAYER2] >= gameinf.getPlayer(PLAYER2)->getScore())
             {
                 endCount = true;
                 isClosing = true;
             }
         }
-        else if (cscore[PLAYER1] >= gameinf.getPlayers()[PLAYER1]->getScore())
+        else if (cscore[PLAYER1] >= gameinf.getPlayer(PLAYER1)->getScore())
         {
             endCount = true;
             isClosing = true;

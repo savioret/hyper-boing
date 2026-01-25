@@ -13,9 +13,17 @@ class IGameObject
 {
 protected:
     bool dead = false;
+    float xPos = 0.0f;
+    float yPos = 0.0f;
 
 public:
     virtual ~IGameObject() = default;
+
+    void setPos(float x, float y) { xPos = x; yPos = y; }
+    void setX(float x) { xPos = x; }
+    void setY(float y) { yPos = y; }
+    float getX() const { return xPos; }
+    float getY() const { return yPos; }
     
     /**
      * Check if this object should be removed from the game world.

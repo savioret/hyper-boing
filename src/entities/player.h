@@ -1,9 +1,12 @@
 #pragma once
 
 #include "../game/weapontype.h"
+#include "eventmanager.h"
+#include <memory>
 
 class Scene;
 class Sprite;
+class Action;
 
 /**
  * Player facing direction
@@ -26,7 +29,7 @@ class Player
 private:
     Sprite* sprite;
     float xPos, yPos;
-    int xDir, yDir; // used for death animation
+    int xDir, yDir; // used for death animation (legacy, may be removed)
     FacingDirection facing;  // Direction player is facing
     int lives;
     int score;
@@ -36,7 +39,7 @@ private:
     int maxShoots;
     int numShoots;
     int shotCounter;
-    int shotInterval; // time between shots
+    int shotInterval; // time between shots // TODO: this should now be part of the Weapon properties
     int animSpeed;
     int animCounter;
     int moveIncrement; // displacement increment when walking
@@ -46,24 +49,31 @@ private:
     int immuneCounter; // for when just revived
     bool visible;
 
+    // Death animation using Action system
+    std::unique_ptr<Action> deathAction;
+    EventManager::ListenerHandle playerDiedHandle;
+
 public:
     Player(int id);
     ~Player();
 
     void init();
     void setFrame(int frame);
-    void update();
+    void update(float dt);  // Now takes delta time for action updates
     void addScore(int num);
     void moveLeft();
     void moveRight();
     void stop();
-    
+
     bool canShoot() const;
     bool isDead() const { return dead; }
     void shoot();
     void looseShoot();
     void kill();
     void revive();
+
+    // Event handlers
+    void onPlayerHit();
 
     // Weapon management
     WeaponType getWeapon() const { return currentWeapon; }

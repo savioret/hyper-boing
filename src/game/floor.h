@@ -18,7 +18,6 @@ private:
     Scene* scene;
     Sprite* sprite;
 
-    int x, y;
     int sx, sy;
     int id;
 
@@ -28,8 +27,6 @@ public:
 
     void update();
     
-    int getX() const { return x; }
-    int getY() const { return y; }
     int getWidth() const { return sx; }
     int getHeight() const { return sy; }
     int getId() const { return id; }

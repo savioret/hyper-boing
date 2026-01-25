@@ -62,7 +62,7 @@ constexpr int SIDE_BOTTOM = 2;
 constexpr int SIDE_LEFT = 3;
 constexpr int SIDE_RIGHT = 4;
 
-constexpr int GLOBAL_GAMESPEED = 60;
+constexpr int GLOBAL_UPDATE_FRAMERATE = 60;
 
 // Legacy compatibility macros - for gradual migration
 #define gameinf AppData::instance()

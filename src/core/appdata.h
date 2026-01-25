@@ -43,7 +43,7 @@ public:
  */
 struct GameBitmaps
 {
-    Sprite player[2][21];
+    Sprite player[2][9];
 };
 
 /**
@@ -124,7 +124,7 @@ public:
     void preloadStageMusic();
 
     // Accessors for convenience (to ease migration)
-    Player** getPlayers() { return reinterpret_cast<Player**>(player); }
+    Player* getPlayer(int p) { return reinterpret_cast<Player**>(player)[p]; }
     Keys* getKeys() { return playerKeys; }
     GameBitmaps& getBmp() { return bitmaps; }
     Stage* getStages() { return stages.data(); }

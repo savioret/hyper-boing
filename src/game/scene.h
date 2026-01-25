@@ -177,7 +177,7 @@ public:
     void drawBoundingBoxes();
     void drawDebugOverlay() override;
 
-    GameState* moveAll() override;
+    GameState* moveAll(float dt) override;
 
     // Debug accessors
     void setBoundingBoxes(bool enabled) { boundingBoxes = enabled; }

@@ -209,7 +209,7 @@ public:
     char music[64];
     int timelimit;
     int itemsleft;
-    int xpos[2]; // initial positions for players 1 and 2
+    int xpos[2]; // initial positions for players 1 and 2 TODO: Review this
                    
 private:
     std::list<StageObject*> sequence;
