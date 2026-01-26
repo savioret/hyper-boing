@@ -1,6 +1,8 @@
 #pragma once
 
 #include "shot.h"
+#include "../core/animcontroller.h"
+#include <memory>
 
 class Sprite;
 
@@ -9,7 +11,7 @@ class Sprite;
  *
  * Fires a vertical chain that extends from the projectile head down to the
  * bottom of the screen. The tail animates by alternating between two sprite
- * variants.
+ * variants using a ToggleAnim controller.
  *
  * This preserves the original HARPOON weapon behavior from the Shoot class.
  */
@@ -17,9 +19,7 @@ class HarpoonShot : public Shot
 {
 private:
     Sprite* sprites[3];  // Head + 2 tail variants
-    int tail;            // 0 or 1 (toggles between tail sprites)
-    int tailCounter;
-    int tailDelay;
+    std::unique_ptr<ToggleAnim> tailAnim;  // Toggles between 0 and 1 for tail selection
 
 public:
     /**
@@ -38,5 +38,5 @@ public:
 
     // Accessors for Scene compatibility
     Sprite* getSprite(int index) const { return sprites[index]; }
-    int getTail() const { return tail; }
+    int getTail() const { return tailAnim->getCurrentFrame(); }
 };

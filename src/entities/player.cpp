@@ -32,7 +32,7 @@ Player::~Player()
  */
 void Player::init()
 {
-    dead = false;
+    resetDead();  // Reset IGameObject's dead flag
     score = 0;
     frame = 0;
     currentWeapon = WeaponType::HARPOON;  // Default weapon
@@ -51,12 +51,21 @@ void Player::init()
     
     // Initialize sprites from global resources
     clearSprites();
-    // Assuming max 16 frames based on usage (ANIM_DEAD=8)
-    for(int i = 0; i < 16; i++) {
+    // Load 9 player sprite frames (0-8: walk, shoot, win, dead)
+    for(int i = 0; i <= ANIM_DEAD; i++) {
         addSprite(&gameinf.getBmp().player[id][i]);
     }
-    
-    setFrame(ANIM_SHOOT); // Match legacy: sprite = &...[ANIM_SHOOT]
+
+    // Initialize animation controller with state machine
+    animController = std::make_unique<StateMachineAnim>();
+    animController->addState("idle", {ANIM_SHOOT}, 1, true);
+    animController->addState("walk", {ANIM_WALK, ANIM_WALK+1, ANIM_WALK+2, ANIM_WALK+3, ANIM_WALK+4}, animSpeed, true);
+    animController->addState("shoot", {ANIM_SHOOT + 1}, 1, true);
+    animController->addState("win", {ANIM_WIN}, 1, true);
+    animController->addState("dead", {ANIM_DEAD}, 1, true);
+    animController->setState("idle");
+
+    setFrame(ANIM_SHOOT); // Initial frame
     
     float startX = 200.0f + 100.0f * id;
     float startY = (float)(MAX_Y - getHeight());
@@ -73,7 +82,7 @@ void Player::init()
  */
 void Player::revive()
 {
-    dead = false;
+    resetDead();  // Reset IGameObject's dead flag
     immuneCounter = 350;
 
     frame = 0;
@@ -85,6 +94,9 @@ void Player::revive()
     shotInterval = 15;
     animSpeed = shotCounter = 10;
     facing = FacingDirection::RIGHT;  // Reset facing on revive
+
+    // Reset animation state to idle
+    animController->setState("idle");
     setFrame(ANIM_SHOOT);
 
     float startX = 200.0f + 100.0f * id;
@@ -93,6 +105,12 @@ void Player::revive()
 
     xDir = 5;
     yDir = -4;
+
+    // Fire PLAYER_REVIVED event
+    GameEventData event(GameEventType::PLAYER_REVIVED);
+    event.playerRevived.player = this;
+    event.playerRevived.remainingLives = lives;
+    EVENT_MGR.trigger(event);
 }
 
 void Player::moveLeft()
@@ -102,18 +120,11 @@ void Player::moveLeft()
     if (x > MIN_X - 10)
         x -= moveIncrement;
 
-    if (frame >= ANIM_SHOOT - 1)
+    // Transition to walk animation if not already walking
+    if (animController->getStateName() != "walk")
     {
-        setFrame(ANIM_WALK);
-        shotCounter = animSpeed;
+        animController->setState("walk");
     }
-    else if (!shotCounter)
-    {
-        if (frame < ANIM_WALK + 4) setFrame(frame + 1);
-        else setFrame(ANIM_WALK);
-        shotCounter = animSpeed;
-    }
-    else shotCounter--;
 }
 
 void Player::moveRight()
@@ -123,19 +134,11 @@ void Player::moveRight()
     if (x + getWidth() < MAX_X - 5)
         x += moveIncrement;
 
-    if (frame >= ANIM_SHOOT - 1)
+    // Transition to walk animation if not already walking
+    if (animController->getStateName() != "walk")
     {
-        setFrame(ANIM_WALK);
-        shotCounter = animSpeed;
+        animController->setState("walk");
     }
-    else if (!shotCounter)
-    {
-        if (frame < ANIM_WALK + 4) setFrame(frame + 1);
-        else setFrame(ANIM_WALK);
-        shotCounter = animSpeed;
-    }
-
-    else shotCounter--;
 }
 
 // void Player::setFrame(int f) // Inherited
@@ -158,28 +161,24 @@ void Player::shoot()
 {
     numShoots++;
     shotCounter = shotInterval;
-    if (frame != ANIM_SHOOT + 1)
-    {
-        setFrame(ANIM_SHOOT + 1);
-    }
+    animController->setState("shoot");
 }
 
 void Player::stop()
 {
-    if (frame != ANIM_SHOOT)
+    const std::string& currentState = animController->getStateName();
+
+    // Transition walk to idle immediately
+    if (currentState == "walk")
     {
-        if (frame == ANIM_SHOOT + 1)
-            if (!shotCounter)
-            {
-                setFrame(ANIM_SHOOT);				
-                shotCounter = shotInterval;
-            }
-            else shotCounter--;
-        else
-        {
-            setFrame(ANIM_SHOOT);
-        }
+        animController->setState("idle");
     }
+    // Transition shoot to idle when cooldown expires
+    else if (currentState == "shoot" && shotCounter == 0)
+    {
+        animController->setState("idle");
+    }
+
     if (x + getWidth() > MAX_X - 10) x = (float)(MAX_X - 16 - getWidth());
 }
 
@@ -187,7 +186,11 @@ void Player::update(float dt)
 {
     if (shotCounter > 0) shotCounter--;
 
-    if (dead)
+    // Update animation controller and sync frame
+    animController->update();
+    setFrame(animController->getCurrentFrame());
+
+    if (isDead())
     {
         // Update death action (rotation + physics trajectory)
         if (deathAction)
@@ -229,9 +232,7 @@ void Player::addScore(int num)
     score += num;
 
     // Fire SCORE_CHANGED event
-    GameEventData event;
-    event.type = GameEventType::SCORE_CHANGED;
-    event.timestamp = SDL_GetTicks();
+    GameEventData event(GameEventType::SCORE_CHANGED);
     event.scoreChanged.player = this;
     event.scoreChanged.scoreAdded = num;
     event.scoreChanged.previousScore = previousScore;
@@ -247,11 +248,22 @@ void Player::looseShoot()
 
 /**
  * Handles player death logic.
+ * Overrides IGameObject::kill() to add Player-specific death behavior.
  */
 void Player::kill()
 {
-    dead = true;
+    IGameObject::kill();  // Sets dead flag and calls onDeath()
     animSpeed = 4;
+}
+
+/**
+ * Called when player is first killed (from IGameObject::kill()).
+ * Can be used for death effects, sounds, etc.
+ */
+void Player::onDeath()
+{
+    // Currently no additional logic needed here
+    // Death animation is handled via PlayerDeadAction in onPlayerHit()
 }
 
 /**
@@ -260,7 +272,10 @@ void Player::kill()
  */
 void Player::onPlayerHit()
 {
-    if (dead || deathAction) return;  // Already dead or death action running
+    if (isDead() || deathAction) return;  // Already dead or death action running
+
+    // Set death animation state
+    animController->setState("dead");
 
     // Create death action with trajectory
     // Thrown to the right with upward velocity

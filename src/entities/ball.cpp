@@ -262,9 +262,7 @@ void Ball::onDeath()
     // Fire BALL_SPLIT event if ball will split into smaller balls
     if (size < 3)
     {
-        GameEventData event;
-        event.type = GameEventType::BALL_SPLIT;
-        event.timestamp = SDL_GetTicks();
+        GameEventData event(GameEventType::BALL_SPLIT);
         event.ballSplit.parentBall = this;
         event.ballSplit.parentSize = size;
         EVENT_MGR.trigger(event);

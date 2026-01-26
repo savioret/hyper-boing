@@ -71,6 +71,11 @@ int Scene::init()
             }
         });
 
+    // Fire STAGE_LOADED event (stage is prepared and displayed)
+    GameEventData loadedEvent(GameEventType::STAGE_LOADED);
+    loadedEvent.stageLoaded.stageId = stage->id;
+    EVENT_MGR.trigger(loadedEvent);
+
     return 1;
 }
 
@@ -356,9 +361,7 @@ void Scene::shoot(Player* pl)
     pl->shoot();  // Updates player state and animation
 
     // Fire PLAYER_SHOOT event
-    GameEventData event;
-    event.type = GameEventType::PLAYER_SHOOT;
-    event.timestamp = SDL_GetTicks();
+    GameEventData event(GameEventType::PLAYER_SHOOT);
     event.playerShoot.player = pl;
     event.playerShoot.weapon = pl->getWeapon();
     EVENT_MGR.trigger(event);
@@ -432,9 +435,7 @@ void Scene::win()
     levelClear = true;
 
     // Fire LEVEL_CLEAR event
-    GameEventData event;
-    event.type = GameEventType::LEVEL_CLEAR;
-    event.timestamp = SDL_GetTicks();
+    GameEventData event(GameEventType::LEVEL_CLEAR);
     event.levelClear.stageId = stage->id;
     EVENT_MGR.trigger(event);
 
@@ -487,9 +488,7 @@ void Scene::checkColisions()
                     sh->getPlayer()->addScore(objectScore(b->diameter));
 
                     // Fire BALL_HIT event
-                    GameEventData event;
-                    event.type = GameEventType::BALL_HIT;
-                    event.timestamp = SDL_GetTicks();
+                    GameEventData event(GameEventType::BALL_HIT);
                     event.ballHit.ball = b;
                     event.ballHit.shot = sh;
                     event.ballHit.shooter = sh->getPlayer();
@@ -560,9 +559,7 @@ void Scene::checkColisions()
                     if (b->collision(gameinf.player[i].get()))
                     {
                         // Fire PLAYER_HIT event
-                        GameEventData event;
-                        event.type = GameEventType::PLAYER_HIT;
-                        event.timestamp = SDL_GetTicks();
+                        GameEventData event(GameEventType::PLAYER_HIT);
                         event.playerHit.player = gameinf.player[i].get();
                         event.playerHit.ball = b;
                         EVENT_MGR.trigger(event);
@@ -636,10 +633,8 @@ void Scene::checkSequence()
                     addBall(obj.x, obj.y, ball->size, ball->top, ball->dirX, ball->dirY, ball->ballType);
 
                     // Fire STAGE_OBJECT_SPAWNED event
-                    GameEventData event;
-                    event.type = GameEventType::STAGE_OBJECT_SPAWNED;
-                    event.timestamp = SDL_GetTicks();
-                    event.objectSpawned.objectType = 0;  // Ball
+                    GameEventData event(GameEventType::STAGE_OBJECT_SPAWNED);
+                    event.objectSpawned.id = obj.id; 
                     event.objectSpawned.x = obj.x;
                     event.objectSpawned.y = obj.y;
                     EVENT_MGR.trigger(event);
@@ -660,10 +655,8 @@ void Scene::checkSequence()
                     addFloor(obj.x, obj.y, floor->floorType);
 
                     // Fire STAGE_OBJECT_SPAWNED event
-                    GameEventData event;
-                    event.type = GameEventType::STAGE_OBJECT_SPAWNED;
-                    event.timestamp = SDL_GetTicks();
-                    event.objectSpawned.objectType = 1;  // Floor
+                    GameEventData event(GameEventType::STAGE_OBJECT_SPAWNED);
+                    event.objectSpawned.id = obj.id; 
                     event.objectSpawned.x = obj.x;
                     event.objectSpawned.y = obj.y;
                     EVENT_MGR.trigger(event);
@@ -766,11 +759,10 @@ GameState* Scene::moveAll(float dt)
                 {
                     readyActive = false;
 
-                    // Fire READY_SCREEN_COMPLETE event
-                    GameEventData event;
-                    event.type = GameEventType::READY_SCREEN_COMPLETE;
-                    event.timestamp = SDL_GetTicks();
-                    EVENT_MGR.trigger(event);
+                    // Fire STAGE_STARTED event (countdown complete, gameplay begins)
+                    GameEventData startedEvent(GameEventType::STAGE_STARTED);
+                    startedEvent.stageStarted.stageId = stage->id;
+                    EVENT_MGR.trigger(startedEvent);
                 }
             }
         }
@@ -832,9 +824,7 @@ GameState* Scene::moveAll(float dt)
                     gameOverCount = 10;
 
                     // Fire GAME_OVER event (reason: player 1 dead)
-                    GameEventData event;
-                    event.type = GameEventType::GAME_OVER;
-                    event.timestamp = SDL_GetTicks();
+                    GameEventData event(GameEventType::GAME_OVER);
                     event.gameOver.reason = 0;  // Player 1 dead
                     EVENT_MGR.trigger(event);
 
@@ -851,9 +841,7 @@ GameState* Scene::moveAll(float dt)
                     gameOverCount = 10;
 
                     // Fire GAME_OVER event (reason: both players dead)
-                    GameEventData event;
-                    event.type = GameEventType::GAME_OVER;
-                    event.timestamp = SDL_GetTicks();
+                    GameEventData event(GameEventType::GAME_OVER);
                     event.gameOver.reason = 1;  // Both players dead
                     EVENT_MGR.trigger(event);
 
@@ -914,9 +902,7 @@ GameState* Scene::moveAll(float dt)
                 timeRemaining--;
 
                 // Fire TIME_SECOND_ELAPSED event
-                GameEventData event;
-                event.type = GameEventType::TIME_SECOND_ELAPSED;
-                event.timestamp = SDL_GetTicks();
+                GameEventData event(GameEventType::TIME_SECOND_ELAPSED);
                 event.timeElapsed.previousTime = previousTime;
                 event.timeElapsed.newTime = timeRemaining;
                 EVENT_MGR.trigger(event);
@@ -930,9 +916,7 @@ GameState* Scene::moveAll(float dt)
                 gameOverCount = 10;
 
                 // Fire GAME_OVER event (reason: time expired)
-                GameEventData event;
-                event.type = GameEventType::GAME_OVER;
-                event.timestamp = SDL_GetTicks();
+                GameEventData event(GameEventType::GAME_OVER);
                 event.gameOver.reason = 2;  // Time expired
                 EVENT_MGR.trigger(event);
 

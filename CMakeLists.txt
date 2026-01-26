@@ -33,6 +33,7 @@ endif()
 # Sources
 set(SOURCES
     src/main.cpp
+    src/core/animcontroller.cpp
     src/core/action.cpp
     src/core/app.cpp
     src/ui/appconsole.cpp
@@ -47,6 +48,7 @@ set(SOURCES
     src/ui/configscreen.cpp
     src/game/floor.cpp
     src/core/gamerunner.cpp
+    src/core/gameevent.cpp
     src/core/graph.cpp
     src/game/item.cpp
     src/core/logger.cpp
@@ -61,6 +63,7 @@ set(SOURCES
     src/entities/harpoonshot.cpp
     src/entities/gunshot.cpp
     src/core/sprite.cpp
+    src/core/sprite2D.cpp
     src/core/spritesheet.cpp
     src/game/stage.cpp
     src/game/stageclear.cpp
@@ -101,6 +104,7 @@ set(HEADERS
     src/entities/harpoonshot.h
     src/entities/gunshot.h
     src/core/sprite.h
+    src/core/sprite2D.h
     src/core/spritesheet.h
     src/game/stage.h
     src/game/stageclear.h

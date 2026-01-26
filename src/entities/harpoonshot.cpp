@@ -17,11 +17,8 @@
  */
 HarpoonShot::HarpoonShot(Scene* scn, Player* pl, WeaponType type, int xOffset)
     : Shot(scn, pl, type, xOffset)
+    , tailAnim(std::make_unique<ToggleAnim>(0, 1, 2))  // Toggle between 0 and 1 every 2 ticks
 {
-    tail = 0;
-    tailDelay = 2;
-    tailCounter = tailDelay;
-
     // Use scene's harpoon sprites
     // Note: Currently using old shoot[] sprites, will be updated in Scene refactoring
     sprites[0] = &scene->bmp.shoot[0];  // Head
@@ -41,16 +38,8 @@ HarpoonShot::~HarpoonShot()
  */
 void HarpoonShot::move()
 {
-    // Toggle tail animation
-    if (!tailCounter)
-    {
-        tail = !tail;
-        tailCounter = tailDelay;
-    }
-    else
-    {
-        tailCounter--;
-    }
+    // Update tail animation
+    tailAnim->update();
 
     if (!isDead())
     {
@@ -78,6 +67,7 @@ void HarpoonShot::draw(Graph* graph)
     graph->draw(sprites[0], (int)xPos, (int)yPos);
 
     // Draw tail chain from head to bottom of screen
+    int tail = tailAnim->getCurrentFrame();
     for (int i = (int)yPos + sprites[0]->getHeight();
          i < MAX_Y;
          i += sprites[1]->getHeight())

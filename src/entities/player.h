@@ -3,7 +3,9 @@
 #include "../game/weapontype.h"
 #include "eventmanager.h"
 #include <memory>
+#include "../core/gameobject.h"
 #include "../core/sprite2d.h"
+#include "../core/animcontroller.h"
 
 class Scene;
 class Action;
@@ -23,8 +25,11 @@ enum class FacingDirection
  * Player, as its name suggests, contains information about the sprite
  * identifying the player, movement and action keys, score, lives,
  * weapons, and internal management data.
+ *
+ * Inherits from both IGameObject (for lifecycle management) and Sprite2D
+ * (for rendering). Position is delegated to Sprite2D as the single source of truth.
  */
-class Player : public Sprite2D
+class Player : public IGameObject, public Sprite2D
 {
 private:
     int xDir, yDir; // used for death animation (legacy, may be removed)
@@ -41,9 +46,11 @@ private:
     int animSpeed;
     int animCounter;
     int moveIncrement; // displacement increment when walking
-    bool dead;
     bool playing;
     int immuneCounter; // for when just revived
+
+    // Animation controller for state-based animations
+    std::unique_ptr<StateMachineAnim> animController;
 
     // Death animation using Action system
     std::unique_ptr<Action> deathAction;
@@ -52,6 +59,17 @@ private:
 public:
     Player(int id);
     ~Player();
+
+    // IGameObject position delegation to Sprite2D (single source of truth)
+    void setPos(float x, float y) override { Sprite2D::setPos(x, y); }
+    void setX(float x) override { Sprite2D::setX(x); }
+    void setY(float y) override { Sprite2D::setY(y); }
+    float getX() const override { return Sprite2D::getX(); }
+    float getY() const override { return Sprite2D::getY(); }
+
+    // IGameObject lifecycle (isDead() is inherited, kill() has Player-specific logic)
+    void kill() override;
+    void onDeath() override;
 
     void init();
     // void setFrame(int frame); // Inherited from Sprite2D
@@ -62,10 +80,8 @@ public:
     void stop();
 
     bool canShoot() const;
-    bool isDead() const { return dead; }
     void shoot();
     void looseShoot();
-    void kill();
     void revive();
 
     // Event handlers
@@ -76,7 +92,9 @@ public:
     void setWeapon(WeaponType type);
 
     // Getters
-    // getX, getY, getWidth, getHeight, getFrame are inherited from Sprite2D
+    // getX, getY are overridden (delegate to Sprite2D)
+    // getWidth, getHeight, getFrame are inherited from Sprite2D
+    // isDead is inherited from IGameObject
     int getId() const { return id; }
     int getScore() const { return score; }
     int getLives() const { return lives; }

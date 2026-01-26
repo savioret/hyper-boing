@@ -19,11 +19,26 @@
 GunShot::GunShot(Scene* scn, Player* pl, SpriteSheet* sheet, int xOffset)
     : Shot(scn, pl, WeaponType::GUN, xOffset)
     , spriteSheet(sheet)
-    , currentFrame(0)
-    , frameDelay(9)      // Change frames every 9 game ticks (~150ms at 60 FPS)
-    , frameCounter(frameDelay)
-    , animState(AnimState::FLIGHT)
+    , animController(std::make_unique<StateMachineAnim>())
 {
+    // Set up animation states
+    // flight_intro: 0→1→2→3→4, then auto-transition to flight_loop
+    animController->addState("flight_intro", {0, 1, 2, 3, 4}, 9, false, "flight_loop");
+    // flight_loop: oscillate 3↔4 forever
+    animController->addState("flight_loop", {3, 4}, 9, true);
+    // impact: 5→6, then stays on 6 (we check for completion to kill)
+    animController->addState("impact", {5, 6}, 9, false);
+
+    // Set callback to kill shot when impact animation completes
+    animController->setOnStateComplete([this](const std::string& state) {
+        if (state == "impact")
+        {
+            kill();
+        }
+    });
+
+    animController->setState("flight_intro");
+
     // Calculate shot spawn position based on player facing direction
     float centerOffset = pl->getWidth() / 2.0f;
     float spriteOffset = pl->getSprite()->getXOff();
@@ -48,21 +63,17 @@ GunShot::~GunShot()
 /**
  * Update gun bullet movement and animation
  *
- * Advances animation frames and moves the bullet upward during FLIGHT state.
- * During IMPACT state, bullet stays in place while playing impact animation.
+ * Advances animation frames and moves the bullet upward during flight states.
+ * During impact state, bullet stays in place while playing impact animation.
  */
 void GunShot::move()
 {
-    // Update frame animation
-    if (--frameCounter <= 0)
-    {
-        frameCounter = frameDelay;
-        advanceFrame();
-    }
+    // Update animation controller
+    animController->update();
 
     if (!isDead())
     {
-        if (animState == AnimState::FLIGHT)
+        if (!inImpact)
         {
             // Normal upward movement
             if (yPos <= MIN_Y)
@@ -74,64 +85,22 @@ void GunShot::move()
                 yPos -= weaponSpeed;
             }
         }
-        else if (animState == AnimState::IMPACT)
-        {
-            // Stay in place during impact animation
-            // Animation will call kill() when done (frame 6)
-        }
-    }
-}
-
-/**
- * Advance to next animation frame based on current state
- *
- * FLIGHT state: Sequence 0→1→2→3→4, then loops 3↔4
- * IMPACT state: Sequence 5→6, then kills the shot
- */
-void GunShot::advanceFrame()
-{
-    if (animState == AnimState::FLIGHT)
-    {
-        // Sequence: 0→1→2→3→4, then loop 3↔4
-        if (currentFrame < 3)
-        {
-            currentFrame++;
-        }
-        else if (currentFrame == 3)
-        {
-            currentFrame = 4;
-        }
-        else  // currentFrame == 4
-        {
-            currentFrame = 3;  // Loop back to 3
-        }
-    }
-    else if (animState == AnimState::IMPACT)
-    {
-        // Sequence: 5→6→kill
-        if (currentFrame == 5)
-        {
-            currentFrame = 6;
-        }
-        else if (currentFrame == 6)
-        {
-            kill();  // Impact animation complete
-        }
+        // During impact state, bullet stays in place while animation plays
+        // The onStateComplete callback will call kill() when done
     }
 }
 
 /**
  * Trigger impact animation sequence
  *
- * Switches to IMPACT state and starts playing frames 5→6
+ * Switches to impact state and starts playing frames 5→6
  */
 void GunShot::triggerImpact()
 {
-    if (animState != AnimState::IMPACT)
+    if (!inImpact)
     {
-        animState = AnimState::IMPACT;
-        currentFrame = 5;
-        frameCounter = frameDelay;
+        inImpact = true;
+        animController->setState("impact");
         player->looseShoot();  // Decrement player's shot count
     }
 }
@@ -143,9 +112,9 @@ void GunShot::triggerImpact()
  */
 void GunShot::draw(Graph* graph)
 {
-    Sprite* frame = spriteSheet->getFrame(currentFrame);
+    Sprite* frame = spriteSheet->getFrame(animController->getCurrentFrame());
 
-    if ( frame )
+    if (frame)
     {
         graph->draw(frame, (int)xPos, (int)yPos);
     }
@@ -202,5 +171,5 @@ bool GunShot::collision(Floor* fl)
  */
 Sprite* GunShot::getCurrentSprite() const
 {
-    return spriteSheet->getFrame(currentFrame);
+    return spriteSheet->getFrame(animController->getCurrentFrame());
 }

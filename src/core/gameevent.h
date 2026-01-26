@@ -38,7 +38,8 @@ enum class GameEventType
     WEAPON_CHANGED,           // Player switched weapon type
 
     // Stage events
-    STAGE_STARTED,            // New stage initialized
+    STAGE_LOADED,             // Stage prepared and shown, before ready screen
+    STAGE_STARTED,            // Stage countdown complete, gameplay begins
     STAGE_MUSIC_CHANGED,      // Music track changed
 
     // System events
@@ -54,6 +55,12 @@ struct PlayerHitEventData
 {
     Player* player;
     Ball* ball;
+};
+
+struct PlayerRevivedEventData
+{
+    Player* player;
+    int remainingLives;
 };
 
 struct BallHitEventData
@@ -92,12 +99,16 @@ struct TimeElapsedEventData
 struct StageStartedEventData
 {
     int stageId;
-    const char* stageName;
+};
+
+struct StageLoadedEventData
+{
+    int stageId;
 };
 
 struct StageObjectSpawnedEventData
 {
-    int objectType;  // 0=ball, 1=floor, 2=item
+    int id;  // Object ID (Type)
     int x;
     int y;
 };
@@ -138,15 +149,19 @@ struct GameEventData
     GameEventType type;
     int timestamp;  // SDL_GetTicks() when event fired
 
+    GameEventData(GameEventType t);
+
     // Union for memory efficiency - only one event data active at a time
     union
     {
         PlayerHitEventData playerHit;
+        PlayerRevivedEventData playerRevived;
         BallHitEventData ballHit;
         ScoreChangedEventData scoreChanged;
         PlayerShootEventData playerShoot;
         BallSplitEventData ballSplit;
         TimeElapsedEventData timeElapsed;
+        StageLoadedEventData stageLoaded;
         StageStartedEventData stageStarted;
         StageObjectSpawnedEventData objectSpawned;
         LevelClearEventData levelClear;
@@ -155,7 +170,4 @@ struct GameEventData
         MusicChangedEventData musicChanged;
         ConsoleCommandEventData consoleCommand;
     };
-
-    // Default constructor
-    GameEventData() : type(GameEventType::READY_SCREEN_COMPLETE), timestamp(0) {}
 };

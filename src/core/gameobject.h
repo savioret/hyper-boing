@@ -16,14 +16,21 @@ protected:
     float xPos = 0.0f;
     float yPos = 0.0f;
 
+    /**
+     * Reset the dead flag. Used by entities that can revive (e.g., Player).
+     * Most game objects should not call this - they are deleted when dead.
+     */
+    void resetDead() { dead = false; }
+
 public:
     virtual ~IGameObject() = default;
 
-    void setPos(float x, float y) { xPos = x; yPos = y; }
-    void setX(float x) { xPos = x; }
-    void setY(float y) { yPos = y; }
-    float getX() const { return xPos; }
-    float getY() const { return yPos; }
+    // Position methods - virtual to allow delegation (e.g., Player delegates to Sprite2D)
+    virtual void setPos(float x, float y) { xPos = x; yPos = y; }
+    virtual void setX(float x) { xPos = x; }
+    virtual void setY(float y) { yPos = y; }
+    virtual float getX() const { return xPos; }
+    virtual float getY() const { return yPos; }
     
     /**
      * Check if this object should be removed from the game world.

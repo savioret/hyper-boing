@@ -1,15 +1,18 @@
 #pragma once
 
 #include "shot.h"
+#include "../core/animcontroller.h"
+#include <memory>
 
 class SpriteSheet;
 
 /**
  * GunShot - Animated bullet projectile
  *
- * Fires animated bullets using a sprite sheet. Has two animation states:
- * - FLIGHT: Normal upward movement with frames 0→1→2→3→4, then loops 3↔4
- * - IMPACT: Plays impact animation (frames 5→6) when hitting non-breakable objects
+ * Fires animated bullets using a sprite sheet. Uses StateMachineAnim for animation:
+ * - flight_intro: Startup sequence (frames 0→1→2→3→4)
+ * - flight_loop: Looping flight (frames 3↔4)
+ * - impact: Impact animation (frames 5→6) when hitting non-breakable objects
  *
  * Unlike harpoon, gun bullets don't have a tail - just the animated bullet sprite.
  */
@@ -17,16 +20,8 @@ class GunShot : public Shot
 {
 private:
     SpriteSheet* spriteSheet;  // Non-owning pointer to scene's sprite sheet
-    int currentFrame;
-    int frameCounter;
-    int frameDelay;
-
-    enum class AnimState
-    {
-        FLIGHT,    // Normal flight animation
-        IMPACT     // Impact animation (floor/ceiling hit)
-    };
-    AnimState animState;
+    std::unique_ptr<StateMachineAnim> animController;
+    bool inImpact = false;     // Track if we're in impact state (for movement logic)
 
 public:
     /**
@@ -55,11 +50,6 @@ public:
     Sprite* getCurrentSprite() const;
 
 private:
-    /**
-     * Advance to next animation frame based on current state
-     */
-    void advanceFrame();
-
     /**
      * Trigger impact animation sequence
      */

@@ -152,7 +152,6 @@ const char* EventManager::getEventTypeName(GameEventType type) const
 {
     switch (type)
     {
-    case GameEventType::READY_SCREEN_COMPLETE: return "READY_SCREEN_COMPLETE";
     case GameEventType::LEVEL_CLEAR: return "LEVEL_CLEAR";
     case GameEventType::GAME_OVER: return "GAME_OVER";
     case GameEventType::TIME_SECOND_ELAPSED: return "TIME_SECOND_ELAPSED";
