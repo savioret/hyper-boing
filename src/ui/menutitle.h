@@ -2,6 +2,7 @@
 
 #include "../core/gameobject.h"
 #include "../core/sprite.h"
+#include "../core/sprite2d.h"
 #include "../core/action.h"
 #include <memory>
 
@@ -23,13 +24,21 @@ class Graph;
 class MenuTitle : public IGameObject
 {
 private:
-    // Sprites
-    Sprite title_boing;
-    Sprite title_hyper;
-    Sprite title_bg;
-    Sprite title_bg_redball;
-    Sprite title_bg_greenball;
-    Sprite title_bg_blueball;
+    // Resources (Sprites)
+    Sprite r_title_boing;
+    Sprite r_title_hyper;
+    Sprite r_title_bg;
+    Sprite r_title_bg_redball;
+    Sprite r_title_bg_greenball;
+    Sprite r_title_bg_blueball;
+
+    // Actors (Sprite2D)
+    Sprite2D title_boing;
+    Sprite2D title_hyper;
+    Sprite2D title_bg;
+    Sprite2D title_bg_redball;
+    Sprite2D title_bg_greenball;
+    Sprite2D title_bg_blueball;
 
     // Animation sequence
     std::unique_ptr<ActionSequence> animation;

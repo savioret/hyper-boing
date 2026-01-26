@@ -48,9 +48,20 @@ void Player::init()
     score = 0;
     moveIncrement = 3;
     facing = FacingDirection::RIGHT;  // Default facing right
-    sprite = &gameinf.getBmp().player[id][ANIM_SHOOT];
-    xPos = 200.0f + 100.0f * id;
-    yPos = (float)(MAX_Y - sprite->getHeight());
+    
+    // Initialize sprites from global resources
+    clearSprites();
+    // Assuming max 16 frames based on usage (ANIM_DEAD=8)
+    for(int i = 0; i < 16; i++) {
+        addSprite(&gameinf.getBmp().player[id][i]);
+    }
+    
+    setFrame(ANIM_SHOOT); // Match legacy: sprite = &...[ANIM_SHOOT]
+    
+    float startX = 200.0f + 100.0f * id;
+    float startY = (float)(MAX_Y - getHeight());
+    
+    setPos(startX, startY);
 
     xDir = 5;
     yDir = -4;
@@ -74,10 +85,11 @@ void Player::revive()
     shotInterval = 15;
     animSpeed = shotCounter = 10;
     facing = FacingDirection::RIGHT;  // Reset facing on revive
-    sprite = &gameinf.getBmp().player[id][ANIM_SHOOT];
+    setFrame(ANIM_SHOOT);
 
-    xPos = 200.0f + 100.0f * id;
-    yPos = (float)(MAX_Y - sprite->getHeight());
+    float startX = 200.0f + 100.0f * id;
+    float startY = (float)(MAX_Y - getHeight());
+    setPos(startX, startY);
 
     xDir = 5;
     yDir = -4;
@@ -86,21 +98,19 @@ void Player::revive()
 void Player::moveLeft()
 {
     facing = FacingDirection::LEFT;  // Update facing direction
-    sprite->setFlipH(true);
-    if (xPos > MIN_X - 10)
-        xPos -= moveIncrement;
+    setFlipH(true);
+    if (x > MIN_X - 10)
+        x -= moveIncrement;
 
     if (frame >= ANIM_SHOOT - 1)
     {
-        frame = ANIM_WALK;
-        sprite = &gameinf.getBmp().player[id][frame];
+        setFrame(ANIM_WALK);
         shotCounter = animSpeed;
     }
     else if (!shotCounter)
     {
-        if (frame < ANIM_WALK + 4) frame++;
-        else frame = ANIM_WALK;
-        sprite = &gameinf.getBmp().player[id][frame];
+        if (frame < ANIM_WALK + 4) setFrame(frame + 1);
+        else setFrame(ANIM_WALK);
         shotCounter = animSpeed;
     }
     else shotCounter--;
@@ -109,32 +119,26 @@ void Player::moveLeft()
 void Player::moveRight()
 {
     facing = FacingDirection::RIGHT;  // Update facing direction
-    sprite->setFlipH(false);
-    if (xPos + sprite->getWidth() < MAX_X - 5)
-        xPos += moveIncrement;
+    setFlipH(false);
+    if (x + getWidth() < MAX_X - 5)
+        x += moveIncrement;
 
     if (frame >= ANIM_SHOOT - 1)
     {
-        frame = ANIM_WALK;
-        sprite = &gameinf.getBmp().player[id][frame];
+        setFrame(ANIM_WALK);
         shotCounter = animSpeed;
     }
     else if (!shotCounter)
     {
-        if (frame < ANIM_WALK + 4) frame++;
-        else frame = ANIM_WALK;
-        sprite = &gameinf.getBmp().player[id][frame];
+        if (frame < ANIM_WALK + 4) setFrame(frame + 1);
+        else setFrame(ANIM_WALK);
         shotCounter = animSpeed;
     }
 
     else shotCounter--;
 }
 
-void Player::setFrame(int f)
-{
-    frame = f;
-    sprite = &gameinf.getBmp().player[id][frame];
-}
+// void Player::setFrame(int f) // Inherited
 
 bool Player::canShoot() const
 {
@@ -156,8 +160,7 @@ void Player::shoot()
     shotCounter = shotInterval;
     if (frame != ANIM_SHOOT + 1)
     {
-        frame = ANIM_SHOOT + 1;
-        sprite = &gameinf.getBmp().player[id][frame];
+        setFrame(ANIM_SHOOT + 1);
     }
 }
 
@@ -168,18 +171,16 @@ void Player::stop()
         if (frame == ANIM_SHOOT + 1)
             if (!shotCounter)
             {
-                frame = ANIM_SHOOT;
-                sprite = &gameinf.getBmp().player[id][frame];				
+                setFrame(ANIM_SHOOT);				
                 shotCounter = shotInterval;
             }
             else shotCounter--;
         else
         {
-            frame = ANIM_SHOOT;
-            sprite = &gameinf.getBmp().player[id][frame];
+            setFrame(ANIM_SHOOT);
         }
     }
-    if (xPos + sprite->getWidth() > MAX_X - 10) xPos = (float)(MAX_X - 16 - sprite->getWidth());
+    if (x + getWidth() > MAX_X - 10) x = (float)(MAX_X - 16 - getWidth());
 }
 
 void Player::update(float dt)
@@ -213,7 +214,6 @@ void Player::update(float dt)
     else
     {
         // Handle immunity blinking effect
-        // TODO: handle this with a BlinkAction
         if (immuneCounter)
         {
             immuneCounter--;

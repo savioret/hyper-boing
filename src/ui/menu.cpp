@@ -11,7 +11,7 @@ int Menu::initBitmaps()
     // Initialize shared background
     GameState::initSharedBackground();
 
-    // SIMPLIFIED: Load BMFont with one call - texture auto-loaded
+    // TODO: Load fonts in GameState or AppData
     fontRenderer.loadFont(&appGraph, "assets/fonts/thickfont_grad_64.fnt");
 
     return 1;

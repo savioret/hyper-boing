@@ -12,26 +12,34 @@ MenuTitle::MenuTitle(Graph* gr)
 
 MenuTitle::~MenuTitle()
 {
-    title_boing.release();
-    title_hyper.release();
-    title_bg.release();
-    title_bg_redball.release();
-    title_bg_greenball.release();
-    title_bg_blueball.release();
+    r_title_boing.release();
+    r_title_hyper.release();
+    r_title_bg.release();
+    r_title_bg_redball.release();
+    r_title_bg_greenball.release();
+    r_title_bg_blueball.release();
 }
 
 void MenuTitle::init()
 {
     if (!graph) return;
 
-    // Load sprites
-    title_boing.init(graph, "assets/graph/ui/title_boing.png", 0, 0);
-    title_hyper.init(graph, "assets/graph/ui/title_hyper.png", 0, 0);
-    title_bg.init(graph, "assets/graph/ui/title_bg.png", 0, 0);
+    // Load resource sprites
+    r_title_boing.init(graph, "assets/graph/ui/title_boing.png", 0, 0);
+    r_title_hyper.init(graph, "assets/graph/ui/title_hyper.png", 0, 0);
+    r_title_bg.init(graph, "assets/graph/ui/title_bg.png", 0, 0);
 
-    title_bg_redball.init(graph, "assets/graph/ui/title_bg_redball.png", 0, 0);
-    title_bg_greenball.init(graph, "assets/graph/ui/title_bg_greenball.png", 0, 0);
-    title_bg_blueball.init(graph, "assets/graph/ui/title_bg_blueball.png", 0, 0);
+    r_title_bg_redball.init(graph, "assets/graph/ui/title_bg_redball.png", 0, 0);
+    r_title_bg_greenball.init(graph, "assets/graph/ui/title_bg_greenball.png", 0, 0);
+    r_title_bg_blueball.init(graph, "assets/graph/ui/title_bg_blueball.png", 0, 0);
+
+    // Link actors to resources
+    title_boing.addSprite(&r_title_boing);
+    title_hyper.addSprite(&r_title_hyper);
+    title_bg.addSprite(&r_title_bg);
+    title_bg_redball.addSprite(&r_title_bg_redball);
+    title_bg_greenball.addSprite(&r_title_bg_greenball);
+    title_bg_blueball.addSprite(&r_title_bg_blueball);
 
     // Set initial sprite states (off-screen)
     title_boing.setY(-300.0f);
@@ -64,6 +72,11 @@ void MenuTitle::buildAnimation()
     const float greenBallFinalX = bgCenterX + 350.0f;
     const float greenBallFinalY = bgCenterY + 5.0f;
 
+    // Set sprite positions for those not using animated x/y
+    title_bg.setPos(centerX, titleY + 60);
+    title_hyper.setY(titleY + 20);
+    title_boing.setX(bgCenterX + 30);
+
     // Create animation sequence
     animation = std::make_unique<ActionSequence>();
 
@@ -71,7 +84,7 @@ void MenuTitle::buildAnimation()
     animation->then(tweenTo(title_boing.yPtr(), 85.0f, 0.5f, Easing::EaseOut));
 
     // Phase 2: "HYPER" slides from left (0.5s, EaseOut)
-    animation->then(tweenTo(title_hyper.xPtr(), centerX - 30.0f, 0.5f, Easing::EaseOut));
+    animation->then(tweenTo(title_hyper.xPtr(), (float)centerX - 30.0f, 0.5f, Easing::EaseOut));
 
     // Phase 3: Background fades in (0.3s, EaseOut)
     animation->then(tweenTo(title_bg.alphaPtr(), 255.0f, 0.3f, Easing::EaseOut));
@@ -117,57 +130,46 @@ void MenuTitle::draw()
 {
     if (!graph) return;
 
-    const int baseX = (int)xPos;
-    const int baseY = (int)yPos;
+    // Render logic using Sprite2D properties
     const int titleY = 5;
-
     const int centerX = (RES_X - title_bg.getWidth()) / 2;
-
-    // Apply base offset using sprite offset property
-    title_bg.setOffset(baseX, baseY);
-    title_bg_redball.setOffset(baseX, baseY);
-    title_bg_blueball.setOffset(baseX, baseY);
-    title_bg_greenball.setOffset(baseX, baseY);
-    title_hyper.setOffset(baseX, baseY);
-    title_boing.setOffset(baseX, baseY);
-
-    // Set sprite positions for those not using animated x/y
-    title_bg.setPos(centerX, titleY + 60);
-    title_hyper.setY(titleY + 20);
-    title_boing.setX(centerX + 30);
-
-    // Background layer - uses sprite's alpha property
+    
+    // Ensure static elements have correct positions if they aren't animated
+    // Note: Assuming setPos updates the actor state which is persisted
+    title_bg.setPos((float)centerX, (float)(titleY + 60));
+    
+    // Background layer
     if (title_bg.getAlpha() > 0)
     {
-        graph->drawClipped(&title_bg);
+        graph->draw(&title_bg);
     }
 
-    // Colored balls - use sprite's position, alpha, and scale properties
+    // Colored balls
     if (title_bg_redball.getAlpha() > 0)
     {
-        graph->drawClipped(&title_bg_redball);
+        graph->draw(&title_bg_redball);
     }
 
     if (title_bg_blueball.getAlpha() > 0)
     {
-        graph->drawClipped(&title_bg_blueball);
+        graph->draw(&title_bg_blueball);
     }
 
     if (title_bg_greenball.getAlpha() > 0)
     {
-        graph->drawClipped(&title_bg_greenball);
+        graph->draw(&title_bg_greenball);
     }
 
-    // "HYPER" text - uses sprite's X property
+    // "HYPER" text
     if (title_hyper.getX() >= -400)
     {
-        graph->drawClipped(&title_hyper);
+        graph->draw(&title_hyper);
     }
 
-    // "BOING" text - uses sprite's Y property
+    // "BOING" text
     if (title_boing.getY() >= -300)
     {
-        graph->drawClipped(&title_boing);
+        graph->draw(&title_boing);
     }
 }
 

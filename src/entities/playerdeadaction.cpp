@@ -21,7 +21,7 @@ void PlayerDeadAction::start()
         player->setFrame(ANIM_DEAD);
 
         // Initialize rotation to 0
-        player->getSprite()->setRotation(0.0f);
+        player->setRotation(0.0f);
 
         // Start rotation motion
         rotationMotion.reset();
@@ -40,7 +40,7 @@ bool PlayerDeadAction::update(float dt)
 
     // Update rotation animation (continuous 720 deg/sec = 2 rotations/sec)
     rotationMotion.update(dt);
-    sprite->setRotation(rotationMotion.value());
+    player->setRotation(rotationMotion.value());
 
     // Update position with physics
     float x = player->getX();
@@ -56,7 +56,6 @@ bool PlayerDeadAction::update(float dt)
         if ( x + player->getWidth() >= MAX_X )
         {
             velocityX = -2.0f;
-            velocityY = 8.0f;
         }
     }
     else
@@ -64,7 +63,6 @@ bool PlayerDeadAction::update(float dt)
         if ( x <= MIN_X )
         {
             velocityX = 2.0f;
-            velocityY = 8.0f;
         }
     }
 
@@ -75,6 +73,7 @@ bool PlayerDeadAction::update(float dt)
     if (y > RES_Y)
     {
         isDone = true;
+        player->setRotation(0);
         return false;
     }
 

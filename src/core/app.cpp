@@ -5,7 +5,7 @@
 #include "appconsole.h"
 #include "sprite.h"
 #include "graph.h"
-#include "main.h"
+#include "../main.h"
 
 // Toggle overlay font: true = use custom font, false = use system font
 #define USE_CUSTOM_OVERLAY_FONT false
@@ -37,7 +37,7 @@ int GameState::init()
     
     // Initialize text overlay
     textOverlay.init(&AppData::instance().graph);
-    
+
     // Load custom overlay font if enabled
 #if USE_CUSTOM_OVERLAY_FONT
     overlayFontRenderer = std::make_unique<BMFontRenderer>();

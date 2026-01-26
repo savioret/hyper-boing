@@ -3,9 +3,9 @@
 #include "../game/weapontype.h"
 #include "eventmanager.h"
 #include <memory>
+#include "../core/sprite2d.h"
 
 class Scene;
-class Sprite;
 class Action;
 
 /**
@@ -24,11 +24,9 @@ enum class FacingDirection
  * identifying the player, movement and action keys, score, lives,
  * weapons, and internal management data.
  */
-class Player
+class Player : public Sprite2D
 {
 private:
-    Sprite* sprite;
-    float xPos, yPos;
     int xDir, yDir; // used for death animation (legacy, may be removed)
     FacingDirection facing;  // Direction player is facing
     int lives;
@@ -39,15 +37,13 @@ private:
     int maxShoots;
     int numShoots;
     int shotCounter;
-    int shotInterval; // time between shots // TODO: this should now be part of the Weapon properties
+    int shotInterval; // time between shots
     int animSpeed;
     int animCounter;
     int moveIncrement; // displacement increment when walking
-    int frame;
     bool dead;
     bool playing;
     int immuneCounter; // for when just revived
-    bool visible;
 
     // Death animation using Action system
     std::unique_ptr<Action> deathAction;
@@ -58,8 +54,8 @@ public:
     ~Player();
 
     void init();
-    void setFrame(int frame);
-    void update(float dt);  // Now takes delta time for action updates
+    // void setFrame(int frame); // Inherited from Sprite2D
+    void update(float dt);
     void addScore(int num);
     void moveLeft();
     void moveRight();
@@ -80,27 +76,20 @@ public:
     void setWeapon(WeaponType type);
 
     // Getters
-    float getX() const { return xPos; }
-    float getY() const { return yPos; }
-    int getWidth() const { return sprite->getWidth(); }
-    int getHeight() const { return sprite->getHeight(); }
+    // getX, getY, getWidth, getHeight, getFrame are inherited from Sprite2D
     int getId() const { return id; }
     int getScore() const { return score; }
     int getLives() const { return lives; }
     bool isPlaying() const { return playing; }
-    bool isVisible() const { return visible; }
     bool isImmune() const { return immuneCounter > 0; }
     int getNumShoots() const { return numShoots; }
     int getIdWeapon() const { return idWeapon; }
-    int getFrame() const { return frame; }
-    Sprite* getSprite() const { return sprite; }
+    Sprite* getSprite() const { return getCurrentSprite(); } // Compatibility wrapper
     FacingDirection getFacing() const { return facing; }
 
     // Setters
-    void setX(float x) { xPos = x; }
-    void setY(float y) { yPos = y; }
+    // setX, setY are inherited
     void setPlaying(bool p) { playing = p; }
-    void setVisible(bool v) { visible = v; }
     
     // For access during refactoring
     friend class Scene;

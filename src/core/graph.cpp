@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <string>
 #include <iostream>
+#include "sprite2d.h"
 #include "sprite.h"
 #include "graph.h"
 #include "bmfont.h"
@@ -145,186 +146,61 @@ void Graph::draw(SDL_Texture* texture, const SDL_Rect* srcRect, int x, int y) {
     SDL_RenderCopy(renderer, texture, srcRect, &dstRect);
 }
 
-void Graph::drawClipped(SDL_Texture* texture, const SDL_Rect* srcRect, int x, int y) {
-    SDL_Rect newSrc = *srcRect;
-    int sx = srcRect->w;
-    int sy = srcRect->h;
+// New methods using Sprite2D's internal properties
 
-    if (x < 0) {
-        newSrc.x += -x; // Fixed from srcRect.x = -x; assuming offset
-        newSrc.w = sx + x;
-        x = 0;
-    }
-    if (x + sx > 640) {
-        newSrc.w = 640 - x;
-    }
-    if (y < 0) {
-        newSrc.y += -y;
-        newSrc.h = sy + y;
-        y = 0;
-    }
-    if (y + sy > 480) {
-        newSrc.h = 480 - y;
-    }
-
-    SDL_Rect dstRect = { x, y, newSrc.w, newSrc.h };
-    SDL_RenderCopy(renderer, texture, &newSrc, &dstRect);
-}
-
-void Graph::drawClipped(Sprite* spr, int x, int y) {
-    SDL_Rect srcRect = { spr->srcX, spr->srcY, spr->sx, spr->sy };
-
-    if (x < 0) {
-        srcRect.x += -x;
-        srcRect.w = spr->sx + x;
-        x = 0;
-    }
-    if (x + spr->sx > 640) {
-        srcRect.w = 640 - x;
-    }
-    if (y < 0) {
-        srcRect.y += -y;
-        srcRect.h = spr->sy + y;
-        y = 0;
-    }
-    if (y + spr->sy > 480) {
-        srcRect.h = 480 - y;
-    }
-
-    SDL_Rect dstRect = { x + spr->xoff, y + spr->yoff, srcRect.w, srcRect.h };
-    SDL_RenderCopy(renderer, spr->bmp, &srcRect, &dstRect);
-}
-
-// New methods using sprite's internal properties
-
-void Graph::draw(Sprite* spr) {
-    if (!spr || !spr->bmp) return;
+void Graph::draw(Sprite2D* spr) {
+    if (!spr || !spr->isVisible()) return;
+    
+    Sprite* currentSprite = spr->getCurrentSprite();
+    if (!currentSprite || !currentSprite->getBmp()) return;
 
     // Apply alpha
-    if (spr->alpha < 255.0f) {
-        SDL_SetTextureAlphaMod(spr->bmp, (Uint8)spr->alpha);
+    if (spr->getAlpha() < 255.0f) {
+        SDL_SetTextureAlphaMod(currentSprite->getBmp(), (Uint8)spr->getAlpha());
     }
 
     // Source rectangle (from sprite sheet)
-    SDL_Rect srcRect = { spr->srcX, spr->srcY, spr->sx, spr->sy };
+    SDL_Rect srcRect = { currentSprite->getSrcX(), currentSprite->getSrcY(), currentSprite->getWidth(), currentSprite->getHeight() };
 
     // Calculate scaled size
-    int scaledW = (int)(spr->sx * spr->scale);
-    int scaledH = (int)(spr->sy * spr->scale);
+    int scaledW = (int)(currentSprite->getWidth() * spr->getScale());
+    int scaledH = (int)(currentSprite->getHeight() * spr->getScale());
 
     // Calculate pivot offset (to keep pivot point fixed during scaling)
     // Pivot is 0.0-1.0 where 0.5, 0.5 = center
-    float pivotOffsetX = spr->sx * spr->pivotX * (1.0f - spr->scale);
-    float pivotOffsetY = spr->sy * spr->pivotY * (1.0f - spr->scale);
+    float pivotOffsetX = currentSprite->getWidth() * spr->getPivotX() * (1.0f - spr->getScale());
+    float pivotOffsetY = currentSprite->getHeight() * spr->getPivotY() * (1.0f - spr->getScale());
 
     // Destination rectangle (with sprite offset and pivot adjustment)
     SDL_Rect dstRect = {
-        (int)(spr->x + spr->xoff + pivotOffsetX),
-        (int)(spr->y + spr->yoff + pivotOffsetY),
+        (int)(spr->getX() + currentSprite->getXOff() + pivotOffsetX),
+        (int)(spr->getY() + currentSprite->getYOff() + pivotOffsetY),
         scaledW,
         scaledH
     };
 
     // Pivot point for rotation (within the destination rect)
     SDL_Point center = {
-        (int)(scaledW * spr->pivotX),
-        (int)(scaledH * spr->pivotY)
+        (int)(scaledW * spr->getPivotX()),
+        (int)(scaledH * spr->getPivotY())
     };
 
     // Flip flags
     SDL_RendererFlip flip = SDL_FLIP_NONE;
-    if (spr->flipH && spr->flipV) {
+    if (spr->getFlipH() && spr->getFlipV()) {
         flip = (SDL_RendererFlip)(SDL_FLIP_HORIZONTAL | SDL_FLIP_VERTICAL);
-    } else if (spr->flipH) {
+    } else if (spr->getFlipH()) {
         flip = SDL_FLIP_HORIZONTAL;
-    } else if (spr->flipV) {
+    } else if (spr->getFlipV()) {
         flip = SDL_FLIP_VERTICAL;
     }
 
     // Render with all transformations
-    SDL_RenderCopyEx(renderer, spr->bmp, &srcRect, &dstRect, spr->rotation, &center, flip);
+    SDL_RenderCopyEx(renderer, currentSprite->getBmp(), &srcRect, &dstRect, spr->getRotation(), &center, flip);
 
     // Reset alpha if modified
-    if (spr->alpha < 255.0f) {
-        SDL_SetTextureAlphaMod(spr->bmp, 255);
-    }
-}
-
-void Graph::drawClipped(Sprite* spr) {
-    if (!spr || !spr->bmp) return;
-
-    // Apply alpha
-    if (spr->alpha < 255.0f) {
-        SDL_SetTextureAlphaMod(spr->bmp, (Uint8)spr->alpha);
-    }
-
-    // Calculate scaled size
-    int scaledW = (int)(spr->sx * spr->scale);
-    int scaledH = (int)(spr->sy * spr->scale);
-
-    // Calculate pivot offset
-    float pivotOffsetX = spr->sx * spr->pivotX * (1.0f - spr->scale);
-    float pivotOffsetY = spr->sy * spr->pivotY * (1.0f - spr->scale);
-
-    // Initial destination position
-    int x = (int)(spr->x + spr->xoff + pivotOffsetX);
-    int y = (int)(spr->y + spr->yoff + pivotOffsetY);
-
-    // Source rectangle (from sprite sheet)
-    SDL_Rect srcRect = { spr->srcX, spr->srcY, spr->sx, spr->sy };
-
-    // Clipping logic (TODO: This is simplified - proper clipping with rotation is complex)
-    // For now, we clip the bounding box. Rotated sprites may still draw outside.
-    if (x < 0) {
-        int clipAmount = -x;
-        srcRect.x += (int)(clipAmount / spr->scale);
-        srcRect.w -= (int)(clipAmount / spr->scale);
-        scaledW -= clipAmount;
-        x = 0;
-    }
-    if (x + scaledW > RES_X) {
-        int excess = (x + scaledW) - RES_X;
-        srcRect.w -= (int)(excess / spr->scale);
-        scaledW -= excess;
-    }
-    if (y < 0) {
-        int clipAmount = -y;
-        srcRect.y += (int)(clipAmount / spr->scale);
-        srcRect.h -= (int)(clipAmount / spr->scale);
-        scaledH -= clipAmount;
-        y = 0;
-    }
-    if (y + scaledH > RES_Y) {
-        int excess = (y + scaledH) - RES_Y;
-        srcRect.h -= (int)(excess / spr->scale);
-        scaledH -= excess;
-    }
-
-    // Destination rectangle after clipping
-    SDL_Rect dstRect = { x, y, scaledW, scaledH };
-
-    // Pivot point for rotation
-    SDL_Point center = {
-        (int)(scaledW * spr->pivotX),
-        (int)(scaledH * spr->pivotY)
-    };
-
-    // Flip flags
-    SDL_RendererFlip flip = SDL_FLIP_NONE;
-    if (spr->flipH && spr->flipV) {
-        flip = (SDL_RendererFlip)(SDL_FLIP_HORIZONTAL | SDL_FLIP_VERTICAL);
-    } else if (spr->flipH) {
-        flip = SDL_FLIP_HORIZONTAL;
-    } else if (spr->flipV) {
-        flip = SDL_FLIP_VERTICAL;
-    }
-
-    // Render with all transformations
-    SDL_RenderCopyEx(renderer, spr->bmp, &srcRect, &dstRect, spr->rotation, &center, flip);
-
-    // Reset alpha if modified
-    if (spr->alpha < 255.0f) {
-        SDL_SetTextureAlphaMod(spr->bmp, 255);
+    if (spr->getAlpha() < 255.0f) {
+        SDL_SetTextureAlphaMod(currentSprite->getBmp(), 255);
     }
 }
 
@@ -341,17 +217,6 @@ void Graph::draw(BmNumFont* font, const std::string& cad, int x, int y) {
     for (char c : cad) {
         srcRect = font->getRect(c);
         draw(font->getSprite()->getBmp(), &srcRect, x + esp, y);
-        esp += srcRect.w;
-    }
-}
-
-void Graph::drawClipped(BmNumFont* font, const std::string& cad, int x, int y) {
-    SDL_Rect srcRect;
-    int esp = 0;
-
-    for (char c : cad) {
-        srcRect = font->getRect(c);
-        drawClipped(font->getSprite()->getBmp(), &srcRect, x + esp, y);
         esp += srcRect.w;
     }
 }

@@ -1,4 +1,4 @@
-#include "main.h"
+#include "../main.h"
 #include "appdata.h"
 #include "appconsole.h"
 #include <SDL.h>
@@ -68,13 +68,9 @@ void SelectPlayer::drawSelect()
     else
         appGraph.filledRectangle(330, 205, 335 + bmp.select[PLAYER2].getWidth() + 5, 210 + bmp.select[PLAYER2].getHeight() + 5);
 
-    bmp.mode.setPos(38, 10);
-    bmp.select[PLAYER1].setPos(70, 210);
-    bmp.select[PLAYER2].setPos(335, 210);
-
-    appGraph.draw(&bmp.mode);
-    appGraph.draw(&bmp.select[PLAYER1]);
-    appGraph.draw(&bmp.select[PLAYER2]);
+    appGraph.draw(&bmp.mode, 38, 10);
+    appGraph.draw(&bmp.select[PLAYER1], 70, 210);
+    appGraph.draw(&bmp.select[PLAYER2], 335, 210);
 }
 
 int SelectPlayer::drawAll()

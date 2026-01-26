@@ -1,6 +1,6 @@
 #include <cstdio>
 #include <cstring>
-#include "main.h"
+#include "../main.h"
 #include "appdata.h"
 
 StageClear::StageClear(Scene* scn, int targetStageNum)
@@ -61,8 +61,8 @@ void StageClear::drawAll()
         for (i = -16; i < (yr1 / 16) + 1; i++)
             for (j = 0; j < 40; j++)
             {
-                appGraph.drawClipped(&bmp.roof, j * 16, i * 16 - (i % 16));
-                appGraph.drawClipped(&bmp.roof, j * 16, 480 - (i * 16));
+                appGraph.draw(&bmp.roof, j * 16, i * 16 - (i % 16));
+                appGraph.draw(&bmp.roof, j * 16, 480 - (i * 16));
             }
     }
     else if (isOpening)
@@ -70,32 +70,30 @@ void StageClear::drawAll()
         for (i = (yr1 / 16) + 1; i > -17; i--)
             for (j = 0; j < 40; j++)
             {
-                appGraph.drawClipped(&bmp.roof, j * 16, i * 16 - (i % 16));
-                appGraph.drawClipped(&bmp.roof, j * 16, 480 - (i * 16));
+                appGraph.draw(&bmp.roof, j * 16, i * 16 - (i % 16));
+                appGraph.draw(&bmp.roof, j * 16, 480 - (i * 16));
             }
     }
 
     // Set sprite positions before drawing
-    bmp.title1.setPos(xt1, yt1);
-    bmp.title2.setPos(xt2, yt2);
+    // bmp.title1.setPos(xt1, yt1);
+    // bmp.title2.setPos(xt2, yt2);
 
-    appGraph.drawClipped(&bmp.title1);
-    appGraph.drawClipped(&bmp.title2);
-    appGraph.drawClipped(&scene->fontNum[FONT_HUGE], cad, xnum, ynum);
+    appGraph.draw(&bmp.title1, xt1, yt1);
+    appGraph.draw(&bmp.title2, xt2, yt2);
+    appGraph.draw(&scene->fontNum[FONT_HUGE], cad, xnum, ynum);
 
     if (finish) return;
     if (!isClosing)
     {
         if (gameinf.getPlayer(PLAYER1)->isPlaying())
         {
-            scene->bmp.miniplayer[PLAYER1].setPos(40, 300);
-            appGraph.draw(&scene->bmp.miniplayer[PLAYER1]);
+            appGraph.draw(&scene->bmp.miniplayer[PLAYER1], 40, 300);
         }
         if (gameinf.getPlayer(PLAYER2))
             if (gameinf.getPlayer(PLAYER2)->isPlaying())
             {
-                scene->bmp.miniplayer[PLAYER2].setPos(350, 300);
-                appGraph.draw(&scene->bmp.miniplayer[PLAYER2]);
+                appGraph.draw(&scene->bmp.miniplayer[PLAYER2], 350, 300);
             }
     }
 

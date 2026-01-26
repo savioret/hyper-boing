@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <climits>
 #include <memory>
-#include "main.h"
+#include "../main.h"
 #include "appdata.h"
 #include "appconsole.h"
 #include "logger.h"
@@ -1031,8 +1031,8 @@ int Scene::release()
 
 void Scene::drawBackground()
 {
-    bmp.back.setPos(0, 0);
-    appGraph.draw(&bmp.back);
+// Draw background
+    appGraph.draw(&bmp.back, 0, 0);
 }
 
 void Scene::draw(Ball* b)
@@ -1042,13 +1042,7 @@ void Scene::draw(Ball* b)
 
 void Scene::draw(Player* pl)
 {
-    bool flipHorizontal = (pl->getFacing() == FacingDirection::LEFT);
-    // Create a temporary sprite with player position and flip state
-    Sprite tempSprite = *(pl->getSprite());
-    tempSprite.setPos((int)pl->getX(), (int)pl->getY());
-    tempSprite.setFlipH(flipHorizontal);
-
-    appGraph.draw(&tempSprite);//, ( int )pl->getX(), ( int )pl->getY(), flipHorizontal);
+    appGraph.draw(pl);
 }
 
 void Scene::draw(Floor* fl)
@@ -1061,8 +1055,7 @@ void Scene::drawScore()
     if (gameinf.getPlayer(PLAYER1)->isPlaying())
     {
         appGraph.draw(&fontNum[1], gameinf.getPlayer(PLAYER1)->getScore(), 80, RES_Y - 55);
-        bmp.miniplayer[PLAYER1].setPos(20, MAX_Y + 7);
-        appGraph.draw(&bmp.miniplayer[PLAYER1]);
+        appGraph.draw(&bmp.miniplayer[PLAYER1], 20, MAX_Y + 7);
         for (int i = 0; i < gameinf.getPlayer(PLAYER1)->getLives(); i++)
         {
             appGraph.draw(&bmp.lives[PLAYER1], 80 + 26 * i, MAX_Y + 30);
@@ -1072,8 +1065,7 @@ void Scene::drawScore()
     if (gameinf.getPlayer(PLAYER2))
         if (gameinf.getPlayer(PLAYER2)->isPlaying())
         {
-            bmp.miniplayer[PLAYER2].setPos(400, MAX_Y + 7);
-            appGraph.draw(&bmp.miniplayer[PLAYER2]);
+            appGraph.draw(&bmp.miniplayer[PLAYER2], 400, MAX_Y + 7);
             appGraph.draw(&fontNum[1], gameinf.getPlayer(PLAYER2)->getScore(), 460, RES_Y - 55);
             for (int i = 0; i < gameinf.getPlayer(PLAYER2)->getLives(); i++)
             {
@@ -1288,8 +1280,7 @@ int Scene::drawAll()
 
     drawMark();
     drawScore();
-    bmp.time.setPos(320 - bmp.time.getWidth() / 2, MAX_Y + 3);
-    appGraph.draw(&bmp.time);
+    appGraph.draw(&bmp.time, 320 - bmp.time.getWidth() / 2, MAX_Y + 3);
     appGraph.draw(&fontNum[FONT_BIG], timeRemaining, 300, MAX_Y + 25);
 
     if (gameinf.getPlayer(PLAYER1)->isVisible() && gameinf.getPlayer(PLAYER1)->isPlaying())
@@ -1307,12 +1298,10 @@ int Scene::drawAll()
 
     if (gameOver)
     {
-        bmp.gameover.setPos(100, 125);
-        appGraph.draw(&bmp.gameover);
+        appGraph.draw(&bmp.gameover, 100, 125);
         if (gameOverCount >= 0)
         {
-            bmp.continu.setPos(130, 200);
-            appGraph.draw(&bmp.continu);
+            appGraph.draw(&bmp.continu, 130, 200);
             appGraph.draw(&fontNum[FONT_HUGE], gameOverCount, 315, 300);
         }
     }
@@ -1325,8 +1314,7 @@ int Scene::drawAll()
         // Center the ready sprite on screen
         int x = (640 - bmp.ready.getWidth()) / 2;
         int y = (416 - bmp.ready.getHeight()) / 2;
-        bmp.ready.setPos(x, y);
-        appGraph.draw(&bmp.ready);
+        appGraph.draw(&bmp.ready, x, y);
     }
 
     // Draw bounding boxes if debug mode is enabled
