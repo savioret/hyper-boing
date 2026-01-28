@@ -75,6 +75,10 @@ bool GameRunner::initialize()
     appData.init();
     LOG_DEBUG("Game data initialized");
     
+    // Initialize shared stage resources (loaded once, reused across scenes)
+    appData.initStageResources();
+    LOG_DEBUG("Stage resources initialized");
+    
     // Preload menu music to avoid delays when returning from other screens
     LOG_INFO("Preloading menu music...");
     appData.preloadMenuMusic();

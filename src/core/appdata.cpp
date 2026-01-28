@@ -91,6 +91,87 @@ void AppData::init()
     playerKeys[PLAYER2].set(SDL_SCANCODE_A, SDL_SCANCODE_S, SDL_SCANCODE_LCTRL);
 }
 
+/**
+ * @brief Loads shared stage resources once at startup
+ * 
+ * These sprites are used by all stages and are kept in memory to avoid
+ * redundant loading/unloading between stage transitions. Called once
+ * during application initialization.
+ */
+void AppData::initStageResources()
+{
+    if (stageRes.initialized)
+        return;  // Already loaded
+
+    int i;
+
+    // Load ball sprites
+    stageRes.redball[0].init(&appGraph, "assets/graph/entities/ball-rd1.png");
+    stageRes.redball[1].init(&appGraph, "assets/graph/entities/ball-rd2.png");
+    stageRes.redball[2].init(&appGraph, "assets/graph/entities/ball-rd3.png");
+    stageRes.redball[3].init(&appGraph, "assets/graph/entities/ball-rd4.png");
+    for (i = 0; i < 4; i++)
+        appGraph.setColorKey(stageRes.redball[i].getBmp(), 0x00FF00);
+
+    // Load mini player icons
+    stageRes.miniplayer[PLAYER1].init(&appGraph, "assets/graph/players/miniplayer1.png");
+    stageRes.miniplayer[PLAYER2].init(&appGraph, "assets/graph/players/miniplayer2.png");
+    appGraph.setColorKey(stageRes.miniplayer[PLAYER1].getBmp(), 0x00FF00);
+    appGraph.setColorKey(stageRes.miniplayer[PLAYER2].getBmp(), 0x00FF00);
+
+    // Load lives icons
+    stageRes.lives[PLAYER1].init(&appGraph, "assets/graph/players/lives1p.png");
+    stageRes.lives[PLAYER2].init(&appGraph, "assets/graph/players/lives2p.png");
+    appGraph.setColorKey(stageRes.lives[PLAYER1].getBmp(), 0x00FF00);
+    appGraph.setColorKey(stageRes.lives[PLAYER2].getBmp(), 0x00FF00);
+
+    // Load weapon sprites
+    stageRes.shoot[0].init(&appGraph, "assets/graph/entities/weapon1.png");
+    stageRes.shoot[1].init(&appGraph, "assets/graph/entities/weapon2.png");
+    stageRes.shoot[2].init(&appGraph, "assets/graph/entities/weapon3.png");
+    for (i = 0; i < 3; i++)
+        appGraph.setColorKey(stageRes.shoot[i].getBmp(), 0x00FF00);
+
+    // Load border markers
+    stageRes.mark[0].init(&appGraph, "assets/graph/entities/ladrill1.png");
+    stageRes.mark[1].init(&appGraph, "assets/graph/entities/ladrill1u.png");
+    stageRes.mark[2].init(&appGraph, "assets/graph/entities/ladrill1d.png");
+    stageRes.mark[3].init(&appGraph, "assets/graph/entities/ladrill1l.png");
+    stageRes.mark[4].init(&appGraph, "assets/graph/entities/ladrill1r.png");
+    for (i = 0; i < 5; i++)
+        appGraph.setColorKey(stageRes.mark[i].getBmp(), 0x00FF00);
+
+    // Load floor sprites
+    stageRes.floor[0].init(&appGraph, "assets/graph/entities/floor1.png");
+    appGraph.setColorKey(stageRes.floor[0].getBmp(), 0x00FF00);
+    stageRes.floor[1].init(&appGraph, "assets/graph/entities/floor2.png");
+    appGraph.setColorKey(stageRes.floor[1].getBmp(), 0x00FF00);
+
+    // Load UI sprites
+    stageRes.time.init(&appGraph, "assets/graph/ui/tiempo.png");
+    appGraph.setColorKey(stageRes.time.getBmp(), 0xFF0000);
+
+    stageRes.gameover.init(&appGraph, "assets/graph/ui/gameover.png", 16, 16);
+    stageRes.continu.init(&appGraph, "assets/graph/ui/continue.png", 16, 16);
+    stageRes.ready.init(&appGraph, "assets/graph/ui/ready.png", 16, 16);
+
+    // Load font sprites
+    int offs[10] = { 0, 22, 44, 71, 93, 120, 148, 171, 198, 221 };
+    int offs1[10] = { 0, 13, 18, 31, 44, 58, 70, 82, 93, 105 };
+    int offs2[10] = { 0, 49, 86, 134, 187, 233, 277, 327, 374, 421 };
+
+    stageRes.fontnum[0].init(&appGraph, "assets/graph/ui/fontnum1.png", 0, 0);
+    appGraph.setColorKey(stageRes.fontnum[0].getBmp(), 0xFF0000);
+    
+    stageRes.fontnum[1].init(&appGraph, "assets/graph/ui/fontnum2.png", 0, 0);
+    appGraph.setColorKey(stageRes.fontnum[1].getBmp(), 0xFF0000);
+    
+    stageRes.fontnum[2].init(&appGraph, "assets/graph/ui/fontnum3.png", 0, 0);
+    appGraph.setColorKey(stageRes.fontnum[2].getBmp(), 0x00FF00);
+
+    stageRes.initialized = true;
+}
+
 void AppData::initStages()
 {
     numStages = 6;
@@ -308,6 +389,33 @@ void AppData::release()
     {
         bitmaps.player[PLAYER1][i].release();
         bitmaps.player[PLAYER2][i].release();
+    }
+    
+    // Release shared stage resources
+    if (stageRes.initialized)
+    {
+        for (int i = 0; i < 4; i++)
+            stageRes.redball[i].release();
+        for (int i = 0; i < 2; i++)
+        {
+            stageRes.floor[i].release();
+            stageRes.miniplayer[i].release();
+            stageRes.lives[i].release();
+        }
+        for (int i = 0; i < 3; i++)
+        {
+            stageRes.shoot[i].release();
+            stageRes.fontnum[i].release();
+        }
+        for (int i = 0; i < 5; i++)
+            stageRes.mark[i].release();
+        
+        stageRes.time.release();
+        stageRes.gameover.release();
+        stageRes.continu.release();
+        stageRes.ready.release();
+        
+        stageRes.initialized = false;
     }
     
     // Release shared background (unique_ptr will auto-delete, just release SDL resources)

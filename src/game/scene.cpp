@@ -19,12 +19,14 @@
 #endif
 
 Scene::Scene(Stage* stg, std::unique_ptr<StageClear> pstgclr)
-    : levelClear(false), pStageClear(std::move(pstgclr)), gameOver(false), gameOverCount(-2),
+    : currentState(pstgclr ? SceneState::Playing : SceneState::Ready),
+      gameOverSubState(GameOverSubState::ContinueCountdown),
+      levelClear(false), pStageClear(std::move(pstgclr)), gameOver(false), gameOverCount(-2),
       stage(stg), change(0), dSecond(0), timeRemaining(0), timeLine(0),
       moveTick(0), moveLastTick(0), moveCount(0),
       drawTick(0), drawLastTick(0), drawCount(0),
       boundingBoxes(false),
-      readyActive(pstgclr ? false : true), readyBlinkCount(0), readyBlinkTimer(0), readyVisible(true)
+      readyBlinkCount(0), readyBlinkTimer(0), readyVisible(true)
 {
     gameinf.isMenu() = false;
     if (pStageClear) pStageClear->scene = this;
@@ -43,7 +45,7 @@ int Scene::init()
     timeLine = 0;
     dSecond = 0;
     timeRemaining = stage->timelimit;
-    readyActive = true;
+    currentState = SceneState::Ready;
     readyBlinkCount = 0;
     readyBlinkTimer = 0;
     readyVisible = true;
@@ -80,42 +82,15 @@ int Scene::init()
 }
 
 /**
- * Loads all the necessary bitmaps for the game scene.
- * This includes balls, background, weapons, and UI elements.
+ * Loads scene-specific bitmaps.
+ * Shared resources (balls, UI, fonts) are referenced from AppData.
+ * Only stage-specific resources (background, weapons) are loaded here.
  */
 int Scene::initBitmaps()
 {
-    int i = 0;
     char txt[MAX_PATH];
 
-    int offs[10] = { 0, 22, 44, 71, 93, 120, 148, 171, 198, 221 };
-    int offs1[10] = { 0, 13, 18, 31, 44, 58, 70, 82, 93, 105 };
-    int offs2[10] = { 0, 49, 86, 134, 187, 233, 277, 327, 374, 421 };
-
-    bmp.redball[0].init(&appGraph, "assets/graph/entities/ball-rd1.png");
-    bmp.redball[1].init(&appGraph, "assets/graph/entities/ball-rd2.png");
-    bmp.redball[2].init(&appGraph, "assets/graph/entities/ball-rd3.png");
-    bmp.redball[3].init(&appGraph, "assets/graph/entities/ball-rd4.png");
-    for (i = 0; i < 4; i++)
-        appGraph.setColorKey(bmp.redball[i].getBmp(), 0x00FF00);
-
-    bmp.miniplayer[PLAYER1].init(&appGraph, "assets/graph/players/miniplayer1.png");
-    bmp.miniplayer[PLAYER2].init(&appGraph, "assets/graph/players/miniplayer2.png");
-    appGraph.setColorKey(bmp.miniplayer[PLAYER1].getBmp(), 0x00FF00);
-    appGraph.setColorKey(bmp.miniplayer[PLAYER2].getBmp(), 0x00FF00);
-
-    bmp.lives[PLAYER1].init(&appGraph, "assets/graph/players/lives1p.png");
-    bmp.lives[PLAYER2].init(&appGraph, "assets/graph/players/lives2p.png");
-    appGraph.setColorKey(bmp.lives[PLAYER1].getBmp(), 0x00FF00);
-    appGraph.setColorKey(bmp.lives[PLAYER2].getBmp(), 0x00FF00);
-
-    bmp.shoot[0].init(&appGraph, "assets/graph/entities/weapon1.png");
-    bmp.shoot[1].init(&appGraph, "assets/graph/entities/weapon2.png");
-    bmp.shoot[2].init(&appGraph, "assets/graph/entities/weapon3.png");
-    for (i = 0; i < 3; i++)
-        appGraph.setColorKey(bmp.shoot[i].getBmp(), 0x00FF00);
-
-    // Load weapon-specific sprites
+    // Load weapon-specific sprites (scene-specific for now)
     // HARPOON sprites
     bmp.weapons.harpoonHead.init(&appGraph, "assets/graph/entities/weapon1.png");
     bmp.weapons.harpoonTail1.init(&appGraph, "assets/graph/entities/weapon2.png");
@@ -136,49 +111,23 @@ int Scene::initBitmaps()
     bmp.weapons.gunBullet.addFrame(116, 4, 14, 5, -7, -1); // Frame 6 (impact)
     appGraph.setColorKey(bmp.weapons.gunBullet.getTexture(), 0x00FF00);
 
-    bmp.mark[0].init(&appGraph, "assets/graph/entities/ladrill1.png");
-    bmp.mark[1].init(&appGraph, "assets/graph/entities/ladrill1u.png");
-    bmp.mark[2].init(&appGraph, "assets/graph/entities/ladrill1d.png");
-    bmp.mark[3].init(&appGraph, "assets/graph/entities/ladrill1l.png");
-    bmp.mark[4].init(&appGraph, "assets/graph/entities/ladrill1r.png");
-
-    for (i = 0; i < 5; i++)
-        appGraph.setColorKey(bmp.mark[i].getBmp(), 0x00FF00);
-
-    bmp.floor[0].init(&appGraph, "assets/graph/entities/floor1.png");
-    appGraph.setColorKey(bmp.floor[0].getBmp(), 0x00FF00);
-    bmp.floor[1].init(&appGraph, "assets/graph/entities/floor2.png");
-    appGraph.setColorKey(bmp.floor[1].getBmp(), 0x00FF00);
-
-    bmp.time.init(&appGraph, "assets/graph/ui/tiempo.png");
-    appGraph.setColorKey(bmp.time.getBmp(), 0xFF0000);
-
-    bmp.gameover.init(&appGraph, "assets/graph/ui/gameover.png", 16, 16);
-    //appGraph.setColorKey(bmp.gameover.getBmp(), 0x00FF00);
-
-    bmp.continu.init(&appGraph, "assets/graph/ui/continue.png", 16, 16);
-    //appGraph.setColorKey(bmp.continu.getBmp(), 0x00FF00);
-
-    bmp.ready.init(&appGraph, "assets/graph/ui/ready.png", 16, 16);
-    //appGraph.setColorKey(bmp.ready.getBmp(), 0x00FF00);
-
+    // Load stage-specific background
     std::snprintf(txt, sizeof(txt), "assets/graph/bg/%s", stage->back);
     bmp.back.init(&appGraph, txt, 16, 16);
     appGraph.setColorKey(bmp.back.getBmp(), 0x00FF00);
 
-    bmp.fontnum[0].init(&appGraph, "assets/graph/ui/fontnum1.png", 0, 0);
-    appGraph.setColorKey(bmp.fontnum[0].getBmp(), 0xFF0000);
-    fontNum[0].init(&bmp.fontnum[0]);
+    // Initialize font renderers using shared resources
+    StageResources& res = gameinf.getStageRes();
+    int offs[10] = { 0, 22, 44, 71, 93, 120, 148, 171, 198, 221 };
+    int offs1[10] = { 0, 13, 18, 31, 44, 58, 70, 82, 93, 105 };
+    int offs2[10] = { 0, 49, 86, 134, 187, 233, 277, 327, 374, 421 };
+    
+    fontNum[0].init(&res.fontnum[0]);
     fontNum[0].setValues(offs);
-    bmp.fontnum[1].init(&appGraph, "assets/graph/ui/fontnum2.png", 0, 0);
-    appGraph.setColorKey(bmp.fontnum[1].getBmp(), 0xFF0000);
-    fontNum[1].init(&bmp.fontnum[1]);
+    fontNum[1].init(&res.fontnum[1]);
     fontNum[1].setValues(offs1);
-    bmp.fontnum[2].init(&appGraph, "assets/graph/ui/fontnum3.png", 0, 0);
-    appGraph.setColorKey(bmp.fontnum[2].getBmp(), 0x00FF00);
-    fontNum[2].init(&bmp.fontnum[2]);
+    fontNum[2].init(&res.fontnum[2]);
     fontNum[2].setValues(offs2);
-
 
     // Configure ball-info section
     TextSection& ballSection = textOverlay.getSection("ball-info");
@@ -186,9 +135,6 @@ int Scene::initBitmaps()
                .setLineHeight(8)
                .setAlpha(200);
     
-    // If custom overlay font is enabled in GameState, ball-info will inherit it
-    // Otherwise it uses system font (can be overridden here if needed)
-
     return 1;
 }
 
@@ -433,6 +379,7 @@ void Scene::win()
     OpenMusic("assets/music/win.ogg");
     PlayMusic();
     levelClear = true;
+    currentState = SceneState::LevelClear;  // Prevent player collisions during victory
 
     // Fire LEVEL_CLEAR event
     GameEventData event(GameEventType::LEVEL_CLEAR);
@@ -551,8 +498,8 @@ void Scene::checkColisions()
             decide(b, flc, moved);
         }
 
-        // Only check collisions if we are in the normal gameplay state
-        if (gameOver || levelClear || readyActive)
+        // Only check player collisions if we are in Playing state
+        if (currentState != SceneState::Playing)
             continue;
 
         for ( i = 0; i < 2; i++ )
@@ -736,11 +683,11 @@ GameState* Scene::moveAll(float dt)
     }
 
     // Handle ready screen blinking sequence
-    if (readyActive)
+    if (currentState == SceneState::Ready)
     {
         if ( !readyBlinkCount && !readyBlinkTimer )
         {
-            // Process time=0 objects now that ready screen is done
+            // Process time=0 objects now that ready screen is shown
             checkSequence();
             LOG_DEBUG("Ready shown, processing time=0 stage objects.");
         }
@@ -758,10 +705,10 @@ GameState* Scene::moveAll(float dt)
             {
                 readyBlinkCount++;
 
-                // After 6 complete blinks, deactivate ready screen
+                // After 6 complete blinks, transition to Playing state
                 if (readyBlinkCount >= 6)
                 {
-                    readyActive = false;
+                    currentState = SceneState::Playing;
 
                     // Fire STAGE_STARTED event (countdown complete, gameplay begins)
                     GameEventData startedEvent(GameEventType::STAGE_STARTED);
@@ -783,16 +730,20 @@ GameState* Scene::moveAll(float dt)
             {
                 if (appInput.key(gameinf.getKeys()[i].shoot))
                 {
-                    if (gameOverCount >= 0)
+                    if (gameOverSubState == GameOverSubState::ContinueCountdown)
                     {
+                        // Player chose to continue - restart from beginning
+                        LOG_INFO("Game Over: Player pressed continue, restarting game");
                         gameinf.getPlayer(PLAYER1)->init();
                         if (gameinf.getPlayer(PLAYER2))
                             gameinf.getPlayer(PLAYER2)->init();
                         gameinf.initStages();
                         return new Scene(stage);
                     }
-                    else
+                    else  // GameOverSubState::Definitive
                     {
+                        // No continue - return to menu
+                        LOG_INFO("Game Over: Player returning to menu");
                         gameinf.player[PLAYER1].reset();
                         gameinf.player[PLAYER2].reset();
                         return new Menu;
@@ -826,6 +777,8 @@ GameState* Scene::moveAll(float dt)
                 {
                     gameOver = true;
                     gameOverCount = 10;
+                    currentState = SceneState::GameOver;  // Prevent player collisions during game over
+                    gameOverSubState = GameOverSubState::ContinueCountdown;  // Allow continue
 
                     // Fire GAME_OVER event (reason: player 1 dead)
                     GameEventData event(GameEventType::GAME_OVER);
@@ -843,6 +796,8 @@ GameState* Scene::moveAll(float dt)
                 {
                     gameOver = true;
                     gameOverCount = 10;
+                    currentState = SceneState::GameOver;  // Prevent player collisions during game over
+                    gameOverSubState = GameOverSubState::ContinueCountdown;  // Allow continue
 
                     // Fire GAME_OVER event (reason: both players dead)
                     GameEventData event(GameEventType::GAME_OVER);
@@ -931,6 +886,8 @@ GameState* Scene::moveAll(float dt)
             {
                 gameOver = true;
                 gameOverCount = 10;
+                currentState = SceneState::GameOver;  // Prevent player collisions during game over
+                gameOverSubState = GameOverSubState::ContinueCountdown;  // Allow continue
 
                 // Fire GAME_OVER event (reason: time expired)
                 GameEventData event(GameEventType::GAME_OVER);
@@ -947,7 +904,16 @@ GameState* Scene::moveAll(float dt)
         timeLine++;
         if (gameOver)
         {
-            if (gameOverCount >= 0) gameOverCount--;
+            if (gameOverCount >= 0)
+            {
+                gameOverCount--;
+                // Transition to Definitive when countdown expires
+                if (gameOverCount < 0 && gameOverSubState == GameOverSubState::ContinueCountdown)
+                {
+                    gameOverSubState = GameOverSubState::Definitive;
+                    LOG_INFO("Game Over: Countdown expired, transitioning to Definitive");
+                }
+            }
         }
     }
 
@@ -983,13 +949,13 @@ GameState* Scene::moveAll(float dt)
         {
             // Stage clear opening animation complete, enable ready screen
             pStageClear.reset();
-            readyActive = true;
+            currentState = SceneState::Ready;
             readyBlinkCount = 0;
             readyBlinkTimer = 0;
             readyVisible = true;
         }
     }
-    else if (!readyActive) // Only check sequence after ready screen is done
+    else if (currentState == SceneState::Playing) // Only check sequence during playing state
     {
         checkSequence();
     }
@@ -999,6 +965,7 @@ GameState* Scene::moveAll(float dt)
 
 int Scene::release()
 {
+    // Clean up entities
     for (Ball* ball : lsBalls)
         delete ball;
     lsBalls.clear();
@@ -1011,26 +978,15 @@ int Scene::release()
         delete floor;
     lsFloor.clear();
 
+    // Release only scene-specific sprites (background, weapons)
     bmp.back.release();
-    bmp.floor[0].release();
-    bmp.floor[1].release();
-    bmp.fontnum[0].release();
-    bmp.fontnum[1].release();
-    bmp.miniplayer[PLAYER1].release();
-    bmp.miniplayer[PLAYER2].release();
-    bmp.lives[PLAYER1].release();
-    bmp.lives[PLAYER2].release();
-    bmp.time.release();
-    bmp.gameover.release();
-    bmp.continu.release();
-    bmp.ready.release();
+    bmp.weapons.harpoonHead.release();
+    bmp.weapons.harpoonTail1.release();
+    bmp.weapons.harpoonTail2.release();
+    // Note: SpriteSheet releases automatically in destructor
 
-    for (int i = 0; i < 5; i++)
-        bmp.mark[i].release();
-    for (int i = 0; i < 4; i++)
-        bmp.redball[i].release();
-    for (int i = 0; i < 3; i++)
-        bmp.shoot[i].release();
+    // Shared resources (balls, floors, UI, fonts) are managed by AppData
+    // and persist across scene transitions
 
     CloseMusic();
 
@@ -1045,7 +1001,8 @@ void Scene::drawBackground()
 
 void Scene::draw(Ball* b)
 {
-    appGraph.draw(b->getSprite(), (int)b->getX(), (int)b->getY());
+    StageResources& res = gameinf.getStageRes();
+    appGraph.draw(&res.redball[b->getSize()], (int)b->getX(), (int)b->getY());
 }
 
 void Scene::draw(Player* pl)
@@ -1055,54 +1012,59 @@ void Scene::draw(Player* pl)
 
 void Scene::draw(Floor* fl)
 {
-    appGraph.draw(&bmp.floor[fl->getId()], fl->getX(), fl->getY());
+    StageResources& res = gameinf.getStageRes();
+    appGraph.draw(&res.floor[fl->getId()], fl->getX(), fl->getY());
 }
 
 void Scene::drawScore()
 {
+    StageResources& res = gameinf.getStageRes();
+    
     if (gameinf.getPlayer(PLAYER1)->isPlaying())
     {
         appGraph.draw(&fontNum[1], gameinf.getPlayer(PLAYER1)->getScore(), 80, RES_Y - 55);
-        appGraph.draw(&bmp.miniplayer[PLAYER1], 20, MAX_Y + 7);
+        appGraph.draw(&res.miniplayer[PLAYER1], 20, MAX_Y + 7);
         for (int i = 0; i < gameinf.getPlayer(PLAYER1)->getLives(); i++)
         {
-            appGraph.draw(&bmp.lives[PLAYER1], 80 + 26 * i, MAX_Y + 30);
+            appGraph.draw(&res.lives[PLAYER1], 80 + 26 * i, MAX_Y + 30);
         }
     }
 
     if (gameinf.getPlayer(PLAYER2))
         if (gameinf.getPlayer(PLAYER2)->isPlaying())
         {
-            appGraph.draw(&bmp.miniplayer[PLAYER2], 400, MAX_Y + 7);
+            appGraph.draw(&res.miniplayer[PLAYER2], 400, MAX_Y + 7);
             appGraph.draw(&fontNum[1], gameinf.getPlayer(PLAYER2)->getScore(), 460, RES_Y - 55);
             for (int i = 0; i < gameinf.getPlayer(PLAYER2)->getLives(); i++)
             {
-                appGraph.draw(&bmp.lives[PLAYER2], 460 + 26 * i, MAX_Y + 30);
+                appGraph.draw(&res.lives[PLAYER2], 460 + 26 * i, MAX_Y + 30);
             }
         }
 }
 
 void Scene::drawMark()
 {
+    StageResources& res = gameinf.getStageRes();
+    
     for (int j = 0; j < 640; j += 16)
     {
-        appGraph.draw(&bmp.mark[2], j, 0);
-        appGraph.draw(&bmp.mark[1], j, MAX_Y + 1);
-        appGraph.draw(&bmp.mark[0], j, MAX_Y + 17);
-        appGraph.draw(&bmp.mark[0], j, MAX_Y + 33);
-        appGraph.draw(&bmp.mark[2], j, MAX_Y + 49);
+        appGraph.draw(&res.mark[2], j, 0);
+        appGraph.draw(&res.mark[1], j, MAX_Y + 1);
+        appGraph.draw(&res.mark[0], j, MAX_Y + 17);
+        appGraph.draw(&res.mark[0], j, MAX_Y + 33);
+        appGraph.draw(&res.mark[2], j, MAX_Y + 49);
     }
 
     for (int j = 0; j < 416; j += 16)
     {
-        appGraph.draw(&bmp.mark[4], 0, j);
-        appGraph.draw(&bmp.mark[3], MAX_X + 1, j);
+        appGraph.draw(&res.mark[4], 0, j);
+        appGraph.draw(&res.mark[3], MAX_X + 1, j);
     }
 
-    appGraph.draw(&bmp.mark[0], 0, 0);
-    appGraph.draw(&bmp.mark[0], MAX_X + 1, 0);
-    appGraph.draw(&bmp.mark[0], 0, MAX_Y + 1);
-    appGraph.draw(&bmp.mark[0], MAX_X + 1, MAX_Y + 1);
+    appGraph.draw(&res.mark[0], 0, 0);
+    appGraph.draw(&res.mark[0], MAX_X + 1, 0);
+    appGraph.draw(&res.mark[0], 0, MAX_Y + 1);
+    appGraph.draw(&res.mark[0], MAX_X + 1, MAX_Y + 1);
 }
 
 /**
@@ -1270,6 +1232,7 @@ int Scene::drawAll()
     Ball* ptb;
     Shot* pts;
     Floor* pfl;
+    StageResources& res = gameinf.getStageRes();
 
     drawBackground();
 
@@ -1288,7 +1251,7 @@ int Scene::drawAll()
 
     drawMark();
     drawScore();
-    appGraph.draw(&bmp.time, 320 - bmp.time.getWidth() / 2, MAX_Y + 3);
+    appGraph.draw(&res.time, 320 - res.time.getWidth() / 2, MAX_Y + 3);
     appGraph.draw(&fontNum[FONT_BIG], timeRemaining, 300, MAX_Y + 25);
 
     if (gameinf.getPlayer(PLAYER1)->isVisible() && gameinf.getPlayer(PLAYER1)->isPlaying())
@@ -1306,23 +1269,25 @@ int Scene::drawAll()
 
     if (gameOver)
     {
-        appGraph.draw(&bmp.gameover, 100, 125);
-        if (gameOverCount >= 0)
+        appGraph.draw(&res.gameover, 100, 125);
+        if (gameOverSubState == GameOverSubState::ContinueCountdown)
         {
-            appGraph.draw(&bmp.continu, 130, 200);
+            // Show continue prompt and countdown
+            appGraph.draw(&res.continu, 130, 200);
             appGraph.draw(&fontNum[FONT_HUGE], gameOverCount, 315, 300);
         }
+        // GameOverSubState::Definitive shows only "GAME OVER" text, no continue
     }
 
     if (pStageClear) pStageClear->drawAll();
 
-    // Draw ready screen if active and visible (blinking)
-    if (readyActive && readyVisible)
+    // Draw ready screen if in Ready state and visible (blinking)
+    if (currentState == SceneState::Ready && readyVisible)
     {
         // Center the ready sprite on screen
-        int x = (640 - bmp.ready.getWidth()) / 2;
-        int y = (416 - bmp.ready.getHeight()) / 2;
-        appGraph.draw(&bmp.ready, x, y);
+        int x = (640 - res.ready.getWidth()) / 2;
+        int y = (416 - res.ready.getHeight()) / 2;
+        appGraph.draw(&res.ready, x, y);
     }
 
     // Draw bounding boxes if debug mode is enabled

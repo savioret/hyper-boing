@@ -19,11 +19,10 @@ HarpoonShot::HarpoonShot(Scene* scn, Player* pl, WeaponType type, int xOffset)
     : Shot(scn, pl, type, xOffset)
     , tailAnim(std::make_unique<ToggleAnim>(0, 1, 33))  // Toggle between 0 and 1 every 33ms (2 frames at 60fps)
 {
-    // Use scene's harpoon sprites
-    // Note: Currently using old shoot[] sprites, will be updated in Scene refactoring
-    sprites[0] = &scene->bmp.shoot[0];  // Head
-    sprites[1] = &scene->bmp.shoot[1];  // Tail variant 1
-    sprites[2] = &scene->bmp.shoot[2];  // Tail variant 2
+    // Use scene's harpoon weapon sprites
+    sprites[0] = &scene->bmp.weapons.harpoonHead;
+    sprites[1] = &scene->bmp.weapons.harpoonTail1;
+    sprites[2] = &scene->bmp.weapons.harpoonTail2;
 }
 
 HarpoonShot::~HarpoonShot()

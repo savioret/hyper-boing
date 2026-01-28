@@ -3,7 +3,7 @@
 Floor::Floor(Scene* scene, int x, int y, int id)
     : scene(scene), id(id)
 {
-    sprite = &scene->bmp.floor[id];
+    sprite = &gameinf.getStageRes().floor[id];
     this->xPos = (float)x;
     this->yPos = (float)y;
     sx = sprite->sx;

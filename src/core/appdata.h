@@ -38,12 +38,49 @@ public:
 };
 
 /**
- * GameBitmaps struct
- * Stores player sprites.
+ * @struct GameBitmaps
+ * @brief Stores player sprites
  */
 struct GameBitmaps
 {
-    Sprite player[2][9];
+    Sprite player[2][9];  ///< Player sprites (2 players, 9 frames each)
+};
+
+/**
+ * @struct StageResources
+ * @brief Shared sprites used across all stages
+ * 
+ * These resources are loaded once at startup and reused by all scenes,
+ * avoiding redundant loading/unloading between stage transitions.
+ */
+struct StageResources
+{
+    // Ball sprites
+    Sprite redball[4];  ///< Ball sprites (4 sizes)
+    
+    // Floor sprites
+    Sprite floor[2];    ///< Floor sprites (0=horizontal, 1=vertical)
+    
+    // Weapon sprites (kept for compatibility)
+    Sprite shoot[3];    ///< Legacy weapon sprites
+    
+    // Border/marker sprites
+    Sprite mark[5];     ///< Border marker sprites
+    
+    // UI sprites
+    Sprite miniplayer[2];  ///< Mini player icons for HUD
+    Sprite lives[2];       ///< Lives icons for HUD
+    Sprite time;           ///< Time icon
+    Sprite gameover;       ///< Game over text
+    Sprite continu;        ///< Continue text
+    Sprite ready;          ///< Ready text
+    
+    // Font sprites
+    Sprite fontnum[3];     ///< Number fonts (3 sizes)
+    
+    bool initialized;      ///< True if resources have been loaded
+    
+    StageResources() : initialized(false) {}
 };
 
 /**
@@ -94,6 +131,7 @@ public:
     std::unique_ptr<Player> player[2];
     Keys playerKeys[2];
     GameBitmaps bitmaps;
+    StageResources stageRes;  ///< Shared stage resources (loaded once)
     int currentStage;
     std::vector<Stage> stages;
     bool inMenu;
@@ -116,6 +154,7 @@ public:
     // Initialization methods
     void init();
     void initStages();
+    void initStageResources();  ///< Load shared stage sprites once
     void setCurrent(GameState* state);
     void release();
     
@@ -127,6 +166,7 @@ public:
     Player* getPlayer(int p) { return reinterpret_cast<Player**>(player)[p]; }
     Keys* getKeys() { return playerKeys; }
     GameBitmaps& getBmp() { return bitmaps; }
+    StageResources& getStageRes() { return stageRes; }  ///< Get shared stage resources
     Stage* getStages() { return stages.data(); }
     int& getCurrentStage() { return currentStage; }
     int& getNumPlayers() { return numPlayers; }

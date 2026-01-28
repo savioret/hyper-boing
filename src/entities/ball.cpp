@@ -32,7 +32,7 @@ Ball::Ball(Scene* scn, int x, int y, int size, int dx, int dy, int topVal, int i
 
     dirX = dx;
     dirY = dy;
-    diameter = scn->bmp.redball[size].getWidth();
+    diameter = gameinf.getStageRes().redball[size].getWidth();
 
     time = 0;
     y0 = yPos;
@@ -72,7 +72,7 @@ Ball::Ball(Scene* scn, Ball* oldball)
 
     size = oldball->size + 1;
 
-    diameter = scn->bmp.redball[size].getWidth();
+    diameter = gameinf.getStageRes().redball[size].getWidth();
 
     initTop();
     init();
@@ -92,7 +92,7 @@ void Ball::init()
     if (y0 != 0)
         y0 -= (float)(MAX_Y - top);
 
-    sprite = &scene->bmp.redball[size];
+    sprite = &gameinf.getStageRes().redball[size];
 }
 
 /**
