@@ -1,0 +1,56 @@
+{ "frames": [
+   {
+    "filename": "victory_p2 0.aseprite",
+    "frame": { "x": 0, "y": 0, "w": 49, "h": 64 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 0, "y": 1, "w": 49, "h": 64 },
+    "sourceSize": { "w": 51, "h": 73 },
+    "duration": 150
+   },
+   {
+    "filename": "victory_p2 1.aseprite",
+    "frame": { "x": 49, "y": 0, "w": 49, "h": 70 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 1, "y": 0, "w": 49, "h": 70 },
+    "sourceSize": { "w": 51, "h": 73 },
+    "duration": 150
+   },
+   {
+    "filename": "victory_p2 2.aseprite",
+    "frame": { "x": 98, "y": 0, "w": 47, "h": 67 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 2, "y": 5, "w": 47, "h": 67 },
+    "sourceSize": { "w": 51, "h": 73 },
+    "duration": 150
+   },
+   {
+    "filename": "victory_p2 3.aseprite",
+    "frame": { "x": 145, "y": 0, "w": 44, "h": 65 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 3, "y": 7, "w": 44, "h": 65 },
+    "sourceSize": { "w": 51, "h": 73 },
+    "duration": 500
+   },
+   {
+    "filename": "victory_p2 4.aseprite",
+    "frame": { "x": 189, "y": 0, "w": 41, "h": 64 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 3, "y": 6, "w": 41, "h": 64 },
+    "sourceSize": { "w": 51, "h": 73 },
+    "duration": 150
+   }
+ ],
+ "meta": {
+  "app": "https://www.aseprite.org/",
+  "version": "1.3.16-beta3",
+  "image": "p2victory.png",
+  "format": "RGBA8888",
+  "size": { "w": 230, "h": 70 },
+  "scale": "1"
+ }
+}

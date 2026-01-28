@@ -48,7 +48,7 @@ public:
     virtual ~Shot() {}
 
     // Abstract interface - must be implemented by subclasses
-    virtual void move() = 0;
+    virtual void update(float dt) = 0;
     virtual void draw(Graph* graph) = 0;
 
     // Collision hooks - can be overridden by subclasses

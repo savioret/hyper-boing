@@ -14,7 +14,7 @@ Floor::~Floor()
 {
 }
 
-void Floor::update()
+void Floor::update(float dt)
 {
-
+    // Currently floors are static, but dt is available for future animations
 }

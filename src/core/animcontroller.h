@@ -63,34 +63,44 @@ public:
 class FrameSequenceAnim : public IAnimController
 {
 private:
-    std::vector<int> frames;      // Frame indices to play
-    int currentIndex = 0;         // Index into frames vector
-    int frameDelay;               // Ticks between frame changes
-    int tickCounter = 0;          // Current tick count
+    std::vector<int> frames;           // Frame indices to play
+    std::vector<int> frameDurations;   // Duration in milliseconds for each frame (if per-frame)
+    int currentIndex = 0;              // Index into frames vector
+    int defaultDuration;               // Default duration in milliseconds
+    float timeAccumulator = 0.0f;      // Accumulated time in milliseconds
     bool loop = true;
     bool complete = false;
+    bool usePerFrameDurations = false; // Whether to use per-frame durations
     std::function<void()> onComplete;
 
 public:
     /**
-     * Create a sequential animation
+     * Create a sequential animation with uniform duration
      * @param frameSequence Vector of frame indices to play
-     * @param delay Ticks between frame changes
+     * @param durationMs Duration in milliseconds for each frame
      * @param shouldLoop Whether to loop when reaching the end
      */
-    FrameSequenceAnim(std::vector<int> frameSequence, int delay, bool shouldLoop = true);
+    FrameSequenceAnim(std::vector<int> frameSequence, int durationMs, bool shouldLoop = true);
+
+    /**
+     * Create a sequential animation with per-frame durations
+     * @param frameSequence Vector of frame indices to play
+     * @param durationsMs Duration in milliseconds for each frame
+     * @param shouldLoop Whether to loop when reaching the end
+     */
+    FrameSequenceAnim(std::vector<int> frameSequence, std::vector<int> durationsMs, bool shouldLoop = true);
 
     /**
      * Convenience: Create animation from start to end frame (inclusive)
      */
-    static FrameSequenceAnim range(int startFrame, int endFrame, int delay, bool loop = true);
+    static FrameSequenceAnim range(int startFrame, int endFrame, int durationMs, bool loop = true);
 
     /**
      * Convenience: Create looping animation that oscillates between two frames
      */
-    static FrameSequenceAnim oscillate(int frameA, int frameB, int delay);
+    static FrameSequenceAnim oscillate(int frameA, int frameB, int durationMs);
 
-    void update(float dt = 1.0f) override;
+    void update(float dt = 1.0f) override;  // dt in milliseconds (typically 16.67ms for 60fps)
     int getCurrentFrame() const override;
     void reset() override;
     bool isComplete() const override { return complete; }
@@ -101,14 +111,14 @@ public:
     void setOnComplete(std::function<void()> callback) { onComplete = std::move(callback); }
 
     /**
-     * Get the frame delay
+     * Get the default frame duration in milliseconds
      */
-    int getFrameDelay() const { return frameDelay; }
+    int getDefaultDuration() const { return defaultDuration; }
 
     /**
-     * Set the frame delay
+     * Set the default frame duration in milliseconds
      */
-    void setFrameDelay(int delay) { frameDelay = delay; }
+    void setDefaultDuration(int durationMs) { defaultDuration = durationMs; }
 };
 
 /**
@@ -125,19 +135,19 @@ class ToggleAnim : public IAnimController
 private:
     int frameA, frameB;
     int currentFrame;
-    int toggleDelay;
-    int tickCounter = 0;
+    int toggleDuration;              // Duration in milliseconds
+    float timeAccumulator = 0.0f;    // Accumulated time in milliseconds
 
 public:
     /**
      * Create a toggle animation
      * @param a First frame value
      * @param b Second frame value
-     * @param delay Ticks between toggles
+     * @param durationMs Duration in milliseconds between toggles
      */
-    ToggleAnim(int a, int b, int delay);
+    ToggleAnim(int a, int b, int durationMs);
 
-    void update(float dt = 1.0f) override;
+    void update(float dt = 1.0f) override;  // dt in milliseconds
     int getCurrentFrame() const override { return currentFrame; }
     void reset() override;
 };
@@ -163,17 +173,19 @@ class StateMachineAnim : public IAnimController
 public:
     struct State
     {
-        std::vector<int> frames;   // Frame sequence for this state
-        int delay;                 // Ticks between frames
-        bool loop;                 // Whether to loop
-        std::string nextState;     // Auto-transition to this state when complete (empty = stay)
+        std::vector<int> frames;           // Frame sequence for this state
+        std::vector<int> frameDurations;   // Duration in milliseconds for each frame (if per-frame)
+        int defaultDuration;               // Default duration in milliseconds
+        bool loop;                         // Whether to loop
+        bool usePerFrameDurations;         // Whether to use per-frame durations
+        std::string nextState;             // Auto-transition to this state when complete (empty = stay)
     };
 
 private:
     std::unordered_map<std::string, State> states;
     std::string currentStateName;
     int currentIndex = 0;
-    int tickCounter = 0;
+    float timeAccumulator = 0.0f;  // Accumulated time in milliseconds
     bool stateComplete = false;
     std::function<void(const std::string&)> onStateComplete;
 
@@ -181,14 +193,25 @@ public:
     StateMachineAnim() = default;
 
     /**
-     * Add a state with its animation parameters
+     * Add a state with uniform frame duration
      * @param name State name (used for transitions)
      * @param frames Frame sequence
-     * @param delay Ticks between frames
+     * @param durationMs Duration in milliseconds for each frame
      * @param loop Whether to loop
      * @param nextState Auto-transition target when complete (empty = stay in state)
      */
-    void addState(const std::string& name, std::vector<int> frames, int delay,
+    void addState(const std::string& name, std::vector<int> frames, int durationMs,
+                  bool loop = true, const std::string& nextState = "");
+
+    /**
+     * Add a state with per-frame durations
+     * @param name State name (used for transitions)
+     * @param frames Frame sequence
+     * @param durationsMs Duration in milliseconds for each frame
+     * @param loop Whether to loop
+     * @param nextState Auto-transition target when complete (empty = stay in state)
+     */
+    void addState(const std::string& name, std::vector<int> frames, std::vector<int> durationsMs,
                   bool loop = true, const std::string& nextState = "");
 
     /**
@@ -206,7 +229,7 @@ public:
      */
     bool isStateComplete() const { return stateComplete; }
 
-    void update(float dt = 1.0f) override;
+    void update(float dt = 1.0f) override;  // dt in milliseconds
     int getCurrentFrame() const override;
     void reset() override;
     bool isComplete() const override { return stateComplete; }

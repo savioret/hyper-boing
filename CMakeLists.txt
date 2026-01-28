@@ -34,12 +34,14 @@ endif()
 set(SOURCES
     src/main.cpp
     src/core/animcontroller.cpp
+    src/core/asepriteloader.cpp
     src/core/action.cpp
     src/core/app.cpp
     src/ui/appconsole.cpp
     src/core/appdata.cpp
     src/core/audiomanager.cpp
     src/core/eventmanager.cpp
+    src/core/jsonparser.cpp
     src/core/motion.cpp
     src/core/oncehelper.cpp
     src/entities/ball.cpp
@@ -76,12 +78,15 @@ set(SOURCES
 set(HEADERS
     src/main.h
     src/core/action.h
+    src/core/animcontroller.h
     src/core/app.h
+    src/core/asepriteloader.h
     src/ui/appconsole.h
     src/core/appdata.h
     src/core/audiomanager.h
     src/core/eventmanager.h
     src/core/gameevent.h
+    src/core/jsonparser.h
     src/core/motion.h
     src/core/oncehelper.h
     src/entities/ball.h

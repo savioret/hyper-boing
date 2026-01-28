@@ -17,7 +17,7 @@
  */
 HarpoonShot::HarpoonShot(Scene* scn, Player* pl, WeaponType type, int xOffset)
     : Shot(scn, pl, type, xOffset)
-    , tailAnim(std::make_unique<ToggleAnim>(0, 1, 2))  // Toggle between 0 and 1 every 2 ticks
+    , tailAnim(std::make_unique<ToggleAnim>(0, 1, 33))  // Toggle between 0 and 1 every 33ms (2 frames at 60fps)
 {
     // Use scene's harpoon sprites
     // Note: Currently using old shoot[] sprites, will be updated in Scene refactoring
@@ -35,11 +35,14 @@ HarpoonShot::~HarpoonShot()
  *
  * Moves the harpoon upward and toggles the tail animation sprite.
  * When reaching the top of the screen, triggers ceiling hit behavior.
+ *
+ * @param dt Delta time in seconds
  */
-void HarpoonShot::move()
+void HarpoonShot::update(float dt)
 {
-    // Update tail animation
-    tailAnim->update();
+    // Convert dt from seconds to milliseconds for animation controller
+    float dtMs = dt * 1000.0f;
+    tailAnim->update(dtMs);
 
     if (!isDead())
     {

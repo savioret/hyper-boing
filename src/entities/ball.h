@@ -36,8 +36,8 @@ public:
 
     void init();
     void initTop();
-    
-    void move();
+
+    void update(float dt);
     
     // IGameObject lifecycle hook
     void onDeath() override;

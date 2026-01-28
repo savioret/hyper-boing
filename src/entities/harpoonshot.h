@@ -33,7 +33,7 @@ public:
     ~HarpoonShot();
 
     // Implement abstract interface from Shot
-    void move() override;
+    void update(float dt) override;
     void draw(Graph* graph) override;
 
     // Accessors for Scene compatibility

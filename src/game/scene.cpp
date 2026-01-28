@@ -24,7 +24,7 @@ Scene::Scene(Stage* stg, std::unique_ptr<StageClear> pstgclr)
       moveTick(0), moveLastTick(0), moveCount(0),
       drawTick(0), drawLastTick(0), drawCount(0),
       boundingBoxes(false),
-      readyActive(true), readyBlinkCount(0), readyBlinkTimer(0), readyVisible(true)
+      readyActive(pstgclr ? false : true), readyBlinkCount(0), readyBlinkTimer(0), readyVisible(true)
 {
     gameinf.isMenu() = false;
     if (pStageClear) pStageClear->scene = this;
@@ -551,7 +551,11 @@ void Scene::checkColisions()
             decide(b, flc, moved);
         }
 
-        for (i = 0; i < 2; i++)
+        // Only check collisions if we are in the normal gameplay state
+        if (gameOver || levelClear || readyActive)
+            continue;
+
+        for ( i = 0; i < 2; i++ )
         {
             if (gameinf.player[i])
                 if (!gameinf.player[i]->isImmune() && !gameinf.player[i]->isDead())
@@ -854,32 +858,45 @@ GameState* Scene::moveAll(float dt)
     }
     else
     {
+        // During level clear, still update players for victory animation
         for (i = 0; i < 2; i++)
+        {
             if (gameinf.getPlayer(i))
+            {
                 if (gameinf.getPlayer(i)->isPlaying())
-                    gameinf.getPlayer(i)->setFrame(ANIM_WIN);
+                {
+                    gameinf.getPlayer(i)->update(dt);
+                    // Ensure win frame is set (in case not using victory animation)
+                    if (!gameinf.getPlayer(i)->isDead())
+                    {
+                        // Only override frame if not using custom animations
+                        // Victory animation will override this automatically
+                    }
+                }
+            }
+        }
     }
 
     checkColisions();
 
     // === PHASE 1: Movement ===
-    // Move all objects without modifying lists
+    // Update all objects without modifying lists
     for (Ball* pt : lsBalls)
     {
         ptb = pt;
-        ptb->move();
+        ptb->update(dt);
     }
 
     for (Shot* pt : lsShoots)
     {
         pts = pt;
-        pts->move();
+        pts->update(dt);
     }
 
     for (Floor* pt : lsFloor)
     {
         pfl = pt;
-        pfl->update();
+        pfl->update(dt);
     }
 
     // === PHASE 2: Cleanup ===
@@ -955,14 +972,21 @@ GameState* Scene::moveAll(float dt)
             if (nextStageId <= gameinf.getNumStages())
             {
                 gameinf.getCurrentStage() = nextStageId;
-                return new Scene(&gameinf.getStages()[nextStageId - 1], std::move(pStageClear));
+                // Create new scene with ready screen disabled initially
+                Scene* newScene = new Scene(&gameinf.getStages()[nextStageId - 1], std::move(pStageClear));
+                return newScene;
             }
             else
                 return new Menu();
         }
         if (res == 0)
         {
+            // Stage clear opening animation complete, enable ready screen
             pStageClear.reset();
+            readyActive = true;
+            readyBlinkCount = 0;
+            readyBlinkTimer = 0;
+            readyVisible = true;
         }
     }
     else if (!readyActive) // Only check sequence after ready screen is done
@@ -1026,7 +1050,7 @@ void Scene::draw(Ball* b)
 
 void Scene::draw(Player* pl)
 {
-    appGraph.draw(pl);
+    pl->draw(&appGraph);
 }
 
 void Scene::draw(Floor* fl)

@@ -44,6 +44,34 @@ constexpr int RES_Y = 480;
 class Graph;
 
 /**
+ * @brief Rendering properties for sprite drawing
+ * 
+ * Contains all properties needed to render a sprite, including position,
+ * flipping, rotation, scale, and alpha blending.
+ */
+struct RenderProps
+{
+    int x, y;                    ///< Screen position
+    bool flipH = false;          ///< Horizontal flip
+    bool flipV = false;          ///< Vertical flip
+    float rotation = 0.0f;       ///< Rotation angle in degrees
+    float scale = 1.0f;          ///< Scale factor
+    float alpha = 1.0f;          ///< Alpha transparency (0.0-1.0)
+    float pivotX = 0.5f;         ///< Pivot X for rotation (0.0-1.0)
+    float pivotY = 0.5f;         ///< Pivot Y for rotation (0.0-1.0)
+
+    /**
+     * @brief Construct from position
+     */
+    RenderProps(int x, int y) : x(x), y(y) {}
+
+    /**
+     * @brief Construct from Sprite2D properties
+     */
+    static RenderProps fromSprite2D(Sprite2D* spr);
+};
+
+/**
  * @class Graph
  * @brief Graphics rendering and management system
  *
@@ -129,6 +157,14 @@ public:
      * @param flipHorizontal If true, flip the sprite horizontally
      */
     void draw(Sprite* spr, int x, int y, bool flipHorizontal);
+
+    /**
+     * @brief Draw a sprite with extended rendering properties
+     * 
+     * @param spr Pointer to the sprite to draw
+     * @param props Rendering properties (position, flip, rotation, scale, etc.)
+     */
+    void drawEx(Sprite* spr, const RenderProps& props);
 
     /**
      * @brief Draw a sprite scaled to specified dimensions

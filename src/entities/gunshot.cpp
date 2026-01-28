@@ -23,11 +23,11 @@ GunShot::GunShot(Scene* scn, Player* pl, SpriteSheet* sheet, int xOffset)
 {
     // Set up animation states
     // flight_intro: 0→1→2→3→4, then auto-transition to flight_loop
-    animController->addState("flight_intro", {0, 1, 2, 3, 4}, 9, false, "flight_loop");
+    animController->addState("flight_intro", {0, 1, 2, 3, 4}, 150, false, "flight_loop");
     // flight_loop: oscillate 3↔4 forever
-    animController->addState("flight_loop", {3, 4}, 9, true);
+    animController->addState("flight_loop", {3, 4}, 150, true);
     // impact: 5→6, then stays on 6 (we check for completion to kill)
-    animController->addState("impact", {5, 6}, 9, false);
+    animController->addState("impact", {5, 6}, 150, false);
 
     // Set callback to kill shot when impact animation completes
     animController->setOnStateComplete([this](const std::string& state) {
@@ -65,11 +65,14 @@ GunShot::~GunShot()
  *
  * Advances animation frames and moves the bullet upward during flight states.
  * During impact state, bullet stays in place while playing impact animation.
+ *
+ * @param dt Delta time in seconds
  */
-void GunShot::move()
+void GunShot::update(float dt)
 {
-    // Update animation controller
-    animController->update();
+    // Convert dt from seconds to milliseconds for animation controller
+    float dtMs = dt * 1000.0f;
+    animController->update(dtMs);
 
     if (!isDead())
     {

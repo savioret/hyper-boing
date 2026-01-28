@@ -63,11 +63,11 @@ void AppData::init()
     inMenu = true;
 
     // Initialize Player 1 sprites
-    bitmaps.player[PLAYER1][0].init(&appGraph, "assets/graph/players/p1k1r.png", 0, 3);
-    bitmaps.player[PLAYER1][1].init(&appGraph, "assets/graph/players/p1k2r.png", 4, 3);
-    bitmaps.player[PLAYER1][2].init(&appGraph, "assets/graph/players/p1k3r.png", 6, 3);
-    bitmaps.player[PLAYER1][3].init(&appGraph, "assets/graph/players/p1k4r.png", 4, 3);
-    bitmaps.player[PLAYER1][4].init(&appGraph, "assets/graph/players/p1k5r.png", 4, 3);
+    // bitmaps.player[PLAYER1][0].init(&appGraph, "assets/graph/players/p1k1r.png", 0, 3);
+    // bitmaps.player[PLAYER1][1].init(&appGraph, "assets/graph/players/p1k2r.png", 4, 3);
+    // bitmaps.player[PLAYER1][2].init(&appGraph, "assets/graph/players/p1k3r.png", 6, 3);
+    // bitmaps.player[PLAYER1][3].init(&appGraph, "assets/graph/players/p1k4r.png", 4, 3);
+    // bitmaps.player[PLAYER1][4].init(&appGraph, "assets/graph/players/p1k5r.png", 4, 3);
 
     bitmaps.player[PLAYER1][5].init(&appGraph, "assets/graph/players/p1shoot1.png", 13, 0);
     bitmaps.player[PLAYER1][6].init(&appGraph, "assets/graph/players/p1shoot2.png", 13, 3);
@@ -75,11 +75,11 @@ void AppData::init()
     bitmaps.player[PLAYER1][8].init(&appGraph, "assets/graph/players/p1dead.png");
 
     // Initialize Player 2 sprites
-    bitmaps.player[PLAYER2][0].init(&appGraph, "assets/graph/players/p2k1r.png", 0, 3);
-    bitmaps.player[PLAYER2][1].init(&appGraph, "assets/graph/players/p2k2r.png", 4, 3);
-    bitmaps.player[PLAYER2][2].init(&appGraph, "assets/graph/players/p2k3r.png", 6, 3);
-    bitmaps.player[PLAYER2][3].init(&appGraph, "assets/graph/players/p2k4r.png", 4, 3);
-    bitmaps.player[PLAYER2][4].init(&appGraph, "assets/graph/players/p2k5r.png", 4, 3);
+    // bitmaps.player[PLAYER2][0].init(&appGraph, "assets/graph/players/p2k1r.png", 0, 3);
+    // bitmaps.player[PLAYER2][1].init(&appGraph, "assets/graph/players/p2k2r.png", 4, 3);
+    // bitmaps.player[PLAYER2][2].init(&appGraph, "assets/graph/players/p2k3r.png", 6, 3);
+    // bitmaps.player[PLAYER2][3].init(&appGraph, "assets/graph/players/p2k4r.png", 4, 3);
+    // bitmaps.player[PLAYER2][4].init(&appGraph, "assets/graph/players/p2k5r.png", 4, 3);
 
     bitmaps.player[PLAYER2][5].init(&appGraph, "assets/graph/players/p2shoot1.png", 13, 0);
     bitmaps.player[PLAYER2][6].init(&appGraph, "assets/graph/players/p2shoot2.png", 13, 3);

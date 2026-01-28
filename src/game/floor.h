@@ -25,7 +25,7 @@ public:
     Floor(Scene* scene, int x, int y, int id);
     ~Floor();
 
-    void update();
+    void update(float dt);
     
     int getWidth() const { return sx; }
     int getHeight() const { return sy; }

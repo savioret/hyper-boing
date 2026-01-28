@@ -35,7 +35,7 @@ public:
     ~GunShot();
 
     // Implement abstract interface from Shot
-    void move() override;
+    void update(float dt) override;
     void draw(Graph* graph) override;
 
     // Override collision hooks for impact animation

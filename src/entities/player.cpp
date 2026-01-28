@@ -1,11 +1,13 @@
 #include "main.h"
 #include "eventmanager.h"
 #include "playerdeadaction.h"
+#include "asepriteloader.h"
+#include "logger.h"
 #include <cstring>
 #include <SDL.h>
 
 Player::Player(int id)
-    : id(id), deathAction(nullptr)
+    : id(id), deathAction(nullptr), currentState(PlayerState::IDLE)
 {
     init();
 
@@ -16,6 +18,16 @@ Player::Player(int id)
         {
             onPlayerHit();
         }
+    });
+
+    // Subscribe to LEVEL_CLEAR events for victory animation
+    levelClearHandle = EVENT_MGR.subscribe(GameEventType::LEVEL_CLEAR, [this](const GameEventData& event) {
+        onLevelClear();
+    });
+
+    // Subscribe to STAGE_LOADED events to reset animation state
+    stageLoadedHandle = EVENT_MGR.subscribe(GameEventType::STAGE_LOADED, [this](const GameEventData& event) {
+        onStageLoaded();
     });
 }
 
@@ -59,12 +71,36 @@ void Player::init()
     // Initialize animation controller with state machine
     animController = std::make_unique<StateMachineAnim>();
     animController->addState("idle", {ANIM_SHOOT}, 1, true);
-    animController->addState("walk", {ANIM_WALK, ANIM_WALK+1, ANIM_WALK+2, ANIM_WALK+3, ANIM_WALK+4}, animSpeed, true);
     animController->addState("shoot", {ANIM_SHOOT + 1}, 1, true);
     animController->addState("win", {ANIM_WIN}, 1, true);
     animController->addState("dead", {ANIM_DEAD}, 1, true);
     animController->setState("idle");
 
+    // Load walk animation from Aseprite JSON
+    const char* playerPrefix = (id == 0) ? "p1" : "p2";
+    walkSheet = std::make_unique<SpriteSheet>();
+    char walkPath[256];
+    std::snprintf(walkPath, sizeof(walkPath), "assets/graph/players/%swalk.json", playerPrefix);
+    
+    walkAnim = AsepriteLoader::load(&appGraph, walkPath, *walkSheet);
+    if (!walkAnim)
+    {
+        LOG_WARNING("Failed to load walk animation for player %d", id + 1);
+    }
+
+    // Load victory animation from Aseprite JSON
+    victorySheet = std::make_unique<SpriteSheet>();
+    char victoryPath[256];
+    std::snprintf(victoryPath, sizeof(victoryPath), "assets/graph/players/%svictory.json", playerPrefix);
+
+    victoryAnim = AsepriteLoader::load(&appGraph, victoryPath, *victorySheet);
+    if (!victoryAnim)
+    {
+        LOG_WARNING("Failed to load victory animation for player %d", id + 1);
+    }
+
+    // Set initial state
+    currentState = PlayerState::IDLE;
     setFrame(ANIM_SHOOT); // Initial frame
     
     float startX = 200.0f + 100.0f * id;
@@ -96,8 +132,7 @@ void Player::revive()
     facing = FacingDirection::RIGHT;  // Reset facing on revive
 
     // Reset animation state to idle
-    animController->setState("idle");
-    setFrame(ANIM_SHOOT);
+    setState(PlayerState::IDLE);
 
     float startX = 200.0f + 100.0f * id;
     float startY = (float)(MAX_Y - getHeight());
@@ -121,9 +156,11 @@ void Player::moveLeft()
         x -= moveIncrement;
 
     // Transition to walk animation if not already walking
-    if (animController->getStateName() != "walk")
+    if (currentState != PlayerState::WALKING &&
+        currentState != PlayerState::VICTORY &&
+        currentState != PlayerState::DEAD)
     {
-        animController->setState("walk");
+        setState(PlayerState::WALKING);
     }
 }
 
@@ -135,9 +172,11 @@ void Player::moveRight()
         x += moveIncrement;
 
     // Transition to walk animation if not already walking
-    if (animController->getStateName() != "walk")
+    if (currentState != PlayerState::WALKING &&
+        currentState != PlayerState::VICTORY &&
+        currentState != PlayerState::DEAD)
     {
-        animController->setState("walk");
+        setState(PlayerState::WALKING);
     }
 }
 
@@ -161,22 +200,21 @@ void Player::shoot()
 {
     numShoots++;
     shotCounter = shotInterval;
-    animController->setState("shoot");
+    setState(PlayerState::SHOOTING);
 }
 
 void Player::stop()
 {
-    const std::string& currentState = animController->getStateName();
-
-    // Transition walk to idle immediately
-    if (currentState == "walk")
+    // Exit walk mode
+    if (currentState == PlayerState::WALKING)
     {
-        animController->setState("idle");
+        setState(PlayerState::IDLE);
     }
+
     // Transition shoot to idle when cooldown expires
-    else if (currentState == "shoot" && shotCounter == 0)
+    if (currentState == PlayerState::SHOOTING && shotCounter == 0)
     {
-        animController->setState("idle");
+        setState(PlayerState::IDLE);
     }
 
     if (x + getWidth() > MAX_X - 10) x = (float)(MAX_X - 16 - getWidth());
@@ -186,9 +224,32 @@ void Player::update(float dt)
 {
     if (shotCounter > 0) shotCounter--;
 
-    // Update animation controller and sync frame
-    animController->update();
-    setFrame(animController->getCurrentFrame());
+    // Convert dt from seconds to milliseconds for animation controllers
+    float dtMs = dt * 1000.0f;
+
+    // Update appropriate animation controller based on state
+    switch (currentState)
+    {
+        case PlayerState::VICTORY:
+            if (victoryAnim) {
+                victoryAnim->update(dtMs);
+                LOG_TRACE("Player %d victory anim update - frame: %d", id + 1, victoryAnim->getCurrentFrame());
+            }
+            break;
+
+        case PlayerState::WALKING:
+            if (walkAnim) {
+                walkAnim->update(dtMs);
+            }
+            break;
+
+        case PlayerState::IDLE:
+        case PlayerState::SHOOTING:
+        case PlayerState::DEAD:
+            animController->update(dtMs);
+            setFrame(animController->getCurrentFrame());
+            break;
+    }
 
     if (isDead())
     {
@@ -275,7 +336,7 @@ void Player::onPlayerHit()
     if (isDead() || deathAction) return;  // Already dead or death action running
 
     // Set death animation state
-    animController->setState("dead");
+    setState(PlayerState::DEAD);
 
     // Create death action with trajectory
     // Thrown to the right with upward velocity
@@ -294,4 +355,138 @@ void Player::setWeapon(WeaponType type)
     const WeaponConfig& config = WeaponConfig::get(type);
     maxShoots = config.maxShots;
     shotInterval = config.cooldown;
+}
+
+/**
+ * Event handler for LEVEL_CLEAR events.
+ * Triggers the victory animation loaded from Aseprite JSON.
+ */
+void Player::onLevelClear()
+{
+    if (victoryAnim && !isDead())
+    {
+        setState(PlayerState::VICTORY);
+    }
+    else
+    {
+        LOG_WARNING("Player %d cannot enter victory mode (anim: %s, dead: %s)",
+                   id + 1, victoryAnim ? "yes" : "no", isDead() ? "yes" : "no");
+    }
+}
+
+/**
+ * Event handler for STAGE_LOADED events.
+ * Resets animation state when starting a new stage.
+ */
+void Player::onStageLoaded()
+{
+    // Reset animation state to idle
+    setState(PlayerState::IDLE);
+}
+
+/**
+ * Draw player sprite.
+ * Uses victory/walk animation sprite sheets when active,
+ * otherwise uses standard sprite rendering.
+ */
+void Player::draw(Graph* graph)
+{
+    if ( !visible ) return;
+
+    // TODO: avoid having to calculate Y y position this way and make it more automated
+
+    switch (currentState)
+    {
+        case PlayerState::VICTORY:
+            if (victoryAnim && victorySheet) {
+                Sprite* frame = victorySheet->getFrame(victoryAnim->getCurrentFrame());
+                if (frame) {
+                    int yPos = (float)(MAX_Y - frame->getHeight() - frame->getYOff());
+                    RenderProps props((int)getX(), yPos);
+                    props.flipH = getFlipH();
+                    graph->drawEx(frame, props);
+                }
+            }
+            break;
+
+        case PlayerState::WALKING:
+            if (walkAnim && walkSheet) {
+                Sprite* frame = walkSheet->getFrame(walkAnim->getCurrentFrame());
+                if (frame) {
+                    int yPos = (float)(MAX_Y - frame->getHeight());
+                    RenderProps props((int)getX(), yPos);
+                    props.flipH = getFlipH();
+                    graph->drawEx(frame, props);
+                }
+            }
+            break;
+
+        case PlayerState::IDLE:
+        case PlayerState::SHOOTING:
+        case PlayerState::DEAD:
+        default:
+            graph->draw(this);
+            break;
+    }
+}
+
+Sprite* Player::getActiveSprite() const
+{
+    switch (currentState)
+    {
+        case PlayerState::WALKING:
+            if (walkAnim && walkSheet)
+                return walkSheet->getFrame(walkAnim->getCurrentFrame());
+            break;
+
+        case PlayerState::VICTORY:
+            if (victoryAnim && victorySheet)
+                return victorySheet->getFrame(victoryAnim->getCurrentFrame());
+            break;
+
+        case PlayerState::IDLE:
+        case PlayerState::SHOOTING:
+        case PlayerState::DEAD:
+        default:
+            return getCurrentSprite();  // Standard sprite from sprites array
+    }
+
+    // Fallback if animation not loaded
+    return getCurrentSprite();
+}
+
+void Player::setState(PlayerState newState)
+{
+    if (currentState == newState) return;
+
+    currentState = newState;
+
+    switch (newState)
+    {
+        case PlayerState::IDLE:
+            animController->setState("idle");
+            setFrame(ANIM_SHOOT);
+            break;
+
+        case PlayerState::WALKING:
+            if (walkAnim) {
+                walkAnim->reset();
+            }
+            break;
+
+        case PlayerState::SHOOTING:
+            animController->setState("shoot");
+            break;
+
+        case PlayerState::VICTORY:
+            if (victoryAnim) {
+                victoryAnim->reset();
+                LOG_INFO("Player %d entering victory mode", id + 1);
+            }
+            break;
+
+        case PlayerState::DEAD:
+            animController->setState("dead");
+            break;
+    }
 }

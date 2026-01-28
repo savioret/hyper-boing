@@ -2,6 +2,7 @@
 #include <cstring>
 #include "../main.h"
 #include "appdata.h"
+#include "logger.h"
 
 StageClear::StageClear(Scene* scn, int targetStageNum)
     : targetStage(targetStageNum)
@@ -111,35 +112,27 @@ void StageClear::drawAll()
  * StageClear logic
  *
  * This function manages the stage clear sequence: moving text into screen,
- * incrementing scores, and waiting for player appInput to proceed.
+ * incrementing scores, and waiting for player input to proceed.
  */
 int StageClear::moveAll()
 {
     bool a = false, b = false, c = false;
 
-    if (appInput.key(gameinf.getKeys()[PLAYER1].shoot))
+    // Only allow progression to closing when score counting is complete
+    if (endCount && !isClosing)
     {
-        if (!endCount)
+        if (appInput.key(gameinf.getKeys()[PLAYER1].shoot))
         {
-            endCount = true;
-            cscore[PLAYER1] = gameinf.getPlayer(PLAYER1)->getScore();
-            if (gameinf.getPlayer(PLAYER2))
-                cscore[PLAYER2] = gameinf.getPlayer(PLAYER2)->getScore();
-        }
-        isClosing = true;
-    }
-    else if (gameinf.getPlayer(PLAYER2))
-    {
-        if (appInput.key(gameinf.getKeys()[PLAYER2].shoot))
-        {
-            if (!endCount)
-            {
-                endCount = true;				
-                cscore[PLAYER1] = gameinf.getPlayer(PLAYER1)->getScore();
-                if (gameinf.getPlayer(PLAYER2))
-                    cscore[PLAYER2] = gameinf.getPlayer(PLAYER2)->getScore();
-            }
+            LOG_INFO("StageClear: Player 1 pressed fire, starting transition");
             isClosing = true;
+        }
+        else if (gameinf.getPlayer(PLAYER2))
+        {
+            if (appInput.key(gameinf.getKeys()[PLAYER2].shoot))
+            {
+                LOG_INFO("StageClear: Player 2 pressed fire, starting transition");
+                isClosing = true;
+            }
         }
     }
 
@@ -149,6 +142,7 @@ int StageClear::moveAll()
         if (yr2 > 241) yr2 -= 4;
         else 
         {
+            LOG_INFO("StageClear: Red blocks closed, moving text out");
             endClose = true;
             movingOut = true;
         }
@@ -159,6 +153,7 @@ int StageClear::moveAll()
         if (yr2 < 481) yr2 += 4;
         else 
         {
+            LOG_INFO("StageClear: Red blocks opened, ready screen can start");
             endOpening = true;
             isOpening = false;
             movingOut = true;
@@ -186,6 +181,7 @@ int StageClear::moveAll()
             isOpening = true;
             isClosing = false;
             movingOut = false;
+            LOG_INFO("StageClear: Text moved out, starting red blocks opening");
             return -1;
         }
     }
@@ -204,7 +200,11 @@ int StageClear::moveAll()
             ynum += 3;
         else c = true;
 
-        if (a && b && c) endMove = true;
+        if (a && b && c) 
+        {
+            endMove = true;
+            LOG_INFO("StageClear: Text in position, starting score count");
+        }
     }
     else if (!endCount)
     {
@@ -218,13 +218,15 @@ int StageClear::moveAll()
                 cscore[PLAYER2] >= gameinf.getPlayer(PLAYER2)->getScore())
             {
                 endCount = true;
-                isClosing = true;
+                LOG_INFO("StageClear: Score counting complete, waiting for button press");
+                // Don't automatically close - wait for button press
             }
         }
         else if (cscore[PLAYER1] >= gameinf.getPlayer(PLAYER1)->getScore())
         {
             endCount = true;
-            isClosing = true;
+            LOG_INFO("StageClear: Score counting complete, waiting for button press");
+            // Don't automatically close - wait for button press
         }
     }
 

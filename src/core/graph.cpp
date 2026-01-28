@@ -17,6 +17,20 @@ static SDL_Rect toSDLRect(int x, int y, int w, int h) {
 // Global system font renderer for graph.cpp text rendering
 static BMFontRenderer g_systemFontRenderer;
 
+// RenderProps implementation
+RenderProps RenderProps::fromSprite2D(Sprite2D* spr)
+{
+    RenderProps props((int)spr->getX(), (int)spr->getY());
+    props.flipH = spr->getFlipH();
+    props.flipV = spr->getFlipV();
+    props.rotation = spr->getRotation();
+    props.scale = spr->getScale();
+    props.alpha = spr->getAlpha() / 255.0f;
+    props.pivotX = spr->getPivotX();
+    props.pivotY = spr->getPivotY();
+    return props;
+}
+
 int Graph::init(const char* title, int _mode) {
     mode = _mode;
 
@@ -146,6 +160,59 @@ void Graph::draw(SDL_Texture* texture, const SDL_Rect* srcRect, int x, int y) {
     SDL_RenderCopy(renderer, texture, srcRect, &dstRect);
 }
 
+// Extended draw with rendering properties
+void Graph::drawEx(Sprite* spr, const RenderProps& props) {
+    if (!spr || !spr->getBmp()) return;
+
+    // Apply alpha
+    if (props.alpha < 1.0f) {
+        SDL_SetTextureAlphaMod(spr->getBmp(), (Uint8)(props.alpha * 255.0f));
+    }
+
+    // Source rectangle (from sprite sheet)
+    SDL_Rect srcRect = { spr->getSrcX(), spr->getSrcY(), spr->getWidth(), spr->getHeight() };
+
+    // Calculate scaled size
+    int scaledW = (int)(spr->getWidth() * props.scale);
+    int scaledH = (int)(spr->getHeight() * props.scale);
+
+    // Calculate pivot offset (to keep pivot point fixed during scaling)
+    float pivotOffsetX = spr->getWidth() * props.pivotX * (1.0f - props.scale);
+    float pivotOffsetY = spr->getHeight() * props.pivotY * (1.0f - props.scale);
+
+    // Destination rectangle (with sprite offset and pivot adjustment)
+    SDL_Rect dstRect = {
+        props.x + spr->getXOff() + (int)pivotOffsetX,
+        props.y + spr->getYOff() + (int)pivotOffsetY,
+        scaledW,
+        scaledH
+    };
+
+    // Pivot point for rotation (within the destination rect)
+    SDL_Point center = {
+        (int)(scaledW * props.pivotX),
+        (int)(scaledH * props.pivotY)
+    };
+
+    // Flip flags
+    SDL_RendererFlip flip = SDL_FLIP_NONE;
+    if (props.flipH && props.flipV) {
+        flip = (SDL_RendererFlip)(SDL_FLIP_HORIZONTAL | SDL_FLIP_VERTICAL);
+    } else if (props.flipH) {
+        flip = SDL_FLIP_HORIZONTAL;
+    } else if (props.flipV) {
+        flip = SDL_FLIP_VERTICAL;
+    }
+
+    // Render with all transformations
+    SDL_RenderCopyEx(renderer, spr->getBmp(), &srcRect, &dstRect, props.rotation, &center, flip);
+
+    // Reset alpha
+    if (props.alpha < 1.0f) {
+        SDL_SetTextureAlphaMod(spr->getBmp(), 255);
+    }
+}
+
 // New methods using Sprite2D's internal properties
 
 void Graph::draw(Sprite2D* spr) {
@@ -154,49 +221,9 @@ void Graph::draw(Sprite2D* spr) {
     Sprite* currentSprite = spr->getCurrentSprite();
     if (!currentSprite || !currentSprite->getBmp()) return;
 
-    // Apply alpha
-    if (spr->getAlpha() < 255.0f) {
-        SDL_SetTextureAlphaMod(currentSprite->getBmp(), (Uint8)spr->getAlpha());
-    }
-
-    // Source rectangle (from sprite sheet)
-    SDL_Rect srcRect = { currentSprite->getSrcX(), currentSprite->getSrcY(), currentSprite->getWidth(), currentSprite->getHeight() };
-
-    // Calculate scaled size
-    int scaledW = (int)(currentSprite->getWidth() * spr->getScale());
-    int scaledH = (int)(currentSprite->getHeight() * spr->getScale());
-
-    // Calculate pivot offset (to keep pivot point fixed during scaling)
-    // Pivot is 0.0-1.0 where 0.5, 0.5 = center
-    float pivotOffsetX = currentSprite->getWidth() * spr->getPivotX() * (1.0f - spr->getScale());
-    float pivotOffsetY = currentSprite->getHeight() * spr->getPivotY() * (1.0f - spr->getScale());
-
-    // Destination rectangle (with sprite offset and pivot adjustment)
-    SDL_Rect dstRect = {
-        (int)(spr->getX() + currentSprite->getXOff() + pivotOffsetX),
-        (int)(spr->getY() + currentSprite->getYOff() + pivotOffsetY),
-        scaledW,
-        scaledH
-    };
-
-    // Pivot point for rotation (within the destination rect)
-    SDL_Point center = {
-        (int)(scaledW * spr->getPivotX()),
-        (int)(scaledH * spr->getPivotY())
-    };
-
-    // Flip flags
-    SDL_RendererFlip flip = SDL_FLIP_NONE;
-    if (spr->getFlipH() && spr->getFlipV()) {
-        flip = (SDL_RendererFlip)(SDL_FLIP_HORIZONTAL | SDL_FLIP_VERTICAL);
-    } else if (spr->getFlipH()) {
-        flip = SDL_FLIP_HORIZONTAL;
-    } else if (spr->getFlipV()) {
-        flip = SDL_FLIP_VERTICAL;
-    }
-
-    // Render with all transformations
-    SDL_RenderCopyEx(renderer, currentSprite->getBmp(), &srcRect, &dstRect, spr->getRotation(), &center, flip);
+    // Use drawEx with properties from Sprite2D
+    RenderProps props = RenderProps::fromSprite2D(spr);
+    drawEx(currentSprite, props);
 
     // Reset alpha if modified
     if (spr->getAlpha() < 255.0f) {

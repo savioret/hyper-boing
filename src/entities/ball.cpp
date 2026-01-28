@@ -199,7 +199,7 @@ bool Ball::collision(Player* pl)
  * S = S0 + V0t + 1/2 a * t^2
  * where S is y and S0 is y0.
  */
-void Ball::move()
+void Ball::update(float dt)
 {
     float incx = dirX * 0.80f;
     static float yPrev;

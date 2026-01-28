@@ -4,10 +4,11 @@
 // FrameSequenceAnim Implementation
 // ============================================================================
 
-FrameSequenceAnim::FrameSequenceAnim(std::vector<int> frameSequence, int delay, bool shouldLoop)
+FrameSequenceAnim::FrameSequenceAnim(std::vector<int> frameSequence, int durationMs, bool shouldLoop)
     : frames(std::move(frameSequence))
-    , frameDelay(delay)
+    , defaultDuration(durationMs)
     , loop(shouldLoop)
+    , usePerFrameDurations(false)
 {
     if (frames.empty())
     {
@@ -15,7 +16,26 @@ FrameSequenceAnim::FrameSequenceAnim(std::vector<int> frameSequence, int delay, 
     }
 }
 
-FrameSequenceAnim FrameSequenceAnim::range(int startFrame, int endFrame, int delay, bool loop)
+FrameSequenceAnim::FrameSequenceAnim(std::vector<int> frameSequence, std::vector<int> durationsMs, bool shouldLoop)
+    : frames(std::move(frameSequence))
+    , frameDurations(std::move(durationsMs))
+    , defaultDuration(100)  // Fallback if frameDurations is empty
+    , loop(shouldLoop)
+    , usePerFrameDurations(true)
+{
+    if (frames.empty())
+    {
+        frames.push_back(0);  // Ensure at least one frame
+    }
+    
+    // Ensure frameDurations matches frames size
+    if (frameDurations.size() < frames.size())
+    {
+        frameDurations.resize(frames.size(), defaultDuration);
+    }
+}
+
+FrameSequenceAnim FrameSequenceAnim::range(int startFrame, int endFrame, int durationMs, bool loop)
 {
     std::vector<int> seq;
     if (startFrame <= endFrame)
@@ -32,22 +52,28 @@ FrameSequenceAnim FrameSequenceAnim::range(int startFrame, int endFrame, int del
             seq.push_back(i);
         }
     }
-    return FrameSequenceAnim(std::move(seq), delay, loop);
+    return FrameSequenceAnim(std::move(seq), durationMs, loop);
 }
 
-FrameSequenceAnim FrameSequenceAnim::oscillate(int frameA, int frameB, int delay)
+FrameSequenceAnim FrameSequenceAnim::oscillate(int frameA, int frameB, int durationMs)
 {
-    return FrameSequenceAnim({frameA, frameB}, delay, true);
+    return FrameSequenceAnim({frameA, frameB}, durationMs, true);
 }
 
 void FrameSequenceAnim::update(float dt)
 {
     if (complete) return;
 
-    tickCounter++;
-    if (tickCounter >= frameDelay)
+    timeAccumulator += dt;
+    
+    // Get current frame duration
+    int currentDuration = usePerFrameDurations && currentIndex < static_cast<int>(frameDurations.size())
+                          ? frameDurations[currentIndex]
+                          : defaultDuration;
+    
+    if (timeAccumulator >= currentDuration)
     {
-        tickCounter = 0;
+        timeAccumulator -= currentDuration;
         currentIndex++;
 
         if (currentIndex >= static_cast<int>(frames.size()))
@@ -81,7 +107,7 @@ int FrameSequenceAnim::getCurrentFrame() const
 void FrameSequenceAnim::reset()
 {
     currentIndex = 0;
-    tickCounter = 0;
+    timeAccumulator = 0.0f;
     complete = false;
 }
 
@@ -89,20 +115,20 @@ void FrameSequenceAnim::reset()
 // ToggleAnim Implementation
 // ============================================================================
 
-ToggleAnim::ToggleAnim(int a, int b, int delay)
+ToggleAnim::ToggleAnim(int a, int b, int durationMs)
     : frameA(a)
     , frameB(b)
     , currentFrame(a)
-    , toggleDelay(delay)
+    , toggleDuration(durationMs)
 {
 }
 
 void ToggleAnim::update(float dt)
 {
-    tickCounter++;
-    if (tickCounter >= toggleDelay)
+    timeAccumulator += dt;
+    if (timeAccumulator >= toggleDuration)
     {
-        tickCounter = 0;
+        timeAccumulator -= toggleDuration;
         currentFrame = (currentFrame == frameA) ? frameB : frameA;
     }
 }
@@ -110,7 +136,7 @@ void ToggleAnim::update(float dt)
 void ToggleAnim::reset()
 {
     currentFrame = frameA;
-    tickCounter = 0;
+    timeAccumulator = 0.0f;
 }
 
 // ============================================================================
@@ -118,17 +144,43 @@ void ToggleAnim::reset()
 // ============================================================================
 
 void StateMachineAnim::addState(const std::string& name, std::vector<int> frames,
-                                 int delay, bool loop, const std::string& nextState)
+                                 int durationMs, bool loop, const std::string& nextState)
 {
     State state;
     state.frames = std::move(frames);
-    state.delay = delay;
+    state.defaultDuration = durationMs;
     state.loop = loop;
+    state.usePerFrameDurations = false;
     state.nextState = nextState;
 
     if (state.frames.empty())
     {
         state.frames.push_back(0);  // Ensure at least one frame
+    }
+
+    states[name] = std::move(state);
+}
+
+void StateMachineAnim::addState(const std::string& name, std::vector<int> frames,
+                                 std::vector<int> durationsMs, bool loop, const std::string& nextState)
+{
+    State state;
+    state.frames = std::move(frames);
+    state.frameDurations = std::move(durationsMs);
+    state.defaultDuration = 100;  // Fallback
+    state.loop = loop;
+    state.usePerFrameDurations = true;
+    state.nextState = nextState;
+
+    if (state.frames.empty())
+    {
+        state.frames.push_back(0);
+    }
+    
+    // Ensure frameDurations matches frames size
+    if (state.frameDurations.size() < state.frames.size())
+    {
+        state.frameDurations.resize(state.frames.size(), state.defaultDuration);
     }
 
     states[name] = std::move(state);
@@ -141,7 +193,7 @@ void StateMachineAnim::setState(const std::string& name)
     {
         currentStateName = name;
         currentIndex = 0;
-        tickCounter = 0;
+        timeAccumulator = 0.0f;
         stateComplete = false;
     }
 }
@@ -155,10 +207,16 @@ void StateMachineAnim::update(float dt)
 
     const State& state = it->second;
 
-    tickCounter++;
-    if (tickCounter >= state.delay)
+    timeAccumulator += dt;
+    
+    // Get current frame duration
+    int currentDuration = state.usePerFrameDurations && currentIndex < static_cast<int>(state.frameDurations.size())
+                          ? state.frameDurations[currentIndex]
+                          : state.defaultDuration;
+    
+    if (timeAccumulator >= currentDuration)
     {
-        tickCounter = 0;
+        timeAccumulator -= currentDuration;
         currentIndex++;
 
         if (currentIndex >= static_cast<int>(state.frames.size()))
@@ -206,7 +264,7 @@ int StateMachineAnim::getCurrentFrame() const
 void StateMachineAnim::reset()
 {
     currentIndex = 0;
-    tickCounter = 0;
+    timeAccumulator = 0.0f;
     stateComplete = false;
     // Note: does not change current state, just resets its animation
 }
