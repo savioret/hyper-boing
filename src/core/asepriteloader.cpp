@@ -86,7 +86,7 @@ std::unique_ptr<IAnimController> AsepriteLoader::load(
     for (size_t i = 0; i < frames.size(); i++)
     {
         JsonValue frameData = frames[i];
-        
+
         if (!frameData.has("frame") || !frameData.has("spriteSourceSize"))
         {
             LOG_WARNING("AsepriteLoader: Frame %zu missing required data", i);
@@ -105,8 +105,17 @@ std::unique_ptr<IAnimController> AsepriteLoader::load(
         int xOff = spriteSource["x"].asInt();
         int yOff = spriteSource["y"].asInt();
 
-        // Add frame to sprite sheet
-        sheet.addFrame(x, y, w, h, xOff, yOff);
+        // Get original canvas size (for bottom-middle positioning)
+        int srcW = 0, srcH = 0;
+        if (frameData.has("sourceSize"))
+        {
+            JsonValue sourceSize = frameData["sourceSize"];
+            srcW = sourceSize["w"].asInt();
+            srcH = sourceSize["h"].asInt();
+        }
+
+        // Add frame to sprite sheet with sourceSize info
+        sheet.addFrame(x, y, w, h, xOff, yOff, srcW, srcH);
     }
 
     LOG_INFO("AsepriteLoader: Loaded %zu frames from %s", frames.size(), imagePath.c_str());

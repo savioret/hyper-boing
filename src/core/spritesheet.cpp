@@ -46,6 +46,13 @@ void SpriteSheet::addFrame(int x, int y, int w, int h, int xoff, int yoff)
     frames.push_back(frame);
 }
 
+void SpriteSheet::addFrame(int x, int y, int w, int h, int xoff, int yoff, int srcW, int srcH)
+{
+    Sprite frame;
+    frame.init(texture, x, y, w, h, xoff, yoff, srcW, srcH);
+    frames.push_back(frame);
+}
+
 void SpriteSheet::release()
 {
     if (texture)

@@ -3,6 +3,7 @@
 #include "playerdeadaction.h"
 #include "asepriteloader.h"
 #include "logger.h"
+#include "../core/coordhelper.h"
 #include <cstring>
 #include <SDL.h>
 
@@ -102,10 +103,12 @@ void Player::init()
     // Set initial state
     currentState = PlayerState::IDLE;
     setFrame(ANIM_SHOOT); // Initial frame
-    
-    float startX = 200.0f + 100.0f * id;
-    float startY = (float)(MAX_Y - getHeight());
-    
+
+    // Position uses bottom-middle coordinates:
+    // X = horizontal center of sprite, Y = bottom of sprite (ground level)
+    float startX = 200.0f + 100.0f * id + getWidth() / 2.0f;
+    float startY = (float)MAX_Y;
+
     setPos(startX, startY);
 
     xDir = 5;
@@ -134,8 +137,9 @@ void Player::revive()
     // Reset animation state to idle
     setState(PlayerState::IDLE);
 
-    float startX = 200.0f + 100.0f * id;
-    float startY = (float)(MAX_Y - getHeight());
+    // Position uses bottom-middle coordinates
+    float startX = 200.0f + 100.0f * id + getWidth() / 2.0f;
+    float startY = (float)MAX_Y;
     setPos(startX, startY);
 
     xDir = 5;
@@ -152,7 +156,8 @@ void Player::moveLeft()
 {
     facing = FacingDirection::LEFT;  // Update facing direction
     setFlipH(true);
-    if (x > MIN_X - 10)
+    // X is center; check if left edge (x - width/2) stays within bounds
+    if (x - getWidth() / 2.0f > MIN_X - 10)
         x -= moveIncrement;
 
     // Transition to walk animation if not already walking
@@ -168,7 +173,8 @@ void Player::moveRight()
 {
     facing = FacingDirection::RIGHT;  // Update facing direction
     setFlipH(false);
-    if (x + getWidth() < MAX_X - 5)
+    // X is center; check if right edge (x + width/2) stays within bounds
+    if (x + getWidth() / 2.0f < MAX_X - 5)
         x += moveIncrement;
 
     // Transition to walk animation if not already walking
@@ -217,7 +223,10 @@ void Player::stop()
         setState(PlayerState::IDLE);
     }
 
-    if (x + getWidth() > MAX_X - 10) x = (float)(MAX_X - 16 - getWidth());
+    // Emergency clamp: ensure right edge doesn't exceed boundary
+    // X is center, so right edge = x + width/2
+    if (x + getWidth() / 2.0f > MAX_X - 10)
+        x = (float)(MAX_X - 16) - getWidth() / 2.0f;
 }
 
 void Player::update(float dt)
@@ -386,48 +395,23 @@ void Player::onStageLoaded()
 
 /**
  * Draw player sprite.
- * Uses victory/walk animation sprite sheets when active,
- * otherwise uses standard sprite rendering.
+ * Player position is stored in bottom-middle coordinates; this method
+ * converts to top-left for SDL rendering using coordhelper.
  */
 void Player::draw(Graph* graph)
 {
-    if ( !visible ) return;
+    if (!visible) return;
 
-    // TODO: avoid having to calculate Y y position this way and make it more automated
+    Sprite* spr = getActiveSprite();
+    if (!spr) return;
 
-    switch (currentState)
-    {
-        case PlayerState::VICTORY:
-            if (victoryAnim && victorySheet) {
-                Sprite* frame = victorySheet->getFrame(victoryAnim->getCurrentFrame());
-                if (frame) {
-                    int yPos = (float)(MAX_Y - frame->getHeight() - frame->getYOff());
-                    RenderProps props((int)getX(), yPos);
-                    props.flipH = getFlipH();
-                    graph->drawEx(frame, props);
-                }
-            }
-            break;
+    RenderProps props(toRenderX(getX(), spr), toRenderY(getY(), spr));
+    props.flipH = getFlipH();
+    props.rotation = getRotation();
+    props.scale = getScale();
+    props.alpha = getAlpha() / 255.0f;
 
-        case PlayerState::WALKING:
-            if (walkAnim && walkSheet) {
-                Sprite* frame = walkSheet->getFrame(walkAnim->getCurrentFrame());
-                if (frame) {
-                    int yPos = (float)(MAX_Y - frame->getHeight());
-                    RenderProps props((int)getX(), yPos);
-                    props.flipH = getFlipH();
-                    graph->drawEx(frame, props);
-                }
-            }
-            break;
-
-        case PlayerState::IDLE:
-        case PlayerState::SHOOTING:
-        case PlayerState::DEAD:
-        default:
-            graph->draw(this);
-            break;
-    }
+    graph->drawEx(spr, props);
 }
 
 Sprite* Player::getActiveSprite() const
@@ -453,6 +437,30 @@ Sprite* Player::getActiveSprite() const
 
     // Fallback if animation not loaded
     return getCurrentSprite();
+}
+
+CollisionBox Player::getCollisionBox() const
+{
+    Sprite* spr = getActiveSprite();
+    if (!spr) {
+        // Fallback for no sprite
+        int renderX = toRenderX(getX(), getWidth());
+        int renderY = toRenderY(getY(), getHeight());
+        return { renderX + 5, renderY + 3, getWidth() - 10, getHeight() - 3 };
+    }
+
+    // Visual position matches draw() logic:
+    // toRenderX/Y gives top-left of source canvas, drawEx adds xOff/yOff
+    int visualX = toRenderX(getX(), spr) + spr->getXOff();
+    int visualY = toRenderY(getY(), spr) + spr->getYOff();
+
+    // Apply collision margins (same as original Ball::collision logic)
+    return {
+        visualX + 5,            // Left margin
+        visualY + 3,            // Top offset
+        spr->getWidth() - 10,   // Width minus both side margins
+        spr->getHeight() - 3    // Height minus top offset
+    };
 }
 
 void Player::setState(PlayerState newState)

@@ -39,21 +39,25 @@ GunShot::GunShot(Scene* scn, Player* pl, SpriteSheet* sheet, int xOffset)
 
     animController->setState("flight_intro");
 
+    // Player uses bottom-middle coordinates (X = center, Y = bottom)
     // Calculate shot spawn position based on player facing direction
-    float centerOffset = pl->getWidth() / 2.0f;
+    float halfWidth = pl->getWidth() / 2.0f;
     float spriteOffset = pl->getSprite()->getXOff();
 
     // When facing left, spawn on left side; when facing right, spawn on right side
     if (pl->getFacing() == FacingDirection::LEFT)
     {
-        xPos = xInit = pl->getX() + spriteOffset + +5 + xOffset;
+        // Convert center to left edge, then apply offsets
+        xPos = xInit = pl->getX() - halfWidth + spriteOffset + 5 + xOffset;
     }
     else  // FacingDirection::RIGHT
     {
-        xPos = xInit = pl->getX() + centerOffset + spriteOffset + 14 + xOffset;
+        // Player X is already center; add offset for right-side spawn
+        xPos = xInit = pl->getX() + spriteOffset + 14 + xOffset;
     }
 
-    yPos = yInit =  pl->getY() + 2.0f;  // Spawn slightly above player's Y position
+    // Player Y is bottom; convert to top and add offset for weapon position
+    yPos = yInit = pl->getY() - pl->getHeight() + 2.0f;
 }
 
 GunShot::~GunShot()

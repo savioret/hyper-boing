@@ -32,7 +32,28 @@ void Sprite::init(SDL_Texture* sharedTexture, int x, int y, int w, int h, int of
     sy = h;
     xoff = offx;
     yoff = offy;
+    sourceW = 0;  // Not set (will use trimmed size)
+    sourceH = 0;
     graph = nullptr;  // No Graph needed for shared texture
+}
+
+/**
+ * Initialize sprite from a shared texture with original canvas size info
+ *
+ * This variant stores the original canvas size from Aseprite's sourceSize field,
+ * which is needed for proper bottom-middle positioning of trimmed sprites.
+ */
+void Sprite::init(SDL_Texture* sharedTexture, int x, int y, int w, int h, int offx, int offy, int srcW, int srcH) {
+    bmp = sharedTexture;
+    srcX = x;
+    srcY = y;
+    sx = w;
+    sy = h;
+    xoff = offx;
+    yoff = offy;
+    sourceW = srcW;
+    sourceH = srcH;
+    graph = nullptr;
 }
 
 void Sprite::release() {

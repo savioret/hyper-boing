@@ -180,10 +180,14 @@ SDL_Point Ball::collision(Floor* fl)
 
 bool Ball::collision(Player* pl)
 {
-    if (yPos + diameter > pl->getY() + pl->getSprite()->getYOff() + 3)
+    // Use Player's collision box (already in top-left coordinates with margins applied)
+    CollisionBox box = pl->getCollisionBox();
+
+    // Check Y: ball bottom must be below box top
+    if (yPos + diameter > box.y)
     {
-        if (xPos < pl->getX() + pl->getSprite()->getXOff() + pl->getWidth() - 5 && 
-            xPos + diameter > pl->getX() + pl->getSprite()->getXOff() + 5)
+        // Check X: ball must overlap box horizontally
+        if (xPos < box.x + box.w && xPos + diameter > box.x)
         {
             return true;
         }

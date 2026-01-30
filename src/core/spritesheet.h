@@ -53,6 +53,19 @@ public:
     void addFrame(int x, int y, int w, int h, int xoff, int yoff);
 
     /**
+     * Add a frame definition with original canvas size info
+     * @param x X position of frame in texture
+     * @param y Y position of frame in texture
+     * @param w Width of frame (trimmed)
+     * @param h Height of frame (trimmed)
+     * @param xoff X offset for rendering (from Aseprite spriteSourceSize.x)
+     * @param yoff Y offset for rendering (from Aseprite spriteSourceSize.y)
+     * @param srcW Original canvas width (from Aseprite sourceSize.w)
+     * @param srcH Original canvas height (from Aseprite sourceSize.h)
+     */
+    void addFrame(int x, int y, int w, int h, int xoff, int yoff, int srcW, int srcH);
+
+    /**
      * Release texture resources
      */
     void release();

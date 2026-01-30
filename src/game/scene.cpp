@@ -1081,27 +1081,15 @@ void Scene::drawBoundingBoxes()
     // Set draw color to black for bounding boxes
     appGraph.setDrawColor(0, 0, 0, 255);
 
-    // Draw player bounding boxes matching Ball::collision(Player*) logic
-    // From ball.cpp:181-184:
-    //   xPos < pl->getX() + pl->getSprite()->getXOff() + pl->getWidth() - 5
-    //   xPos + diameter > pl->getX() + pl->getSprite()->getXOff() + 5
-    //   yPos + diameter > pl->getY() + pl->getSprite()->getYOff() + 3
+    // Draw player bounding boxes using the same collision box as Ball::collision()
     for (int i = 0; i < 2; i++)
     {
         Player* pl = gameinf.getPlayer(i);
         if (pl && pl->isPlaying() && pl->isVisible())
         {
-            Sprite* spr = pl->getSprite();
-            int xBase = (int)pl->getX() + spr->getXOff();
-            int yBase = (int)pl->getY() + spr->getYOff();
-
-            // Collision box has 5-pixel margins on sides, 3-pixel offset on top
-            int x = xBase + 5;
-            int y = yBase + 3;
-            int w = pl->getWidth() - 10;  // -5 on each side
-            int h = pl->getHeight() - 3;   // -3 from top
-
-            appGraph.rectangle(x, y, x + w, y + h);
+            // Use Player's getCollisionBox() to ensure debug matches actual collision
+            CollisionBox box = pl->getCollisionBox();
+            appGraph.rectangle(box.x, box.y, box.x + box.w, box.y + box.h);
         }
     }
 

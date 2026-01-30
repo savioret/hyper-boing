@@ -8,6 +8,14 @@
 #include "../core/animcontroller.h"
 #include "../core/spritesheet.h"
 
+/**
+ * Collision box in top-left coordinate space for AABB collision detection.
+ * Used by Ball and other entities to check collision with Player.
+ */
+struct CollisionBox {
+    int x, y, w, h;
+};
+
 class Scene;
 class Action;
 class Graph;
@@ -142,6 +150,13 @@ public:
      * Used for collision detection and bounding boxes.
      */
     Sprite* getActiveSprite() const;
+
+    /**
+     * Get collision box in top-left coordinate space for AABB collision detection.
+     * Player position is stored in bottom-middle coordinates, but collision
+     * detection uses top-left AABB. This method handles the conversion.
+     */
+    CollisionBox getCollisionBox() const;
 
     /**
      * Change player animation state with proper transitions

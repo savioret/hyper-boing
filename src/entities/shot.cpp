@@ -7,8 +7,8 @@
 /**
  * Shot base constructor
  *
- * Calculates the origin of the shot based on the center of the player
- * who fired it, adjusted for their sprite's current offset.
+ * Calculates the origin of the shot based on the player position.
+ * Player uses bottom-middle coordinates (X = center, Y = bottom).
  *
  * @param scn The scene this shot belongs to
  * @param pl The player who fired the shot
@@ -21,22 +21,24 @@ Shot::Shot(Scene* scn, Player* pl, WeaponType type, int xOffset)
     const WeaponConfig& config = WeaponConfig::get(type);
     weaponSpeed = config.speed;
 
-    // Calculate shot spawn position based on player facing direction
-    float centerOffset = pl->getWidth() / 2.0f;
+    // Player X is center; calculate spawn position based on facing direction
+    float halfWidth = pl->getWidth() / 2.0f;
     float spriteOffset = pl->getSprite()->getXOff();
 
     // When facing left, spawn on left side; when facing right, spawn on right side
     if (pl->getFacing() == FacingDirection::LEFT)
     {
-        xPos = xInit = pl->getX() + spriteOffset - 2.0f + xOffset;
+        // Convert center to left edge, then apply offsets
+        xPos = xInit = pl->getX() - halfWidth + spriteOffset - 2.0f + xOffset;
     }
     else  // FacingDirection::RIGHT
     {
-        xPos = xInit = pl->getX() + centerOffset + spriteOffset + 5.0f + xOffset;
+        // Player X is already center; add offset for right-side spawn
+        xPos = xInit = pl->getX() + spriteOffset + 5.0f + xOffset;
     }
 
-    yPos = yInit = ( float )MAX_Y;
-    //yPos = yInit =  pl->getY() + 2.0f;  // Spawn slightly above player's Y position
+    // Player Y is bottom (MAX_Y when standing); harpoon spawns from ground level
+    yPos = yInit = pl->getY();
 }
 
 /**
