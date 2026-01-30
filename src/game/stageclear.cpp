@@ -235,8 +235,10 @@ int StageClear::moveAll()
         {
             // Close red brick curtain from top and bottom
             if (yr1 < 240) yr1 += 4;
-            if (yr2 > 241) yr2 -= 4;
-            else
+            if (yr2 > 240) yr2 -= 4;
+
+            // Transition only when both curtains have reached the middle
+            if (yr1 >= 240 && yr2 <= 240)
             {
                 setSubState(LevelClearSubState::TextSlideOut);
             }

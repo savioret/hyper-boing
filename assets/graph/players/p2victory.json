@@ -6,7 +6,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 10, "w": 48, "h": 63 },
     "sourceSize": { "w": 50, "h": 80 },
-    "duration": 100
+    "duration": 150
    },
    {
     "filename": "victory_p2 1.aseprite",
@@ -15,7 +15,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 1, "y": 4, "w": 48, "h": 68 },
     "sourceSize": { "w": 50, "h": 80 },
-    "duration": 100
+    "duration": 150
    },
    {
     "filename": "victory_p2 2.aseprite",
@@ -24,7 +24,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 2, "y": 9, "w": 46, "h": 66 },
     "sourceSize": { "w": 50, "h": 80 },
-    "duration": 100
+    "duration": 150
    },
    {
     "filename": "victory_p2 3.aseprite",
@@ -33,7 +33,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 3, "y": 15, "w": 43, "h": 65 },
     "sourceSize": { "w": 50, "h": 80 },
-    "duration": 100
+    "duration": 500
    },
    {
     "filename": "victory_p2 4.aseprite",
@@ -42,7 +42,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 2, "y": 13, "w": 40, "h": 64 },
     "sourceSize": { "w": 50, "h": 80 },
-    "duration": 100
+    "duration": 150
    }
  ],
  "meta": {

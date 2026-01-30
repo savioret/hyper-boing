@@ -485,7 +485,19 @@ public:
      * @return True if bounding boxes are enabled
      */
     bool getBoundingBoxes() const { return boundingBoxes; }
-    
+
+    /**
+     * @brief Sets the stage countdown timer
+     * @param seconds Time remaining in seconds
+     */
+    void setTimeRemaining(int seconds) { timeRemaining = seconds; }
+
+    /**
+     * @brief Gets the stage countdown timer
+     * @return Time remaining in seconds
+     */
+    int getTimeRemaining() const { return timeRemaining; }
+
     /**
      * @brief Processes stage timeline to spawn objects
      * 

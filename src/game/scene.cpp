@@ -45,10 +45,16 @@ int Scene::init()
     timeLine = 0;
     dSecond = 0;
     timeRemaining = stage->timelimit;
-    currentState = SceneState::Ready;
-    readyBlinkCount = 0;
-    readyBlinkTimer = 0;
-    readyVisible = true;
+
+    // Only initialize Ready state if there's no stage clear animation in progress
+    // (Stage clear animation will transition to Ready when curtain opens)
+    if (!pStageClear)
+    {
+        currentState = SceneState::Ready;
+        readyBlinkCount = 0;
+        readyBlinkTimer = 0;
+        readyVisible = true;
+    }
 
     gameinf.getPlayer(PLAYER1)->setX((float)stage->xpos[PLAYER1]);
     if (gameinf.getPlayer(PLAYER2))
@@ -880,25 +886,21 @@ GameState* Scene::moveAll(float dt)
                 EVENT_MGR.trigger(event);
             }
         }
-        else
+        else if (timeRemaining == 0 && !gameOver)
         {
-            if (timeRemaining == 0)
-            {
-                gameOver = true;
-                gameOverCount = 10;
-                currentState = SceneState::GameOver;  // Prevent player collisions during game over
-                gameOverSubState = GameOverSubState::ContinueCountdown;  // Allow continue
+            gameOver = true;
+            gameOverCount = 10;
+            currentState = SceneState::GameOver;
+            gameOverSubState = GameOverSubState::ContinueCountdown;
 
-                // Fire GAME_OVER event (reason: time expired)
-                GameEventData event(GameEventType::GAME_OVER);
-                event.gameOver.reason = 2;  // Time expired
-                EVENT_MGR.trigger(event);
+            // Fire GAME_OVER event (reason: time expired)
+            GameEventData event(GameEventType::GAME_OVER);
+            event.gameOver.reason = 2;
+            EVENT_MGR.trigger(event);
 
-                gameinf.player[PLAYER1]->setPlaying(false);
-                if (gameinf.player[PLAYER2])
-                    gameinf.player[PLAYER2]->setPlaying(false);
-                timeRemaining = -1;
-            }
+            gameinf.player[PLAYER1]->setPlaying(false);
+            if (gameinf.player[PLAYER2])
+                gameinf.player[PLAYER2]->setPlaying(false);
         }
 
         timeLine++;
@@ -1257,14 +1259,17 @@ int Scene::drawAll()
 
     if (gameOver)
     {
-        appGraph.draw(&res.gameover, 100, 125);
         if (gameOverSubState == GameOverSubState::ContinueCountdown)
         {
-            // Show continue prompt and countdown
+            // Show continue prompt and countdown (no "GAME OVER" text)
             appGraph.draw(&res.continu, 130, 200);
             appGraph.draw(&fontNum[FONT_HUGE], gameOverCount, 315, 300);
         }
-        // GameOverSubState::Definitive shows only "GAME OVER" text, no continue
+        else  // GameOverSubState::Definitive
+        {
+            // Show only "GAME OVER" text, no continue
+            appGraph.draw(&res.gameover, 100, 125);
+        }
     }
 
     if (pStageClear) pStageClear->drawAll();

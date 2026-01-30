@@ -101,15 +101,47 @@ void AppConsole::release()
     {
         fontRenderer->release();
     }
-    
+
     fontRenderer.reset();
     graph = nullptr;
-    
+
     commands.clear();
     commandHistory.clear();
     inputBuffer.clear();
-    
+
     initialized = false;
+}
+
+void AppConsole::show()
+{
+    if (!visible)
+    {
+        visible = true;
+        inputBuffer.clear();
+        cursorPosition = 0;
+        // Ensure text input is enabled (should already be active, but ensure it)
+        SDL_StartTextInput();
+    }
+}
+
+void AppConsole::hide()
+{
+    if (visible)
+    {
+        visible = false;
+        inputBuffer.clear();
+        cursorPosition = 0;
+        // Don't call SDL_StopTextInput() - keep text input active so "/" shortcut continues to work
+        // Text input events are filtered by handleEvent() when console is hidden
+    }
+}
+
+void AppConsole::toggle()
+{
+    if (visible)
+        hide();
+    else
+        show();
 }
 
 void AppConsole::registerBuiltinCommands()
@@ -140,6 +172,9 @@ void AppConsole::registerBuiltinCommands()
 
     registerCommand("events", "Toggle event logging: /events",
         [this](const std::string& args) { cmdEvents(args); });
+
+    registerCommand("time", "Set stage countdown time: /time <seconds>",
+        [this](const std::string& args) { cmdTime(args); });
 }
 
 void AppConsole::cmdHelp(const std::string& args)
@@ -420,6 +455,54 @@ void AppConsole::cmdEvents(const std::string& args)
     }
 }
 
+/**
+ * Command: /time <seconds>
+ *
+ * Sets the stage countdown timer to the specified value in seconds.
+ * Only works during gameplay (Scene).
+ */
+void AppConsole::cmdTime(const std::string& args)
+{
+    if (args.empty())
+    {
+        LOG_WARNING("Usage: /time <seconds>");
+        LOG_INFO("  Example: /time 60");
+        return;
+    }
+
+    // Get current scene
+    AppData& appData = AppData::instance();
+    Scene* scene = dynamic_cast<Scene*>(appData.currentScreen.get());
+    if (!scene)
+    {
+        LOG_WARNING("Time command only available during gameplay");
+        return;
+    }
+
+    // Parse time value
+    int newTime = 0;
+    try
+    {
+        newTime = std::stoi(args);
+    }
+    catch (const std::exception&)
+    {
+        LOG_ERROR("Invalid time value: %s (must be a number)", args.c_str());
+        return;
+    }
+
+    // Validate time range (0 to 999 seconds)
+    if (newTime < 0 || newTime > 999)
+    {
+        LOG_WARNING("Time value %d is out of range (valid: 0-999 seconds)", newTime);
+        return;
+    }
+
+    // Set the time
+    scene->setTimeRemaining(newTime);
+    LOG_SUCCESS("Stage time set to %d seconds", newTime);
+}
+
 void AppConsole::registerCommand(const std::string& name, const std::string& desc, CommandHandler handler)
 {
     // Check if command already exists
@@ -484,13 +567,27 @@ bool AppConsole::handleEvent(const SDL_Event& event)
         }
         return true;
     }
-    
-    if (event.type == SDL_TEXTINPUT && visible)
+
+    if (event.type == SDL_TEXTINPUT)
     {
-        handleTextInput(event.text.text);
-        return true;
+        // Special case: "/" opens console with "/" pre-typed (if console is hidden and prompt is empty)
+        if (!visible && event.text.text[0] == '/' && inputBuffer.empty())
+        {
+            show();
+            inputBuffer = "/";
+            cursorPosition = 1;
+            LOG_DEBUG("AppConsole opened with '/' shortcut");
+            return true;
+        }
+
+        // Normal text input when console is visible
+        if (visible)
+        {
+            handleTextInput(event.text.text);
+            return true;
+        }
     }
-    
+
     return false;
 }
 
