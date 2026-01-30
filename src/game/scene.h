@@ -142,8 +142,14 @@ private:
     int readyBlinkTimer;   ///< Timer for blink intervals (12 frames = 200ms at 60fps)
     bool readyVisible;     ///< Current visibility state for "Ready" text
     
+    // Game over input delay
+    int gameOverInputDelay;  ///< Frames to wait before accepting input on game over screen (prevents accidental skip)
+
     // Event subscriptions
     EventManager::ListenerHandle timeWarningHandle;  ///< Subscription for time warning sound
+    EventManager::ListenerHandle ballHitHandle;      ///< Subscription for ball hit pop sounds
+    EventManager::ListenerHandle playerShootHandle;  ///< Subscription for weapon shoot sounds
+    EventManager::ListenerHandle playerHitHandle;    ///< Subscription for player death sound
     
     // Stage-level utility
     OnceHelper stageOnceHelper;  ///< Helper for one-time actions per stage

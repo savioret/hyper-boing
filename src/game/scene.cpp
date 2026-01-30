@@ -26,7 +26,8 @@ Scene::Scene(Stage* stg, std::unique_ptr<StageClear> pstgclr)
       moveTick(0), moveLastTick(0), moveCount(0),
       drawTick(0), drawLastTick(0), drawCount(0),
       boundingBoxes(false),
-      readyBlinkCount(0), readyBlinkTimer(0), readyVisible(true)
+      readyBlinkCount(0), readyBlinkTimer(0), readyVisible(true),
+      gameOverInputDelay(0)
 {
     gameinf.isMenu() = false;
     if (pStageClear) pStageClear->scene = this;
@@ -71,11 +72,91 @@ int Scene::init()
     // Clear stage-level once helper (resets all stage flags)
     stageOnceHelper.clear();
 
+    // Register warning sound with short ID (as sound, not music)
+    appAudio.registerSound("last_seconds", "assets/music/last_seconds.ogg");
+
     // Subscribe to time warning event (uses once() for cleaner pattern)
     timeWarningHandle = EVENT_MGR.subscribe(GameEventType::TIME_SECOND_ELAPSED,
         [this](const GameEventData& data) {
             if (data.timeElapsed.newTime == 11 && once("last_seconds_warning")) {
-                appAudio.playSound("assets/music/last_seconds.ogg");
+                // Parallel fade: BGM fades out WHILE warning fades in
+                appAudio.fadeOutMusic(5000);
+                appAudio.playSoundWithFadeIn("last_seconds", 5000, false); // false = play once
+            }
+        });
+
+    // Subscribe to ball hit event for pop sound effects
+    ballHitHandle = EVENT_MGR.subscribe(GameEventType::BALL_HIT,
+        [this](const GameEventData& data) {
+            // Play appropriate pop sound based on ball size (only if loaded)
+            // Size 0 = largest (pop1), Size 1-2 = medium (pop2), Size 3 = smallest (pop3)
+            int ballSize = data.ballHit.ball->getSize();
+            
+            const char* soundId = nullptr;
+            if (ballSize == 0) {
+                soundId = "pop1";
+            } else if (ballSize <= 2) {
+                soundId = "pop2";
+            } else {
+                soundId = "pop3";
+            }
+            
+            // Only play if sound is actually loaded (prevents error spam)
+            if (soundId && appAudio.isSoundLoaded(soundId)) {
+                appAudio.playSound(soundId);
+            }
+        });
+
+    // Subscribe to player shoot event for weapon sound effects
+    playerShootHandle = EVENT_MGR.subscribe(GameEventType::PLAYER_SHOOT,
+        [this](const GameEventData& data) {
+            // Play appropriate weapon sound based on weapon type (only if loaded)
+            const char* soundId = nullptr;
+            bool isHarpoon = false;
+            
+            switch (data.playerShoot.weapon) {
+                case WeaponType::HARPOON:
+                case WeaponType::HARPOON2:
+                    soundId = "harpoon";
+                    isHarpoon = true;
+                    break;
+                case WeaponType::GUN:
+                    soundId = "gun";
+                    break;
+            }
+            
+            // Only play if sound is actually loaded (prevents error spam)
+            if (soundId && appAudio.isSoundLoaded(soundId)) {
+                if (isHarpoon) {
+                    // Harpoon sound is looped - need to track channel to stop it when shot dies
+                    int channel = appAudio.playSound(soundId);  // Loop=true
+                    
+                    // Find the shot that was just created and associate the audio channel
+                    // The shot was added to lsShoots just before this event fired
+                    if (channel >= 0 && !lsShoots.empty()) {
+                        // The most recent shot(s) belong to this player
+                        for (auto it = lsShoots.rbegin(); it != lsShoots.rend(); ++it) {
+                            Shot* shot = *it;
+                            if (shot->getPlayer() == data.playerShoot.player && 
+                                shot->getAudioChannel() < 0) {
+                                shot->setAudioChannel(channel);
+                                break;  // Only set channel for one shot
+                            }
+                        }
+                    }
+                } else {
+                    // Gun and other weapons: one-shot sound, no tracking needed
+                    appAudio.playSound(soundId);
+                }
+            }
+        });
+
+    // Subscribe to player hit event for death sound effect
+    playerHitHandle = EVENT_MGR.subscribe(GameEventType::PLAYER_HIT,
+        [this](const GameEventData& data) {
+            // Play player death sound (only if loaded)
+            if (appAudio.isSoundLoaded("player_dies")) {
+                appAudio.playSound("player_dies");
             }
         });
 
@@ -730,11 +811,18 @@ GameState* Scene::moveAll(float dt)
 
     if (gameOver)
     {
+        // Decrement input delay counter
+        if (gameOverInputDelay > 0)
+        {
+            gameOverInputDelay--;
+        }
+        
         for (i = 0; i < 2; i++)
         {
             if (gameinf.getPlayer(i))
             {
-                if (appInput.key(gameinf.getKeys()[i].shoot))
+                // Only accept input after delay has expired
+                if (gameOverInputDelay == 0 && appInput.key(gameinf.getKeys()[i].shoot))
                 {
                     if (gameOverSubState == GameOverSubState::ContinueCountdown)
                     {
@@ -759,22 +847,31 @@ GameState* Scene::moveAll(float dt)
         }
     }
 
-    if (!levelClear)
+    if (!levelClear && currentState == SceneState::Playing)
     {
+        // Player input is only processed during Playing state
+        for (i = 0; i < 2; i++)
+        {
+            if (gameinf.getPlayer(i) && 
+                !gameinf.getPlayer(i)->isDead() && 
+                gameinf.getPlayer(i)->isPlaying())
+            {
+                if (appInput.key(gameinf.getKeys()[i].shoot)) { shoot(gameinf.getPlayer(i)); }
+                else if (appInput.key(gameinf.getKeys()[i].left)) gameinf.getPlayer(i)->moveLeft();
+                else if (appInput.key(gameinf.getKeys()[i].right)) gameinf.getPlayer(i)->moveRight();
+                else gameinf.getPlayer(i)->stop();
+            }
+        }
+        
+        // Always update players (even if dead, for death animation)
         for (i = 0; i < 2; i++)
         {
             if (gameinf.getPlayer(i))
             {
-                if (!gameinf.getPlayer(i)->isDead() && gameinf.getPlayer(i)->isPlaying())
-                {
-                    if (appInput.key(gameinf.getKeys()[i].shoot)) { shoot(gameinf.getPlayer(i)); }
-                    else if (appInput.key(gameinf.getKeys()[i].left)) gameinf.getPlayer(i)->moveLeft();
-                    else if (appInput.key(gameinf.getKeys()[i].right)) gameinf.getPlayer(i)->moveRight();
-                    else gameinf.getPlayer(i)->stop();
-                }
                 gameinf.getPlayer(i)->update(dt);
             }
         }
+        
         if (gameOverCount == -2)
         {
             if (gameinf.getPlayer(PLAYER1) && !gameinf.getPlayer(PLAYER2))
@@ -783,6 +880,7 @@ GameState* Scene::moveAll(float dt)
                 {
                     gameOver = true;
                     gameOverCount = 10;
+                    gameOverInputDelay = 120;  // ~2 seconds at 60fps
                     currentState = SceneState::GameOver;  // Prevent player collisions during game over
                     gameOverSubState = GameOverSubState::ContinueCountdown;  // Allow continue
 
@@ -802,6 +900,7 @@ GameState* Scene::moveAll(float dt)
                 {
                     gameOver = true;
                     gameOverCount = 10;
+                    gameOverInputDelay = 120;  // ~2 seconds at 60fps
                     currentState = SceneState::GameOver;  // Prevent player collisions during game over
                     gameOverSubState = GameOverSubState::ContinueCountdown;  // Allow continue
 
@@ -819,26 +918,21 @@ GameState* Scene::moveAll(float dt)
     }
     else
     {
-        // During level clear, still update players for victory animation
+        // During level clear or non-playing states, only update players (no input processing)
         for (i = 0; i < 2; i++)
         {
-            if (gameinf.getPlayer(i))
+            if (gameinf.getPlayer(i) && gameinf.getPlayer(i)->isPlaying())
             {
-                if (gameinf.getPlayer(i)->isPlaying())
-                {
-                    gameinf.getPlayer(i)->update(dt);
-                    // Ensure win frame is set (in case not using victory animation)
-                    if (!gameinf.getPlayer(i)->isDead())
-                    {
-                        // Only override frame if not using custom animations
-                        // Victory animation will override this automatically
-                    }
-                }
+                gameinf.getPlayer(i)->update(dt);
             }
         }
     }
 
-    checkColisions();
+    // Only check collisions during Playing state
+    if (currentState == SceneState::Playing)
+    {
+        checkColisions();
+    }
 
     // === PHASE 1: Movement ===
     // Update all objects without modifying lists
@@ -890,6 +984,7 @@ GameState* Scene::moveAll(float dt)
         {
             gameOver = true;
             gameOverCount = 10;
+            gameOverInputDelay = 120;  // ~2 seconds at 60fps
             currentState = SceneState::GameOver;
             gameOverSubState = GameOverSubState::ContinueCountdown;
 

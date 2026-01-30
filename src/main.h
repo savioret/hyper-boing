@@ -75,4 +75,4 @@ constexpr int GLOBAL_UPDATE_FRAMERATE = 60;
 #define PlayMusic() AudioManager::instance().play()
 #define StopMusic() AudioManager::instance().stop()
 #define ContinueMusic() AudioManager::instance().resume()
-#define CloseMusic() AudioManager::instance().closeAll()
+#define CloseMusic() AudioManager::instance().closeMusic()

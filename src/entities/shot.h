@@ -35,6 +35,7 @@ protected:
 
     WeaponType weaponType;
     int weaponSpeed;
+    int audioChannel;  // SDL_mixer channel for weapon sound (-1 if none)
 
 public:
     /**
@@ -46,6 +47,9 @@ public:
      */
     Shot(Scene* scn, Player* pl, WeaponType type, int xOffset);
     virtual ~Shot() {}
+
+    // IGameObject lifecycle hook
+    void onDeath() override;
 
     // Abstract interface - must be implemented by subclasses
     virtual void update(float dt) = 0;
@@ -78,6 +82,10 @@ public:
     Scene* getScene() const { return scene; }
     WeaponType getWeaponType() const { return weaponType; }
     int getSpeed() const { return weaponSpeed; }
+    
+    // Audio channel management
+    void setAudioChannel(int channel) { audioChannel = channel; }
+    int getAudioChannel() const { return audioChannel; }
 
     // Collision detection helper
     /**

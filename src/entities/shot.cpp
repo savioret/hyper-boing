@@ -16,7 +16,7 @@
  * @param xOffset Horizontal offset for multi-projectile weapons
  */
 Shot::Shot(Scene* scn, Player* pl, WeaponType type, int xOffset)
-    : scene(scn), player(pl), weaponType(type)
+    : scene(scn), player(pl), weaponType(type), audioChannel(-1)
 {
     const WeaponConfig& config = WeaponConfig::get(type);
     weaponSpeed = config.speed;
@@ -84,4 +84,16 @@ bool Shot::collision(Floor* fl)
     }
 
     return false;
+}
+
+/**
+ * Called when shot dies - stops associated audio channel
+ */
+void Shot::onDeath()
+{
+    if (audioChannel >= 0)
+    {
+        AudioManager::instance().stopChannel(audioChannel);
+        audioChannel = -1;
+    }
 }

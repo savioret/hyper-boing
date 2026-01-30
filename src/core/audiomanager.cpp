@@ -73,11 +73,40 @@ bool AudioManager::init()
     return true;
 }
 
+const char* AudioManager::resolveTrackPath(const char* idOrPath) const
+{
+    auto it = trackAliases.find(idOrPath);
+    return (it != trackAliases.end()) ? it->second.c_str() : idOrPath;
+}
+
+const char* AudioManager::resolveSoundPath(const char* idOrPath) const
+{
+    auto it = soundAliases.find(idOrPath);
+    return (it != soundAliases.end()) ? it->second.c_str() : idOrPath;
+}
+
+void AudioManager::registerTrack(const char* id, const char* filepath)
+{
+    trackAliases[id] = filepath;
+    preloadMusic(filepath);
+    LOG_DEBUG("Registered track ID '%s' -> '%s'", id, filepath);
+}
+
+void AudioManager::registerSound(const char* id, const char* filepath)
+{
+    soundAliases[id] = filepath;
+    loadSound(filepath);
+    LOG_DEBUG("Registered sound ID '%s' -> '%s'", id, filepath);
+}
+
 bool AudioManager::preloadMusic(const char* filename)
 {
     if (!isInitialized && !init())
         return false;
-    
+
+    // Resolve ID to filepath if it's an alias
+    filename = resolveTrackPath(filename);
+
     std::string filenameStr(filename);
     
     // Check if already loaded
@@ -114,7 +143,10 @@ bool AudioManager::openMusic(const char* filename)
 {
     if (!isInitialized && !init())
         return false;
-    
+
+    // Resolve ID to filepath if it's an alias
+    filename = resolveTrackPath(filename);
+
     std::string filenameStr(filename);
     
     // Stop current music if playing
@@ -193,6 +225,9 @@ bool AudioManager::resume()
 
 void AudioManager::closeTrack(const char* filename)
 {
+    // Resolve ID to filepath if it's an alias
+    filename = resolveTrackPath(filename);
+
     std::string key(filename);
     auto it = loadedMusic.find(key);
     
@@ -231,11 +266,28 @@ void AudioManager::closeAll()
     currentTrack = "";
 }
 
+void AudioManager::closeMusic()
+{
+    Mix_HaltMusic();
+    
+    for (auto& pair : loadedMusic)
+    {
+        Mix_FreeMusic(pair.second);
+    }
+    loadedMusic.clear();
+    
+    currentMusic = nullptr;
+    currentTrack = "";
+}
+
 bool AudioManager::loadSound(const char* filename)
 {
     if (!isInitialized && !init())
         return false;
-    
+
+    // Resolve ID to filepath if it's an alias
+    filename = resolveSoundPath(filename);
+
     std::string key(filename);
     
     if (loadedSounds.find(key) != loadedSounds.end())
@@ -256,28 +308,64 @@ bool AudioManager::loadSound(const char* filename)
     return true;
 }
 
-bool AudioManager::playSound(const char* filename)
+int AudioManager::playSound(const char* filename)
 {
     if (!isInitialized && !init())
-        return false;
-    
+        return -1;
+
+    // Resolve ID to filepath if it's an alias
+    filename = resolveSoundPath(filename);
+
     std::string key(filename);
     auto it = loadedSounds.find(key);
     
     if (it == loadedSounds.end())
     {
         if (!loadSound(filename))
-            return false;
+            return -1;
         it = loadedSounds.find(key);
     }
-    
-    if (Mix_PlayChannel(-1, it->second, 0) < 0)
+
+    int channel = Mix_PlayChannel(-1, it->second, 0);
+    if ( channel < 0 )
     {
         LOG_ERROR("Failed to play sound %s: %s", filename, Mix_GetError());
-        return false;
     }
     
-    return true;
+    return channel;
+}
+
+int AudioManager::playSoundWithFadeIn(const char* filename, int fadeMs, bool loop)
+{
+    if (!isInitialized && !init())
+        return -1;
+
+    // Resolve ID to filepath if it's an alias
+    filename = resolveSoundPath(filename);
+
+    std::string key(filename);
+    auto it = loadedSounds.find(key);
+
+    // Load if not already loaded
+    if (it == loadedSounds.end())
+    {
+        if (!loadSound(filename))
+            return -1;
+        it = loadedSounds.find(key);
+    }
+
+    // Play with fade on first available channel
+    int loops = loop ? -1 : 0;
+    int channel = Mix_FadeInChannel(-1, it->second, loops, fadeMs);
+
+    if (channel < 0)
+    {
+        LOG_ERROR("Failed to fade in sound %s: %s", filename, Mix_GetError());
+        return -1;
+    }
+
+    LOG_DEBUG("Fading in sound over %d ms on channel %d: %s", fadeMs, channel, filename);
+    return channel;
 }
 
 void AudioManager::stopAllSounds()
@@ -285,6 +373,14 @@ void AudioManager::stopAllSounds()
     if (isInitialized)
     {
         Mix_HaltChannel(-1);
+    }
+}
+
+void AudioManager::stopChannel(int channel)
+{
+    if (isInitialized && channel >= 0)
+    {
+        Mix_HaltChannel(channel);
     }
 }
 
@@ -298,12 +394,64 @@ bool AudioManager::getIsPlaying() const
 
 bool AudioManager::isTrackLoaded(const char* filename) const
 {
+    // Resolve ID to filepath if it's an alias
+    filename = resolveTrackPath(filename);
+
     std::string key(filename);
     return loadedMusic.find(key) != loadedMusic.end();
 }
 
 bool AudioManager::isSoundLoaded(const char* filename) const
 {
+    // Resolve ID to filepath if it's an alias
+    filename = resolveSoundPath(filename);
+
     std::string key(filename);
     return loadedSounds.find(key) != loadedSounds.end();
+}
+
+bool AudioManager::fadeOutMusic(int fadeMs)
+{
+    if (!isInitialized)
+        return false;
+
+    if (!Mix_PlayingMusic())
+        return false;
+
+    Mix_FadeOutMusic(fadeMs);
+    return true;
+}
+
+bool AudioManager::playMusicWithFadeIn(const char* filename, int fadeMs, bool loop)
+{
+    if (!openMusic(filename))
+        return false;
+
+    if (!currentMusic)
+        return false;
+
+    int loops = loop ? -1 : 0;
+    if (Mix_FadeInMusic(currentMusic, loops, fadeMs) < 0)
+    {
+        LOG_ERROR("Failed to fade in music: %s", Mix_GetError());
+        return false;
+    }
+
+    LOG_DEBUG("Fading in music over %d ms: %s", fadeMs, filename);
+    return true;
+}
+
+bool AudioManager::crossFadeMusic(const char* newTrack, int fadeMs, bool loop)
+{
+    if (!isInitialized && !init())
+        return false;
+
+    // Fade out current music if playing
+    if (Mix_PlayingMusic())
+    {
+        fadeOutMusic(fadeMs);
+    }
+
+    // Load and fade in new track
+    return playMusicWithFadeIn(newTrack, fadeMs, loop);
 }

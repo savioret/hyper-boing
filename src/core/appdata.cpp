@@ -169,6 +169,20 @@ void AppData::initStageResources()
     stageRes.fontnum[2].init(&appGraph, "assets/graph/ui/fontnum3.png", 0, 0);
     appGraph.setColorKey(stageRes.fontnum[2].getBmp(), 0x00FF00);
 
+    // Preload ball pop sound effects (optional - gracefully handles missing files)
+    // pop1 = largest balls (size 0), pop2 = medium balls (size 1-2), pop3 = smallest balls (size 3)
+    // Note: registerSound will log errors but won't crash if files don't exist
+    AudioManager::instance().registerSound("pop1", "assets/sounds/pop1.ogg");
+    AudioManager::instance().registerSound("pop2", "assets/sounds/pop2.ogg");
+    AudioManager::instance().registerSound("pop3", "assets/sounds/pop3.ogg");
+
+    // Preload weapon sound effects
+    AudioManager::instance().registerSound("harpoon", "assets/sounds/harpoon.ogg");
+    AudioManager::instance().registerSound("gun", "assets/sounds/gun.ogg");
+
+    // Preload player sound effects
+    AudioManager::instance().registerSound("player_dies", "assets/sounds/player_dies.ogg");
+
     stageRes.initialized = true;
 }
 
