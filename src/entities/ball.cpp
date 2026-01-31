@@ -271,7 +271,19 @@ void Ball::onDeath()
         event.ballSplit.parentSize = size;
         EVENT_MGR.trigger(event);
     }
+}
 
-    // Queue this ball to split into smaller balls
-    scene->splitBall(this);
+void Ball::createChildren(Ball*& child1, Ball*& child2)
+{
+    child1 = nullptr;
+    child2 = nullptr;
+
+    // Only create children if ball is large enough to split
+    if (size < 3)
+    {
+        child1 = new Ball(scene, this);
+        child2 = new Ball(scene, this);
+        child1->setDirX(-1);  // Left
+        child2->setDirX(1);   // Right
+    }
 }

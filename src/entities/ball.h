@@ -38,10 +38,21 @@ public:
     void initTop();
 
     void update(float dt);
-    
+
     // IGameObject lifecycle hook
     void onDeath() override;
-    
+
+    /**
+     * @brief Create child balls when this ball is destroyed
+     *
+     * If ball is large enough (size < 3), creates two smaller balls.
+     * Caller is responsible for adding them to the scene.
+     *
+     * @param child1 Output pointer for first child (nullptr if no split)
+     * @param child2 Output pointer for second child (nullptr if no split)
+     */
+    void createChildren(Ball*& child1, Ball*& child2);
+
     bool collision(Shot* shot);
     SDL_Point collision(Floor* floor);
     bool collision(Player* player);
@@ -57,7 +68,4 @@ public:
     int getSize() const { return size; }
     int getDiameter() const { return diameter; }
     Sprite* getSprite() const { return sprite; }
-
-    // Friend classes for easier refactoring transition
-    friend class Scene;
 };

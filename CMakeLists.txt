@@ -48,6 +48,7 @@ set(SOURCES
     src/ui/bmfont.cpp
     src/core/configdata.cpp
     src/ui/configscreen.cpp
+    src/game/collisionsystem.cpp
     src/game/floor.cpp
     src/core/gamerunner.cpp
     src/core/gameevent.cpp
@@ -92,6 +93,7 @@ set(HEADERS
     src/entities/ball.h
     src/ui/bmfont.h
     src/ui/configscreen.h
+    src/game/collisionsystem.h
     src/game/floor.h
     src/core/gameobject.h
     src/core/gamerunner.h

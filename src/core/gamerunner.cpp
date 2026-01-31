@@ -44,34 +44,20 @@ bool GameRunner::initialize()
         return false;
     }
     LOG_SUCCESS("Audio subsystem initialized");
-    
-    // Initialize in-game console
-    if (!AppConsole::instance().init(&appData.graph))
-    {
-        LOG_WARNING("Failed to initialize AppConsole (non-critical)");
-    }
-    else
-    {
-        LOG_SUCCESS("AppConsole initialized");
-    }
 
     // Initialize EventManager (singleton - auto-creates on first access)
     EventManager::instance();
     LOG_DEBUG("EventManager initialized");
 
-    // Initialize game data (player sprites, etc.)
+    // Initialize default game data
     appData.init();
     LOG_DEBUG("Game data initialized");
-    
-    // Initialize shared stage resources (loaded once, reused across scenes)
-    appData.initStageResources();
-    LOG_DEBUG("Stage resources initialized");
     
     // Preload menu music to avoid delays when returning from other screens
     LOG_INFO("Preloading menu music...");
     appData.preloadMenuMusic();
     
-    // Load configuration
+    // Load configuration (here we redefine key bindings, load render mode, etc.)
     appData.config.load();
     LOG_DEBUG("Configuration loaded");
 
@@ -82,6 +68,16 @@ bool GameRunner::initialize()
         return false;
     }
     LOG_SUCCESS("Graphics subsystem initialized");
+    
+    // Initialize in-game console
+    if ( !AppConsole::instance().init(&appData.graph) )
+        LOG_WARNING("Failed to initialize AppConsole (non-critical)");
+    else
+        LOG_SUCCESS("AppConsole initialized");
+
+    // Initialize shared stage resources (loaded once, reused across scenes)
+    appData.initStageResources();
+    LOG_DEBUG("Stage resources initialized");
     
     // Create and initialize first screen (Menu)
     appData.currentScreen = std::make_unique<Menu>();

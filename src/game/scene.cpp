@@ -21,8 +21,8 @@
 Scene::Scene(Stage* stg, std::unique_ptr<StageClear> pstgclr)
     : currentState(pstgclr ? SceneState::Playing : SceneState::Ready),
       gameOverSubState(GameOverSubState::ContinueCountdown),
-      levelClear(false), pStageClear(std::move(pstgclr)), gameOver(false), gameOverCount(-2),
-      stage(stg), change(0), dSecond(0), timeRemaining(0), timeLine(0),
+      pStageClear(std::move(pstgclr)), gameOverCountdown(10),
+      stage(stg), dSecond(0), timeRemaining(0), timeLine(0),
       moveTick(0), moveLastTick(0), moveCount(0),
       drawTick(0), drawLastTick(0), drawCount(0),
       boundingBoxes(false),
@@ -38,10 +38,6 @@ int Scene::init()
 
     char txt[MAX_PATH];
 
-    change = 0;
-    levelClear = false;
-    gameOver = false;
-    gameOverCount = -2;
     timeLine = 0;
     dSecond = 0;
     timeRemaining = stage->timelimit;
@@ -50,10 +46,7 @@ int Scene::init()
     // (Stage clear animation will transition to Ready when curtain opens)
     if (!pStageClear)
     {
-        currentState = SceneState::Ready;
-        readyVisible = true;
-        // 13 toggles = 6.5 visible↔invisible cycles, ends invisible
-        readyBlinkAction = blink(&readyVisible, 0.2f, 9);
+        setState(SceneState::Ready);
     }
 
     gameinf.getPlayer(PLAYER1)->setX((float)stage->xpos[PLAYER1]);
@@ -61,7 +54,6 @@ int Scene::init()
         gameinf.getPlayer(PLAYER2)->setX((float)stage->xpos[PLAYER2]);
 
     CloseMusic();
-
     initBitmaps();
 
     std::snprintf(txt, sizeof(txt), "assets/music/%s", stage->music);
@@ -74,6 +66,19 @@ int Scene::init()
     // Register warning sound with short ID (as sound, not music)
     appAudio.registerSound("last_seconds", "assets/music/last_seconds.ogg");
 
+    // Subscribe to gameplay events
+    subscribeToEvents();
+
+    // Fire STAGE_LOADED event (stage is prepared and displayed)
+    GameEventData loadedEvent(GameEventType::STAGE_LOADED);
+    loadedEvent.stageLoaded.stageId = stage->id;
+    EVENT_MGR.trigger(loadedEvent);
+
+    return 1;
+}
+
+void Scene::subscribeToEvents()
+{
     // Subscribe to time warning event (uses once() for cleaner pattern)
     timeWarningHandle = EVENT_MGR.subscribe(GameEventType::TIME_SECOND_ELAPSED,
         [this](const GameEventData& data) {
@@ -90,7 +95,7 @@ int Scene::init()
             // Play appropriate pop sound based on ball size (only if loaded)
             // Size 0 = largest (pop1), Size 1-2 = medium (pop2), Size 3 = smallest (pop3)
             int ballSize = data.ballHit.ball->getSize();
-            
+
             const char* soundId = nullptr;
             if (ballSize == 0) {
                 soundId = "pop1";
@@ -99,7 +104,7 @@ int Scene::init()
             } else {
                 soundId = "pop3";
             }
-            
+
             // Only play if sound is actually loaded (prevents error spam)
             if (soundId && appAudio.isSoundLoaded(soundId)) {
                 appAudio.playSound(soundId);
@@ -112,7 +117,7 @@ int Scene::init()
             // Play appropriate weapon sound based on weapon type (only if loaded)
             const char* soundId = nullptr;
             bool isHarpoon = false;
-            
+
             switch (data.playerShoot.weapon) {
                 case WeaponType::HARPOON:
                 case WeaponType::HARPOON2:
@@ -123,20 +128,20 @@ int Scene::init()
                     soundId = "gun";
                     break;
             }
-            
+
             // Only play if sound is actually loaded (prevents error spam)
             if (soundId && appAudio.isSoundLoaded(soundId)) {
                 if (isHarpoon) {
                     // Harpoon sound is looped - need to track channel to stop it when shot dies
                     int channel = appAudio.playSound(soundId);  // Loop=true
-                    
+
                     // Find the shot that was just created and associate the audio channel
                     // The shot was added to lsShoots just before this event fired
                     if (channel >= 0 && !lsShoots.empty()) {
                         // The most recent shot(s) belong to this player
                         for (auto it = lsShoots.rbegin(); it != lsShoots.rend(); ++it) {
                             Shot* shot = *it;
-                            if (shot->getPlayer() == data.playerShoot.player && 
+                            if (shot->getPlayer() == data.playerShoot.player &&
                                 shot->getAudioChannel() < 0) {
                                 shot->setAudioChannel(channel);
                                 break;  // Only set channel for one shot
@@ -158,13 +163,16 @@ int Scene::init()
                 appAudio.playSound("player_dies");
             }
         });
+}
 
-    // Fire STAGE_LOADED event (stage is prepared and displayed)
-    GameEventData loadedEvent(GameEventType::STAGE_LOADED);
-    loadedEvent.stageLoaded.stageId = stage->id;
-    EVENT_MGR.trigger(loadedEvent);
-
-    return 1;
+void Scene::unsubscribeFromEvents()
+{
+    // Event handles automatically unsubscribe when destroyed,
+    // but we can explicitly clear them here for clarity
+    timeWarningHandle = EventManager::ListenerHandle();
+    ballHitHandle = EventManager::ListenerHandle();
+    playerShootHandle = EventManager::ListenerHandle();
+    playerHitHandle = EventManager::ListenerHandle();
 }
 
 /**
@@ -422,50 +430,13 @@ Player* Scene::getPlayer(int index)
  * balls if possible, or removes the ball if it's already the
  * smallest size. It also grants points to the player.
  */
-int Scene::divideBall(Ball* ball)
-{
-    Ball* ball1;
-    Ball* ball2;
-    int res = 1;
-
-    if (ball->size < 3)
-    {
-        ball1 = new Ball(this, ball);
-        ball2 = new Ball(this, ball);
-        ball1->setDirX(-1);
-        ball2->setDirX(1);
-
-        lsBalls.push_back(ball1);
-        lsBalls.push_back(ball2);
-
-        res = 0;
-    }
-    else
-    {
-        if (lsBalls.size() == 1 && !stage->itemsleft)
-        {
-            win();
-        }
-    }
-
-    lsBalls.remove(ball);
-    delete ball;
-
-    return res;
-}
-
-int Scene::objectScore(int id)
-{
-    return 1000 / id;
-}
 
 void Scene::win()
 {
     CloseMusic();
     OpenMusic("assets/music/win.ogg");
     PlayMusic();
-    levelClear = true;
-    currentState = SceneState::LevelClear;  // Prevent player collisions during victory
+    setState(SceneState::LevelClear);
 
     // Fire LEVEL_CLEAR event
     GameEventData event(GameEventType::LEVEL_CLEAR);
@@ -492,164 +463,10 @@ void Scene::skipToStage(int stageNumber)
     CloseMusic();
     OpenMusic("assets/music/win.ogg");
     PlayMusic();
-    levelClear = true;
-    
+    setState(SceneState::LevelClear);
+
     // Create StageClear with target stage number
     pStageClear = std::make_unique<StageClear>(this, stageNumber);
-}
-
-void Scene::checkColisions()
-{
-    Ball* b;
-    Shot* sh;
-    Floor* fl;
-    int i;
-    SDL_Point col;
-
-    for (Ball* ptball : lsBalls)
-    {
-        b = ptball;
-
-        for (Shot* pt : lsShoots)
-        {
-            sh = pt;
-            if (!b->isDead() && !sh->getPlayer()->isDead())
-            {
-                if (b->collision(sh))
-                {
-                    sh->onBallHit(b);  // Polymorphic call - handles weapon-specific behavior
-                    sh->getPlayer()->addScore(objectScore(b->diameter));
-
-                    // Fire BALL_HIT event
-                    GameEventData event(GameEventType::BALL_HIT);
-                    event.ballHit.ball = b;
-                    event.ballHit.shot = sh;
-                    event.ballHit.shooter = sh->getPlayer();
-                    EVENT_MGR.trigger(event);
-
-                    b->kill();
-                }
-            }
-        }
-
-        FloorColision flc[2];
-        int cont = 0;
-        int moved = 0;
-
-        for (Floor* pt : lsFloor)
-        {
-            fl = pt;
-            col = b->collision(fl);
-
-            if (col.x)
-            {
-                if (cont && flc[0].floor == fl)
-                {
-                    b->setDirX(-b->dirX);
-                    moved = 1;
-                    break;
-                }
-                if (cont < 2)
-                {
-                    flc[cont].point.x = col.x;
-                    flc[cont].floor = fl;
-                    cont++;
-                }
-            }
-            if (col.y)
-            {
-                if (cont && flc[0].floor == fl)
-                {
-                    b->setDirY(-b->dirY);
-                    moved = 2;
-                    break;
-                }
-                if (cont < 2)
-                {
-                    flc[cont].point.y = col.y;
-                    flc[cont].floor = fl;
-                    cont++;
-                }
-            }
-        }
-        if (cont == 1)
-        {
-            if (flc[0].point.x)
-                b->setDirX(-b->dirX);
-            else
-                b->setDirY(-b->dirY);
-        }
-        else if (cont > 1)
-        {
-            decide(b, flc, moved);
-        }
-
-        // Only check player collisions if we are in Playing state
-        if (currentState != SceneState::Playing)
-            continue;
-
-        for ( i = 0; i < 2; i++ )
-        {
-            if (gameinf.player[i])
-                if (!gameinf.player[i]->isImmune() && !gameinf.player[i]->isDead())
-                {
-                    if (b->collision(gameinf.player[i].get()))
-                    {
-                        // Fire PLAYER_HIT event
-                        GameEventData event(GameEventType::PLAYER_HIT);
-                        event.playerHit.player = gameinf.player[i].get();
-                        event.playerHit.ball = b;
-                        EVENT_MGR.trigger(event);
-
-                        gameinf.player[i]->kill();
-                        // Frame is now set by PlayerDeadAction via event subscription
-                    }
-                }
-        }
-    }
-
-    for (Shot* ptshoot : lsShoots)
-    {
-        sh = ptshoot;
-
-        for (Floor* pt : lsFloor)
-        {
-            fl = pt;
-            if (!sh->isDead())
-                if (sh->collision(fl))
-                {
-                    sh->onFloorHit(fl);  // Polymorphic call - handles weapon-specific behavior
-                }
-        }
-    }
-}
-
-void Scene::decide(Ball* b, FloorColision* fc, int moved)
-{
-    if (fc[0].floor->getId() == fc[1].floor->getId() || fc[0].point.y == fc[1].point.y)
-    {
-        if (fc[0].point.x)
-            if (moved != 1) b->setDirX(-b->dirX);
-
-        if (fc[0].point.y)
-            if (moved != 2) b->setDirY(-b->dirY);
-        return;
-    }
-
-    if (fc[0].floor->getId() == fc[1].floor->getId())
-    {
-        if (fc[0].floor->getId() == 0)
-            if (moved != 2) b->setDirY(-b->dirY);
-        if (fc[0].floor->getId() == 1)
-            if (moved != 1) b->setDirX(-b->dirX);
-    }
-    else
-    {
-        if (fc[0].floor->getY() == fc[1].floor->getY())
-            if (moved != 2) b->setDirY(-b->dirY);
-            else
-                if (moved != 1) b->setDirX(-b->dirX);
-    }
 }
 
 void Scene::checkSequence()
@@ -720,37 +537,73 @@ void Scene::checkSequence()
     } while (obj.id != OBJ_NULL);
 }
 
-void Scene::splitBall(Ball* ball)
+void Scene::cleanupBalls()
 {
-    // Queue new smaller balls to be added after cleanup
-    if (ball->getSize() < 3)
+    // Clean up dead balls and create children
+    for (auto it = lsBalls.begin(); it != lsBalls.end(); )
     {
-        pendingBalls.push_back(new Ball(this, ball));
-        pendingBalls.push_back(new Ball(this, ball));
-        pendingBalls.back()->setDirX(1);
-        pendingBalls[pendingBalls.size()-2]->setDirX(-1);
+        Ball* b = *it;
+        if (b->isDead())
+        {
+            // Ask ball to create its children
+            Ball* child1 = nullptr;
+            Ball* child2 = nullptr;
+            b->createChildren(child1, child2);
+
+            if (child1) pendingBalls.push_back(child1);
+            if (child2) pendingBalls.push_back(child2);
+
+            delete b;
+            it = lsBalls.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
     }
-    else if (lsBalls.size() == 1 && !stage->itemsleft)
+
+    // Check win condition after all removals
+    if (lsBalls.empty() && pendingBalls.empty() && !stage->itemsleft)
     {
         win();
     }
-}
 
-void Scene::processBallDivisions()
-{
-    // Add queued balls after cleanup
+    // Add children to active list
     for (Ball* b : pendingBalls)
         lsBalls.push_back(b);
     pendingBalls.clear();
 }
 
-GameState* Scene::moveAll(float dt)
+void Scene::setState(SceneState newState)
 {
-    Ball* ptb;
-    Shot* pts;
-    Floor* pfl;
-    int i, res;
+    currentState = newState;
 
+    switch (newState)
+    {
+        case SceneState::Ready:
+            readyVisible = true;
+            // 13 toggles = 6.5 visible↔invisible cycles, ends invisible
+            readyBlinkAction = blink(&readyVisible, 0.2f, 9);
+            break;
+
+        case SceneState::GameOver:
+            gameOverCountdown = 10;
+            gameOverInputDelay = std::make_unique<DelayAction>(2.0f);
+            gameOverSubState = GameOverSubState::ContinueCountdown;
+            break;
+
+        case SceneState::Playing:
+            // No special initialization needed
+            break;
+
+        case SceneState::LevelClear:
+            // LevelClear state is managed via pStageClear
+            break;
+    }
+}
+
+void Scene::updateFPSCounters()
+{
     moveTick = SDL_GetTicks();
     if (moveTick - moveLastTick > 1000)
     {
@@ -759,180 +612,16 @@ GameState* Scene::moveAll(float dt)
         moveLastTick = moveTick;
     }
     else
+    {
         moveCount++;
-
-    if (goback)
-    {
-        goback = false;
-        gameinf.isMenu() = true;
-        return new Menu;
     }
+}
 
-    // Handle ready screen blinking sequence (time-based using BlinkAction)
-    if (currentState == SceneState::Ready)
-    {
-        // Process time=0 objects on first frame of ready screen
-        if (once("ready_screen_shown"))
-        {
-            checkSequence();
-            LOG_DEBUG("Ready shown, processing time=0 stage objects.");
-        }
-
-        // Update blinking action
-        if (readyBlinkAction && !readyBlinkAction->isFinished())
-        {
-            readyBlinkAction->update(dt);
-        }
-        else
-        {
-            // Blinking complete, transition to Playing state
-            currentState = SceneState::Playing;
-
-            // Fire STAGE_STARTED event (countdown complete, gameplay begins)
-            GameEventData startedEvent(GameEventType::STAGE_STARTED);
-            startedEvent.stageStarted.stageId = stage->id;
-            EVENT_MGR.trigger(startedEvent);
-        }
-
-        // During ready screen, skip all game logic but allow exit
-        return nullptr;
-    }
-
-    if (gameOver)
-    {
-        // Update input delay action (time-based, not frame-based)
-        // NOTE: For more complex delayed callbacks, use ActionSequence:
-        //   auto action = std::make_unique<ActionSequence>();
-        //   action->then(delay(2.0f))           // Wait 2 seconds
-        //        ->then(call([]() {             // Then execute callback
-        //            LOG_INFO("Executed after 2 seconds");
-        //        }));
-        //
-        //   // Update each frame in moveAll():
-        //   if (action && !action->isFinished()) {
-        //       action->update(dt);
-        //   }
-        if (gameOverInputDelay && !gameOverInputDelay->isFinished())
-        {
-            gameOverInputDelay->update(dt);
-        }
-
-        for (i = 0; i < 2; i++)
-        {
-            if (gameinf.getPlayer(i))
-            {
-                // Only accept input after delay has expired
-                if ((!gameOverInputDelay || gameOverInputDelay->isFinished()) && appInput.key(gameinf.getKeys(i).getShoot()))
-                {
-                    if (gameOverSubState == GameOverSubState::ContinueCountdown)
-                    {
-                        // Player chose to continue - restart from beginning
-                        LOG_INFO("Game Over: Player pressed continue, restarting game");
-                        gameinf.getPlayer(PLAYER1)->init();
-                        if (gameinf.getPlayer(PLAYER2))
-                            gameinf.getPlayer(PLAYER2)->init();
-                        gameinf.initStages();
-                        return new Scene(stage);
-                    }
-                    else  // GameOverSubState::Definitive
-                    {
-                        // No continue - return to menu
-                        LOG_INFO("Game Over: Player returning to menu");
-                        gameinf.player[PLAYER1].reset();
-                        gameinf.player[PLAYER2].reset();
-                        return new Menu;
-                    }
-                }
-            }
-        }
-    }
-
-    if (!levelClear && currentState == SceneState::Playing)
-    {
-        // Player input is only processed during Playing state
-        for (i = 0; i < 2; i++)
-        {
-            if (gameinf.getPlayer(i) && 
-                !gameinf.getPlayer(i)->isDead() && 
-                gameinf.getPlayer(i)->isPlaying())
-            {
-                if (appInput.key(gameinf.getKeys(i).getShoot())) { shoot(gameinf.getPlayer(i)); }
-                else if (appInput.key(gameinf.getKeys(i).getLeft())) gameinf.getPlayer(i)->moveLeft();
-                else if (appInput.key(gameinf.getKeys(i).getRight())) gameinf.getPlayer(i)->moveRight();
-                else gameinf.getPlayer(i)->stop();
-            }
-        }
-        
-        // Always update players (even if dead, for death animation)
-        for (i = 0; i < 2; i++)
-        {
-            if (gameinf.getPlayer(i))
-            {
-                gameinf.getPlayer(i)->update(dt);
-            }
-        }
-        
-        if (gameOverCount == -2)
-        {
-            if (gameinf.getPlayer(PLAYER1) && !gameinf.getPlayer(PLAYER2))
-            {
-                if (!gameinf.getPlayer(PLAYER1)->isPlaying())
-                {
-                    gameOver = true;
-                    gameOverCount = 10;
-                    gameOverInputDelay = std::make_unique<DelayAction>(2.0f);  // 2 seconds (time-based)
-                    currentState = SceneState::GameOver;  // Prevent player collisions during game over
-                    gameOverSubState = GameOverSubState::ContinueCountdown;  // Allow continue
-
-                    // Fire GAME_OVER event (reason: player 1 dead)
-                    GameEventData event(GameEventType::GAME_OVER);
-                    event.gameOver.reason = 0;  // Player 1 dead
-                    EVENT_MGR.trigger(event);
-
-                    CloseMusic();
-                    OpenMusic("assets/music/gameover.ogg");
-                    PlayMusic();
-                }
-            }
-            else if (gameinf.getPlayer(PLAYER1) && gameinf.getPlayer(PLAYER2))
-            {
-                if (!gameinf.getPlayer(PLAYER1)->isPlaying() && !gameinf.getPlayer(PLAYER2)->isPlaying())
-                {
-                    gameOver = true;
-                    gameOverCount = 10;
-                    gameOverInputDelay = std::make_unique<DelayAction>(2.0f);  // 2 seconds (time-based)
-                    currentState = SceneState::GameOver;  // Prevent player collisions during game over
-                    gameOverSubState = GameOverSubState::ContinueCountdown;  // Allow continue
-
-                    // Fire GAME_OVER event (reason: both players dead)
-                    GameEventData event(GameEventType::GAME_OVER);
-                    event.gameOver.reason = 1;  // Both players dead
-                    EVENT_MGR.trigger(event);
-
-                    CloseMusic();
-                    OpenMusic("assets/music/gameover.ogg");
-                    PlayMusic();
-                }
-            }
-        }
-    }
-    else
-    {
-        // During level clear or non-playing states, only update players (no input processing)
-        for (i = 0; i < 2; i++)
-        {
-            if (gameinf.getPlayer(i) && gameinf.getPlayer(i)->isPlaying())
-            {
-                gameinf.getPlayer(i)->update(dt);
-            }
-        }
-    }
-
-    // Only check collisions during Playing state
-    if (currentState == SceneState::Playing)
-    {
-        checkColisions();
-    }
+void Scene::updateEntities(float dt)
+{
+    Ball* ptb;
+    Shot* pts;
+    Floor* pfl;
 
     // === PHASE 1: Movement ===
     // Update all objects without modifying lists
@@ -953,22 +642,29 @@ GameState* Scene::moveAll(float dt)
         pfl = pt;
         pfl->update(dt);
     }
+}
 
+void Scene::cleanupPhase()
+{
     // === PHASE 2: Cleanup ===
-    cleanupDeadObjects(lsBalls);  // Now using standard pattern!
+    // Ball cleanup is special - creates children during cleanup
+    cleanupBalls();
+
+    // Other entities use standard cleanup
     cleanupDeadObjects(lsShoots);
     cleanupDeadObjects(lsFloor);
-    
-    // Add new balls created from splits
-    processBallDivisions();
+}
 
-    if (dSecond < 60) dSecond++;
+void Scene::updateTimer(float dt)
+{
+    if (dSecond < 60)
+        dSecond++;
     else
     {
         dSecond = 0;
         if (timeRemaining > 0)
         {
-            if (!pStageClear && !gameOver)
+            if (!pStageClear && currentState != SceneState::GameOver)
             {
                 int previousTime = timeRemaining;
                 timeRemaining--;
@@ -980,13 +676,9 @@ GameState* Scene::moveAll(float dt)
                 EVENT_MGR.trigger(event);
             }
         }
-        else if (timeRemaining == 0 && !gameOver)
+        else if (timeRemaining == 0 && currentState != SceneState::GameOver)
         {
-            gameOver = true;
-            gameOverCount = 10;
-            gameOverInputDelay = std::make_unique<DelayAction>(2.0f);  // 2 seconds (time-based)
-            currentState = SceneState::GameOver;
-            gameOverSubState = GameOverSubState::ContinueCountdown;
+            setState(SceneState::GameOver);
 
             // Fire GAME_OVER event (reason: time expired)
             GameEventData event(GameEventType::GAME_OVER);
@@ -996,16 +688,20 @@ GameState* Scene::moveAll(float dt)
             gameinf.player[PLAYER1]->setPlaying(false);
             if (gameinf.player[PLAYER2])
                 gameinf.player[PLAYER2]->setPlaying(false);
+
+            CloseMusic();
+            OpenMusic("assets/music/gameover.ogg");
+            PlayMusic();
         }
 
         timeLine++;
-        if (gameOver)
+        if (currentState == SceneState::GameOver)
         {
-            if (gameOverCount >= 0)
+            if (gameOverCountdown >= 0)
             {
-                gameOverCount--;
+                gameOverCountdown--;
                 // Transition to Definitive when countdown expires
-                if (gameOverCount < 0 && gameOverSubState == GameOverSubState::ContinueCountdown)
+                if (gameOverCountdown < 0 && gameOverSubState == GameOverSubState::ContinueCountdown)
                 {
                     gameOverSubState = GameOverSubState::Definitive;
                     LOG_INFO("Game Over: Countdown expired, transitioning to Definitive");
@@ -1013,6 +709,169 @@ GameState* Scene::moveAll(float dt)
             }
         }
     }
+}
+
+GameState* Scene::handleReadyState(float dt)
+{
+    // Process time=0 objects on first frame of ready screen
+    if (once("ready_screen_shown"))
+    {
+        checkSequence();
+        LOG_DEBUG("Ready shown, processing time=0 stage objects.");
+    }
+
+    // Update blinking action
+    if (readyBlinkAction && !readyBlinkAction->isFinished())
+    {
+        readyBlinkAction->update(dt);
+    }
+    else
+    {
+        // Blinking complete, transition to Playing state
+        setState(SceneState::Playing);
+
+        // Fire STAGE_STARTED event (countdown complete, gameplay begins)
+        GameEventData startedEvent(GameEventType::STAGE_STARTED);
+        startedEvent.stageStarted.stageId = stage->id;
+        EVENT_MGR.trigger(startedEvent);
+    }
+
+    // During ready screen, skip all game logic
+    return nullptr;
+}
+
+GameState* Scene::handleGameOverState(float dt)
+{
+    // Update input delay action (time-based, not frame-based)
+    if (gameOverInputDelay && !gameOverInputDelay->isFinished())
+    {
+        gameOverInputDelay->update(dt);
+    }
+
+    for (int i = 0; i < 2; i++)
+    {
+        if (gameinf.getPlayer(i))
+        {
+            // Only accept input after delay has expired
+            if ((!gameOverInputDelay || gameOverInputDelay->isFinished()) &&
+                appInput.key(gameinf.getKeys(i).getShoot()))
+            {
+                if (gameOverSubState == GameOverSubState::ContinueCountdown)
+                {
+                    // Player chose to continue - restart from beginning
+                    LOG_INFO("Game Over: Player pressed continue, restarting game");
+                    gameinf.getPlayer(PLAYER1)->init();
+                    if (gameinf.getPlayer(PLAYER2))
+                        gameinf.getPlayer(PLAYER2)->init();
+                    gameinf.initStages();
+                    return new Scene(stage);
+                }
+                else  // GameOverSubState::Definitive
+                {
+                    // No continue - return to menu
+                    LOG_INFO("Game Over: Player returning to menu");
+                    gameinf.player[PLAYER1].reset();
+                    gameinf.player[PLAYER2].reset();
+                    return new Menu;
+                }
+            }
+        }
+    }
+
+    return nullptr;
+}
+
+GameState* Scene::handlePlayingState(float dt)
+{
+    int i;
+
+    // Player input is only processed during Playing state
+    for (i = 0; i < 2; i++)
+    {
+        if (gameinf.getPlayer(i) &&
+            !gameinf.getPlayer(i)->isDead() &&
+            gameinf.getPlayer(i)->isPlaying())
+        {
+            if (appInput.key(gameinf.getKeys(i).getShoot())) { shoot(gameinf.getPlayer(i)); }
+            else if (appInput.key(gameinf.getKeys(i).getLeft())) gameinf.getPlayer(i)->moveLeft();
+            else if (appInput.key(gameinf.getKeys(i).getRight())) gameinf.getPlayer(i)->moveRight();
+            else gameinf.getPlayer(i)->stop();
+        }
+    }
+
+    // Always update players (even if dead, for death animation)
+    for (i = 0; i < 2; i++)
+    {
+        if (gameinf.getPlayer(i))
+        {
+            gameinf.getPlayer(i)->update(dt);
+        }
+    }
+
+    // Check game over condition
+    if (gameinf.getPlayer(PLAYER1) && !gameinf.getPlayer(PLAYER2))
+    {
+        if (!gameinf.getPlayer(PLAYER1)->isPlaying())
+        {
+            setState(SceneState::GameOver);
+
+            // Fire GAME_OVER event (reason: player 1 dead)
+            GameEventData event(GameEventType::GAME_OVER);
+            event.gameOver.reason = 0;  // Player 1 dead
+            EVENT_MGR.trigger(event);
+
+            CloseMusic();
+            OpenMusic("assets/music/gameover.ogg");
+            PlayMusic();
+        }
+    }
+    else if (gameinf.getPlayer(PLAYER1) && gameinf.getPlayer(PLAYER2))
+    {
+        if (!gameinf.getPlayer(PLAYER1)->isPlaying() && !gameinf.getPlayer(PLAYER2)->isPlaying())
+        {
+            setState(SceneState::GameOver);
+
+            // Fire GAME_OVER event (reason: both players dead)
+            GameEventData event(GameEventType::GAME_OVER);
+            event.gameOver.reason = 1;  // Both players dead
+            EVENT_MGR.trigger(event);
+
+            CloseMusic();
+            OpenMusic("assets/music/gameover.ogg");
+            PlayMusic();
+        }
+    }
+
+    // Check collisions using CollisionSystem
+    CollisionSystem::Context ctx = {
+        lsBalls,
+        lsShoots,
+        lsFloor,
+        { gameinf.player[PLAYER1].get(), gameinf.player[PLAYER2].get() },
+        true  // checkPlayerCollisions = true during Playing state
+    };
+    collisionSystem.checkAll(ctx);
+
+    return nullptr;
+}
+
+GameState* Scene::handleLevelClearState(float dt)
+{
+    // During level clear, only update players (no input processing)
+    for (int i = 0; i < 2; i++)
+    {
+        if (gameinf.getPlayer(i) && gameinf.getPlayer(i)->isPlaying())
+        {
+            gameinf.getPlayer(i)->update(dt);
+        }
+    }
+
+    return nullptr;
+}
+
+GameState* Scene::updateStageProgression(float dt)
+{
+    int res;
 
     if (pStageClear)
     {
@@ -1046,10 +905,7 @@ GameState* Scene::moveAll(float dt)
         {
             // Stage clear opening animation complete, enable ready screen
             pStageClear.reset();
-            currentState = SceneState::Ready;
-            readyVisible = true;
-            // 13 toggles = 6.5 visible↔invisible cycles, ends invisible
-            readyBlinkAction = blink(&readyVisible, 0.2f, 13);
+            setState(SceneState::Ready);
         }
     }
     else if (currentState == SceneState::Playing) // Only check sequence during playing state
@@ -1060,17 +916,63 @@ GameState* Scene::moveAll(float dt)
     return nullptr;
 }
 
+GameState* Scene::moveAll(float dt)
+{
+    updateFPSCounters();
+
+    if (goback)
+    {
+        goback = false;
+        gameinf.isMenu() = true;
+        return new Menu;
+    }
+
+    // Dispatch to state handler
+    GameState* result = nullptr;
+    switch (currentState)
+    {
+        case SceneState::Ready:
+            result = handleReadyState(dt);
+            break;
+        case SceneState::Playing:
+            result = handlePlayingState(dt);
+            break;
+        case SceneState::GameOver:
+            result = handleGameOverState(dt);
+            break;
+        case SceneState::LevelClear:
+            result = handleLevelClearState(dt);
+            break;
+    }
+
+    if (result) return result;
+
+    // During Ready state, skip entity updates, cleanup, and timer to freeze the scene
+    if (currentState != SceneState::Ready)
+    {
+        // Common: update entities, cleanup, time management
+        updateEntities(dt);
+        cleanupPhase();
+        updateTimer(dt);
+    }
+
+    return updateStageProgression(dt);
+}
+
 int Scene::release()
 {
+    // Unsubscribe from all events
+    unsubscribeFromEvents();
+
     // Clean up entities
     for (Ball* ball : lsBalls)
         delete ball;
     lsBalls.clear();
-    
+
     for (Shot* shot : lsShoots)
         delete shot;
     lsShoots.clear();
-    
+
     for (Floor* floor : lsFloor)
         delete floor;
     lsFloor.clear();
@@ -1307,58 +1209,66 @@ void Scene::drawDebugOverlay()
     textOverlay.addTextF("Stage: %d  Time=%d  Timeline=%d",
             stage->id, timeRemaining, timeLine);
 
-    textOverlay.addTextF("GameOver=%s  LevelClear=%s",
-            gameOver ? "YES" : "NO",
-            levelClear ? "YES" : "NO");
+    textOverlay.addTextF("State=%s",
+            currentState == SceneState::Ready ? "Ready" :
+            currentState == SceneState::Playing ? "Playing" :
+            currentState == SceneState::GameOver ? "GameOver" :
+            currentState == SceneState::LevelClear ? "LevelClear" : "Unknown");
 }
 
-int Scene::drawAll()
+void Scene::drawEntities()
 {
-    Ball* ptb;
-    Shot* pts;
-    Floor* pfl;
-    StageResources& res = gameinf.getStageRes();
-
-    drawBackground();
-
-    for (Floor* pt : lsFloor)
+    // Draw floors
+    for (Floor* pfl : lsFloor)
     {
-        pfl = pt;
         draw(pfl);
     }
 
     // Draw shots using polymorphic draw() method
-    for (Shot* pt : lsShoots)
+    for (Shot* pts : lsShoots)
     {
-        pts = pt;
         pts->draw(&appGraph);  // Polymorphic call
     }
 
-    drawMark();
-    drawScore();
-    appGraph.draw(&res.time, 320 - res.time.getWidth() / 2, MAX_Y + 3);
-    appGraph.draw(&fontNum[FONT_BIG], timeRemaining, 300, MAX_Y + 25);
+    // Draw balls
+    for (Ball* ptb : lsBalls)
+    {
+        draw(ptb);
+    }
+}
 
+void Scene::drawPlayers()
+{
     if (gameinf.getPlayer(PLAYER1)->isVisible() && gameinf.getPlayer(PLAYER1)->isPlaying())
         draw(gameinf.getPlayer(PLAYER1));
 
     if (gameinf.getPlayer(PLAYER2))
         if (gameinf.getPlayer(PLAYER2)->isVisible() && gameinf.getPlayer(PLAYER2)->isPlaying())
             draw(gameinf.getPlayer(PLAYER2));
+}
 
-    for (Ball* pt : lsBalls)
-    {
-        ptb = pt;
-        draw(ptb);
-    }
+void Scene::drawHUD()
+{
+    StageResources& res = gameinf.getStageRes();
 
-    if (gameOver)
+    drawMark();
+    drawScore();
+    appGraph.draw(&res.time, 320 - res.time.getWidth() / 2, MAX_Y + 3);
+    appGraph.draw(&fontNum[FONT_BIG], timeRemaining, 300, MAX_Y + 25);
+}
+
+void Scene::drawStateOverlay()
+{
+    StageResources& res = gameinf.getStageRes();
+
+    // Game over overlay
+    if (currentState == SceneState::GameOver)
     {
         if (gameOverSubState == GameOverSubState::ContinueCountdown)
         {
             // Show continue prompt and countdown (no "GAME OVER" text)
             appGraph.draw(&res.continu, 130, 200);
-            appGraph.draw(&fontNum[FONT_HUGE], gameOverCount, 315, 300);
+            appGraph.draw(&fontNum[FONT_HUGE], gameOverCountdown, 315, 300);
         }
         else  // GameOverSubState::Definitive
         {
@@ -1367,9 +1277,10 @@ int Scene::drawAll()
         }
     }
 
+    // Stage clear overlay
     if (pStageClear) pStageClear->drawAll();
 
-    // Draw ready screen if in Ready state and visible (blinking)
+    // Ready screen overlay (if in Ready state and visible - blinking)
     if (currentState == SceneState::Ready && readyVisible)
     {
         // Center the ready sprite on screen
@@ -1377,6 +1288,30 @@ int Scene::drawAll()
         int y = (416 - res.ready.getHeight()) / 2;
         appGraph.draw(&res.ready, x, y);
     }
+}
+
+void Scene::updateDrawFPSCounters()
+{
+    drawTick = SDL_GetTicks();
+    if (drawTick - drawLastTick > 1000)
+    {
+        fps = drawCount;
+        drawCount = 0;
+        drawLastTick = drawTick;
+    }
+    else
+    {
+        drawCount++;
+    }
+}
+
+int Scene::drawAll()
+{
+    drawBackground();
+    drawEntities();
+    drawHUD();
+    drawPlayers();
+    drawStateOverlay();
 
     // Draw bounding boxes if debug mode is enabled
     if (boundingBoxes)
@@ -1387,15 +1322,7 @@ int Scene::drawAll()
     // Finalize render (debug overlay, console, flip)
     finalizeRender();
 
-    drawTick = SDL_GetTicks();
-    if (drawTick - drawLastTick > 1000)
-    {
-        fps = drawCount;
-        drawCount = 0;
-        drawLastTick = drawTick;
-    }
-    else
-        drawCount++;
+    updateDrawFPSCounters();
 
     return 1;
 }

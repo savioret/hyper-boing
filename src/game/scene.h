@@ -16,6 +16,7 @@
 #include "eventmanager.h"
 #include "oncehelper.h"
 #include "action.h"
+#include "collisionsystem.h"
 
 class StageClear;
 
@@ -46,22 +47,6 @@ enum class GameOverSubState
 {
     ContinueCountdown,  ///< Shows countdown (10→0), player can press fire to continue
     Definitive          ///< No continue option, press fire to return to main menu
-};
-
-/**
- * @class FloorColision
- * @brief Auxiliary class for handling collisions between balls and floors
- * 
- * Stores collision information when a ball intersects with a floor,
- * including which floor was hit and at what point.
- */
-class FloorColision
-{
-public:
-    Floor* floor;      ///< Pointer to the floor involved in collision
-    SDL_Point point;   ///< Collision point coordinates
-
-    FloorColision() : floor(nullptr) { point.x = point.y = 0; }
 };
 
 /**
@@ -108,7 +93,6 @@ struct SceneBitmaps
  */
 class Scene : public GameState
 {
-    friend class Ball;
     
 private:
     // Scene state management
@@ -118,9 +102,7 @@ private:
     // Stage and level management
     Stage* stage;                           ///< Current stage definition (balls, floors, timing)
     std::unique_ptr<StageClear> pStageClear; ///< Stage clear screen manager
-    bool levelClear;                        ///< True when all balls are destroyed
-    bool gameOver;                          ///< True when all players are dead or time expired
-    int gameOverCount;                      ///< Countdown timer (10→0 during ContinueCountdown, -2=inactive)
+    int gameOverCountdown;                  ///< Countdown timer (10→0 during Continue mode)
     
     // Time management
     int dSecond;         ///< Deciseconds counter (60 = 1 second)
@@ -156,10 +138,10 @@ private:
     
     // Ball management
     std::vector<Ball*> pendingBalls;  ///< Buffer for balls created from splits
-    
-    // Legacy (deprecated)
-    int change;  ///< Unused legacy variable (TODO: remove)
-    
+
+    // Collision system
+    CollisionSystem collisionSystem;  ///< Handles all collision detection and response
+
     /**
      * @brief Validates ball spawn position against floor collisions
      * 
@@ -175,34 +157,95 @@ private:
 
     /**
      * @brief Generic cleanup helper for removing dead objects
-     * 
+     *
      * Iterates through a list, deleting and removing any objects
      * marked as dead (IGameObject::isDead() returns true).
-     * 
+     *
      * @tparam T Object type (must inherit from IGameObject)
      * @param list The list to clean up
      */
     template<typename T>
     void cleanupDeadObjects(std::list<T*>& list);
-    
+
     /**
-     * @brief Handles ball divisions after collisions
-     * 
-     * Processes the pending ball queue, adding new balls created
-     * from splits to the active ball list.
+     * @brief Clean up dead balls and handle ball splitting
+     *
+     * Special cleanup for balls that creates child balls when
+     * a parent ball is destroyed. Also checks win condition.
      */
-    void processBallDivisions();
-    
+    void cleanupBalls();
+
     /**
-     * @brief Queues a ball to split into smaller balls
-     * 
-     * Creates two child balls from a parent ball and queues them
-     * for addition after cleanup phase.
-     * 
-     * @param ball Parent ball to split
+     * @brief Subscribe to gameplay events
+     *
+     * Sets up event handlers for: time warnings, ball hits, player shoots, player hits.
+     * Called during init().
      */
-    void splitBall(Ball* ball);
-    
+    void subscribeToEvents();
+
+    /**
+     * @brief Unsubscribe from all events
+     *
+     * Cleans up event subscriptions. Called during release().
+     */
+    void unsubscribeFromEvents();
+
+    // Helper methods for drawAll()
+    /**
+     * @brief Draw all game entities (floors, shots, balls)
+     */
+    void drawEntities();
+
+    /**
+     * @brief Draw players with visibility checks
+     */
+    void drawPlayers();
+
+    /**
+     * @brief Draw HUD elements (marks, score, time)
+     */
+    void drawHUD();
+
+    /**
+     * @brief Draw state-specific overlays (game over, ready, stage clear)
+     */
+    void drawStateOverlay();
+
+    /**
+     * @brief Update draw FPS counters
+     */
+    void updateDrawFPSCounters();
+
+    // Helper methods for moveAll()
+    /**
+     * @brief Updates FPS counters
+     */
+    void updateFPSCounters();
+
+    /**
+     * @brief Updates all entities (balls, shots, floors)
+     * @param dt Delta time in seconds
+     */
+    void updateEntities(float dt);
+
+    /**
+     * @brief Cleanup phase - removes dead objects
+     */
+    void cleanupPhase();
+
+    /**
+     * @brief Updates game timer and timeline
+     * @param dt Delta time in seconds
+     */
+    void updateTimer(float dt);
+
+    /**
+     * @brief Updates stage progression and StageClear
+     * @param dt Delta time in seconds
+     * @return New GameState if transitioning, nullptr otherwise
+     */
+    GameState* updateStageProgression(float dt);
+
     // State handlers
     /**
      * @brief Handles Ready state logic
@@ -345,45 +388,6 @@ public:
      */
     Shot* createShot(Player* pl, WeaponType type, int xOffset);
 
-    /**
-     * @brief Handles ball hit logic (split or destroy)
-     * 
-     * @param b Ball that was hit
-     * @return 1 if ball destroyed, 0 if split
-     * @deprecated Use splitBall() instead
-     */
-    int divideBall(Ball* b);
-    
-    /**
-     * @brief Checks all collision pairs (balls/players/shots/floors)
-     * 
-     * Performs collision detection and response for:
-     * - Balls vs Shots (destroy ball)
-     * - Balls vs Floors (bounce)
-     * - Balls vs Players (kill player)
-     * - Shots vs Floors (destroy shot)
-     */
-    void checkColisions();
-    
-    /**
-     * @brief Resolves complex ball-floor collision scenarios
-     * 
-     * Called when a ball collides with multiple floors simultaneously
-     * to determine the correct bounce direction.
-     * 
-     * @param b Ball in collision
-     * @param fc Array of floor collision data (size 2)
-     * @param moved Direction of movement (1=X, 2=Y)
-     */
-    void decide(Ball* b, FloorColision* fc, int moved);
-
-    /**
-     * @brief Calculates score for destroying an object
-     * @param id Object size/type
-     * @return Score value
-     */
-    int objectScore(int id);
-    
     /**
      * @brief Triggers level win sequence
      * 
