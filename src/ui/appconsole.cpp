@@ -175,6 +175,9 @@ void AppConsole::registerBuiltinCommands()
 
     registerCommand("time", "Set stage countdown time: /time <seconds>",
         [this](const std::string& args) { cmdTime(args); });
+    
+    registerCommand("lives", "Set player lives: /lives <player_num> <lives>",
+        [this](const std::string& args) { cmdLives(args); });
 }
 
 void AppConsole::cmdHelp(const std::string& args)
@@ -501,6 +504,66 @@ void AppConsole::cmdTime(const std::string& args)
     // Set the time
     scene->setTimeRemaining(newTime);
     LOG_SUCCESS("Stage time set to %d seconds", newTime);
+}
+
+/**
+ * Command: /lives <player_num> <lives>
+ *
+ * Sets a specific player's life count.
+ * Only works during gameplay (Scene).
+ */
+void AppConsole::cmdLives(const std::string& args)
+{
+    if (args.empty())
+    {
+        LOG_WARNING("Usage: /lives <player_num> <lives>");
+        LOG_INFO("  player_num: 1 or 2");
+        LOG_INFO("  lives: number of lives to set (0-99)");
+        LOG_INFO("  Example: /lives 1 5");
+        return;
+    }
+
+    // Get current scene
+    AppData& appData = AppData::instance();
+    Scene* scene = dynamic_cast<Scene*>(appData.currentScreen.get());
+    if (!scene)
+    {
+        LOG_WARNING("Lives command only available during gameplay");
+        return;
+    }
+
+    // Parse arguments
+    std::istringstream iss(args);
+    int playerNum = 0;
+    int newLives = 0;
+    iss >> playerNum >> newLives;
+
+    // Validate player number
+    if (playerNum < 1 || playerNum > 2)
+    {
+        LOG_ERROR("Invalid player number: %d (must be 1 or 2)", playerNum);
+        return;
+    }
+
+    // Validate lives count
+    if (newLives < 0 || newLives > 99)
+    {
+        LOG_ERROR("Invalid lives count: %d (must be 0-99)", newLives);
+        return;
+    }
+
+    // Get the player
+    Player* player = scene->getPlayer(playerNum - 1);  // Convert to 0-indexed
+    if (!player)
+    {
+        LOG_WARNING("Player %d is not active", playerNum);
+        return;
+    }
+
+    // Set the lives (we need to access the private member, so we'll use a friend or add a setter)
+    // For now, let's add a public setter method to Player class
+    player->setLives(newLives);
+    LOG_SUCCESS("Player %d lives set to %d", playerNum, newLives);
 }
 
 void AppConsole::registerCommand(const std::string& name, const std::string& desc, CommandHandler handler)

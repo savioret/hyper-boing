@@ -34,19 +34,25 @@ RenderProps RenderProps::fromSprite2D(Sprite2D* spr)
 int Graph::init(const char* title, int _mode) {
     mode = _mode;
 
-    if (mode == RENDERMODE_NORMAL)
-        return initNormal(title);
-    else
+    if (mode == RENDERMODE_EXCLUSIVE)
         return initEx(title);
+    else
+    {
+        // For windowed modes, calculate window size based on mode
+        int windowWidth = (mode == RENDERMODE_WINDOWED_2X) ? RES_X * 2 : RES_X;
+        int windowHeight = (mode == RENDERMODE_WINDOWED_2X) ? RES_Y * 2 : RES_Y;
+        return initNormal(title, windowWidth, windowHeight);
+    }
 }
 
-int Graph::initNormal(const char* title) {
+int Graph::initNormal(const char* title, int windowWidth, int windowHeight) {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         LOG_ERROR("SDL could not initialize! SDL_Error: %s", SDL_GetError());
         return 0;
     }
 
-    window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, RES_X, RES_Y, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
+                              windowWidth, windowHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     if (window == nullptr) {
         LOG_ERROR("Window could not be created! SDL_Error: %s", SDL_GetError());
         return 0;
@@ -106,11 +112,26 @@ int Graph::initEx(const char* title) {
     return 1;
 }
 
+void Graph::setWindowSize(int windowWidth, int windowHeight) {
+    if (window) {
+        SDL_SetWindowSize(window, windowWidth, windowHeight);
+    }
+}
+
 void Graph::setFullScreen(bool fs) {
     if (fs)
+    {
         SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+    }
     else
+    {
         SDL_SetWindowFullscreen(window, 0);
+        
+        // Restore window size based on current mode
+        int windowWidth = (mode == RENDERMODE_WINDOWED_2X) ? RES_X * 2 : RES_X;
+        int windowHeight = (mode == RENDERMODE_WINDOWED_2X) ? RES_Y * 2 : RES_Y;
+        setWindowSize(windowWidth, windowHeight);
+    }
 }
 
 void Graph::release() {

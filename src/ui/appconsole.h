@@ -111,6 +111,7 @@ private:
     void cmdBoxes(const std::string& args);
     void cmdEvents(const std::string& args);
     void cmdTime(const std::string& args);
+    void cmdLives(const std::string& args);
 
 public:
     // Singleton accessor

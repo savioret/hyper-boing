@@ -167,10 +167,10 @@ int StageClear::moveAll()
         {
             // Check if player wants to skip counting
             bool skipRequested = false;
-            if (appInput.key(gameinf.getKeys()[PLAYER1].shoot))
+            if (appInput.key(gameinf.getKeys(PLAYER1).getShoot()))
                 skipRequested = true;
             else if (gameinf.getPlayer(PLAYER2))
-                if (appInput.key(gameinf.getKeys()[PLAYER2].shoot))
+                if (appInput.key(gameinf.getKeys(PLAYER2).getShoot()))
                     skipRequested = true;
 
             if (skipRequested)
@@ -215,14 +215,14 @@ int StageClear::moveAll()
         case LevelClearSubState::WaitingForInput:
         {
             // Wait for player to press fire button to continue
-            if (appInput.key(gameinf.getKeys()[PLAYER1].shoot))
+            if (appInput.key(gameinf.getKeys(PLAYER1).getShoot()))
             {
                 LOG_INFO("StageClear: Player 1 pressed fire, starting curtain close");
                 setSubState(LevelClearSubState::CurtainClosing);
             }
             else if (gameinf.getPlayer(PLAYER2))
             {
-                if (appInput.key(gameinf.getKeys()[PLAYER2].shoot))
+                if (appInput.key(gameinf.getKeys(PLAYER2).getShoot()))
                 {
                     LOG_INFO("StageClear: Player 2 pressed fire, starting curtain close");
                     setSubState(LevelClearSubState::CurtainClosing);

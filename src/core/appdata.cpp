@@ -5,6 +5,7 @@
 #include "stage.h"
 #include "stageloader.h"
 #include "main.h"
+#include "logger.h"
 #include <cstdlib>
 
 // Temporarily undefine macros that conflict with member names during construction
@@ -20,6 +21,40 @@
 
 // Initialize static singleton instance
 std::unique_ptr<AppData> AppData::s_instance = nullptr;
+
+
+void Keys::setLeft(SDL_Scancode l) 
+{ 
+    left = l;
+    LOG_DEBUG("Set Left key to %d %s", l, Keys::getKeyName(l));
+}
+
+void Keys::setRight(SDL_Scancode r) 
+{ 
+    right = r;
+    LOG_DEBUG("Set Right key to %d %s", r, Keys::getKeyName(r));
+}
+
+void Keys::setShoot(SDL_Scancode s) 
+{ 
+    shoot = s;
+    LOG_DEBUG("Set Shoot key to %d %s", s, Keys::getKeyName(s));
+}
+
+void Keys::set(SDL_Scancode lf, SDL_Scancode rg, SDL_Scancode sh)
+{
+    setLeft(lf);
+    setRight(rg);
+    setShoot(sh);
+}
+
+const char* Keys::getKeyName(SDL_Scancode scancode)
+{
+    const char* name = SDL_GetScancodeName(scancode);
+    return name ? name : "Unknown";
+}
+
+
 
 AppData::AppData()
     : numPlayers(1), numStages(6), currentStage(1), inMenu(true),
@@ -61,30 +96,6 @@ void AppData::destroy()
 void AppData::init()
 {
     inMenu = true;
-
-    // Initialize Player 1 sprites
-    // bitmaps.player[PLAYER1][0].init(&appGraph, "assets/graph/players/p1k1r.png", 0, 3);
-    // bitmaps.player[PLAYER1][1].init(&appGraph, "assets/graph/players/p1k2r.png", 4, 3);
-    // bitmaps.player[PLAYER1][2].init(&appGraph, "assets/graph/players/p1k3r.png", 6, 3);
-    // bitmaps.player[PLAYER1][3].init(&appGraph, "assets/graph/players/p1k4r.png", 4, 3);
-    // bitmaps.player[PLAYER1][4].init(&appGraph, "assets/graph/players/p1k5r.png", 4, 3);
-
-    bitmaps.player[PLAYER1][5].init(&appGraph, "assets/graph/players/p1shoot1.png", 13, 0);
-    bitmaps.player[PLAYER1][6].init(&appGraph, "assets/graph/players/p1shoot2.png", 13, 3);
-    bitmaps.player[PLAYER1][7].init(&appGraph, "assets/graph/players/p1win.png", 13, 4);
-    bitmaps.player[PLAYER1][8].init(&appGraph, "assets/graph/players/p1dead.png");
-
-    // Initialize Player 2 sprites
-    // bitmaps.player[PLAYER2][0].init(&appGraph, "assets/graph/players/p2k1r.png", 0, 3);
-    // bitmaps.player[PLAYER2][1].init(&appGraph, "assets/graph/players/p2k2r.png", 4, 3);
-    // bitmaps.player[PLAYER2][2].init(&appGraph, "assets/graph/players/p2k3r.png", 6, 3);
-    // bitmaps.player[PLAYER2][3].init(&appGraph, "assets/graph/players/p2k4r.png", 4, 3);
-    // bitmaps.player[PLAYER2][4].init(&appGraph, "assets/graph/players/p2k5r.png", 4, 3);
-
-    bitmaps.player[PLAYER2][5].init(&appGraph, "assets/graph/players/p2shoot1.png", 13, 0);
-    bitmaps.player[PLAYER2][6].init(&appGraph, "assets/graph/players/p2shoot2.png", 13, 3);
-    bitmaps.player[PLAYER2][7].init(&appGraph, "assets/graph/players/p2win.png", 13, 4);
-    bitmaps.player[PLAYER2][8].init(&appGraph, "assets/graph/players/p2dead.png");
 
     // Initialize default key bindings
     playerKeys[PLAYER1].set(SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT, SDL_SCANCODE_SPACE);
@@ -154,6 +165,18 @@ void AppData::initStageResources()
     stageRes.gameover.init(&appGraph, "assets/graph/ui/gameover.png", 16, 16);
     stageRes.continu.init(&appGraph, "assets/graph/ui/continue.png", 16, 16);
     stageRes.ready.init(&appGraph, "assets/graph/ui/ready.png", 16, 16);
+
+    // Players sprites
+    bitmaps.player[PLAYER1][5].init(&appGraph, "assets/graph/players/p1shoot1.png", 13, 0);
+    bitmaps.player[PLAYER1][6].init(&appGraph, "assets/graph/players/p1shoot2.png", 13, 3);
+    bitmaps.player[PLAYER1][7].init(&appGraph, "assets/graph/players/p1win.png", 13, 4);
+    bitmaps.player[PLAYER1][8].init(&appGraph, "assets/graph/players/p1dead.png");
+
+    bitmaps.player[PLAYER2][5].init(&appGraph, "assets/graph/players/p2shoot1.png", 13, 0);
+    bitmaps.player[PLAYER2][6].init(&appGraph, "assets/graph/players/p2shoot2.png", 13, 3);
+    bitmaps.player[PLAYER2][7].init(&appGraph, "assets/graph/players/p2win.png", 13, 4);
+    bitmaps.player[PLAYER2][8].init(&appGraph, "assets/graph/players/p2dead.png");
+
 
     // Load font sprites
     int offs[10] = { 0, 22, 44, 71, 93, 120, 148, 171, 198, 221 };

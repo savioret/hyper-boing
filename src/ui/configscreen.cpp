@@ -9,7 +9,9 @@
 
 ConfigScreen::ConfigScreen()
     : state(ConfigState::Normal), selectedOption(0), waitingForKey(-1), tempRenderMode(0),
-      upPressed(false), downPressed(false), leftPressed(false), rightPressed(false)
+      upPressed(false), downPressed(false), leftPressed(false), rightPressed(false),
+      enterPressed(false), escapePressed(false), editModeDelay(0.0f), initialDelay(INITIAL_DELAY_TIME),
+      postConfigDelay(0.0f)
 {
     std::memset(tempKeys, 0, sizeof(tempKeys));
 }
@@ -21,9 +23,9 @@ int ConfigScreen::init()
     
     for (int player = 0; player < 2; player++)
     {
-        tempKeys[player][0] = gameinf.getKeys()[player].left;
-        tempKeys[player][1] = gameinf.getKeys()[player].right;
-        tempKeys[player][2] = gameinf.getKeys()[player].shoot;
+        tempKeys[player][0] = gameinf.getKeys(player).getLeft();
+        tempKeys[player][1] = gameinf.getKeys(player).getRight();
+        tempKeys[player][2] = gameinf.getKeys(player).getShoot();
     }
     
     tempRenderMode = globalmode;
@@ -35,6 +37,11 @@ int ConfigScreen::init()
         fontRenderer.setScale(2.0f); // Scale 2x for readability
     }
     
+    // Setup custom modal overlay (centered on screen, large text)
+    configModalOverlay.init(&appGraph);
+    configModalOverlay.addSection("modal", 100, 150, 440, 120, 10, 30, 240);
+    configModalOverlay.getSection("modal").setFont(&fontRenderer);
+    
     return 1;
 }
 
@@ -42,13 +49,76 @@ GameState* ConfigScreen::moveAll(float dt)
 {
     GameState::updateScrollingBackground();
     
-    if (state == ConfigState::WaitingKey)
+    // Handle initial delay to prevent capturing ENTER from menu
+    if (initialDelay > 0.0f)
+    {
+        initialDelay -= dt;
+        // Don't process any input during initial delay
+        return nullptr;
+    }
+    
+    // Handle post-configuration delay to prevent navigation keys just bound
+    if (postConfigDelay > 0.0f)
+    {
+        postConfigDelay -= dt;
+        // Only allow ESC and F1 during post-config delay (exit options)
+        if (appInput.key(SDL_SCANCODE_F1))
+        {
+            saveConfiguration();
+            return new Menu();
+        }
+        
+        if (appInput.key(SDL_SCANCODE_ESCAPE))
+        {
+            if (!escapePressed)
+            {
+                cancelConfiguration();
+                escapePressed = true;
+                return new Menu();
+            }
+        }
+        else escapePressed = false;
+        
+        // Don't process navigation or ENTER during post-config delay
+        return nullptr;
+    }
+    
+    if (state == ConfigState::EnteringEdit)
+    {
+        // Wait for ENTER key to be released before accepting new key input
+        editModeDelay -= dt;
+        
+        if (editModeDelay <= 0.0f && !appInput.key(SDL_SCANCODE_RETURN))
+        {
+            // ENTER has been released and delay has passed, now ready to capture new key
+            state = ConfigState::WaitingKey;
+        }
+        
+        // Allow ESC to cancel immediately
+        if (appInput.key(SDL_SCANCODE_ESCAPE))
+        {
+            if (!escapePressed)
+            {
+                state = ConfigState::Normal;
+                postConfigDelay = POST_CONFIG_DELAY_TIME;  // Add delay after canceling
+                escapePressed = true;
+            }
+        }
+        else escapePressed = false;
+    }
+    else if (state == ConfigState::WaitingKey)
     {
         const Uint8* keystate = SDL_GetKeyboardState(nullptr);
         
+        // Skip ENTER and ESCAPE from being captured as key bindings
         for (int i = (int)SDL_SCANCODE_A; i < (int)SDL_NUM_SCANCODES; i++)
         {
             SDL_Scancode scancode = static_cast<SDL_Scancode>(i);
+            
+            // Skip ENTER and ESCAPE
+            if (scancode == SDL_SCANCODE_RETURN || scancode == SDL_SCANCODE_ESCAPE)
+                continue;
+            
             if (keystate[scancode])
             {
                 int player = selectedOption / 3;
@@ -56,18 +126,23 @@ GameState* ConfigScreen::moveAll(float dt)
                 tempKeys[player][keyIndex] = scancode;
                 
                 state = ConfigState::Normal;
-                SDL_Delay(200);
+                postConfigDelay = POST_CONFIG_DELAY_TIME;  // Add delay after key configured
                 break;
             }
         }
         
         if (appInput.key(SDL_SCANCODE_ESCAPE))
         {
-            state = ConfigState::Normal;
-            SDL_Delay(200);
+            if (!escapePressed)
+            {
+                state = ConfigState::Normal;
+                postConfigDelay = POST_CONFIG_DELAY_TIME;  // Add delay after canceling
+                escapePressed = true;
+            }
         }
+        else escapePressed = false;
     }
-    else
+    else // ConfigState::Normal
     {
         if (appInput.key(SDL_SCANCODE_UP))
         {
@@ -93,13 +168,18 @@ GameState* ConfigScreen::moveAll(float dt)
         
         if (appInput.key(SDL_SCANCODE_RETURN))
         {
-            if (selectedOption < 6)
+            if (!enterPressed)
             {
-                state = ConfigState::WaitingKey;
-                waitingForKey = selectedOption;
-                SDL_Delay(200);
+                if (selectedOption < 6)
+                {
+                    state = ConfigState::EnteringEdit;
+                    waitingForKey = selectedOption;
+                    editModeDelay = EDIT_MODE_DELAY_TIME;
+                }
+                enterPressed = true;
             }
         }
+        else enterPressed = false;
         
         if (selectedOption == 6)
         {
@@ -107,7 +187,10 @@ GameState* ConfigScreen::moveAll(float dt)
             {
                 if (!leftPressed)
                 {
-                    tempRenderMode = RENDERMODE_NORMAL;
+                    // Cycle backwards through modes
+                    tempRenderMode--;
+                    if (tempRenderMode < RENDERMODE_NORMAL)
+                        tempRenderMode = RENDERMODE_WINDOWED_2X;
                     leftPressed = true;
                 }
             }
@@ -117,7 +200,10 @@ GameState* ConfigScreen::moveAll(float dt)
             {
                 if (!rightPressed)
                 {
-                    tempRenderMode = RENDERMODE_EXCLUSIVE;
+                    // Cycle forwards through modes
+                    tempRenderMode++;
+                    if (tempRenderMode > RENDERMODE_WINDOWED_2X)
+                        tempRenderMode = RENDERMODE_NORMAL;
                     rightPressed = true;
                 }
             }
@@ -132,9 +218,14 @@ GameState* ConfigScreen::moveAll(float dt)
         
         if (appInput.key(SDL_SCANCODE_ESCAPE))
         {
-            cancelConfiguration();
-            return new Menu();
+            if (!escapePressed)
+            {
+                cancelConfiguration();
+                escapePressed = true;
+                return new Menu();
+            }
         }
+        else escapePressed = false;
     }
     
     return nullptr;
@@ -145,10 +236,58 @@ int ConfigScreen::drawAll()
     GameState::drawScrollingBackground();
     drawUI();
     
+    // Draw custom modal overlay if in edit mode (not the debug overlay)
+    if (state == ConfigState::EnteringEdit || state == ConfigState::WaitingKey)
+    {
+        drawConfigModal();
+    }
+    
     // Finalize render (debug overlay, console, flip)
     finalizeRender();
     
     return 1;
+}
+
+void ConfigScreen::drawConfigModal()
+{
+    // Draw semi-transparent dark overlay backdrop
+    SDL_SetRenderDrawBlendMode(appGraph.getRenderer(), SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(appGraph.getRenderer(), 0, 0, 0, 180);
+    SDL_Rect backdrop = { 0, 0, RES_X, RES_Y };
+    SDL_RenderFillRect(appGraph.getRenderer(), &backdrop);
+    
+    // Draw modal box border (background is drawn by TextOverlay)
+    SDL_SetRenderDrawColor(appGraph.getRenderer(), 200, 200, 220, 255);
+    SDL_Rect modalBox = { 100, 150, 440, 120 };
+    SDL_RenderDrawRect(appGraph.getRenderer(), &modalBox);
+    
+    // Prepare text content
+    const char* actionNames[] = {
+        "PLAYER 1 - LEFT",
+        "PLAYER 1 - RIGHT", 
+        "PLAYER 1 - SHOOT",
+        "PLAYER 2 - LEFT",
+        "PLAYER 2 - RIGHT",
+        "PLAYER 2 - SHOOT"
+    };
+    
+    // Clear and populate modal overlay
+    configModalOverlay.clear("modal");
+    configModalOverlay.addTextFS("modal", "CONFIGURING: %s", actionNames[selectedOption]);
+    configModalOverlay.addText("", "modal");  // Empty line for spacing
+    
+    if (state == ConfigState::WaitingKey)
+    {
+        configModalOverlay.addText("Press any key...", "modal");
+        configModalOverlay.addText("(ESC to cancel)", "modal");
+    }
+    else // EnteringEdit
+    {
+        configModalOverlay.addText("Release ENTER...", "modal");
+    }
+    
+    // Render the modal overlay
+    configModalOverlay.render();
 }
 
 void ConfigScreen::drawUI()
@@ -198,7 +337,13 @@ void ConfigScreen::drawUI()
     y += 10;
     
     drawText("Screen Mode:", xLabel, y, selectedOption == 6);
-    const char* modeText = (tempRenderMode == RENDERMODE_NORMAL) ? "Windowed" : "Fullscreen";
+    const char* modeText;
+    if (tempRenderMode == RENDERMODE_NORMAL)
+        modeText = "Windowed 1x";
+    else if (tempRenderMode == RENDERMODE_WINDOWED_2X)
+        modeText = "Windowed 2x";
+    else
+        modeText = "Fullscreen";
     drawText(modeText, xKey, y, false);
     y += lineHeight + 10;
     
@@ -206,14 +351,11 @@ void ConfigScreen::drawUI()
     SDL_RenderDrawLine(appGraph.getRenderer(), 60, y, 580, y);
     y += 10;
     
-    if (state == ConfigState::WaitingKey)
-    {
-        drawText("Press a key... (ESC to cancel)", 120, y, false);
-    }
-    else
+    // Instructions at bottom (only when not in edit mode)
+    if (state == ConfigState::Normal)
     {
         drawText("Arrows: Navigate  |  ENTER: Change key", 80, y, false);
-        drawText("F1: Save  |  ESC: Cancel", 160, y + 15, false);
+        drawText("F1: Save  |  ESC: Cancel", 160, y + 20, false);
     }
 }
 
@@ -222,7 +364,7 @@ void ConfigScreen::drawText(const char* text, int x, int y, bool selected)
     if (selected)
     {
         SDL_SetRenderDrawColor(appGraph.getRenderer(), 255, 255, 0, 255);
-        SDL_Rect selRect = { x - 10, y+10, 5, 16 };
+        SDL_Rect selRect = { x - 10, y, 5, 16 };
         SDL_RenderFillRect(appGraph.getRenderer(), &selRect);
     }
     fontRenderer.text(text, x, y);
@@ -242,20 +384,17 @@ void ConfigScreen::drawDebugOverlay()
     // Call base class to populate default section
     GameState::drawDebugOverlay();
 
-    textOverlay.addTextF("Selected = %d  State = %d",
-            selectedOption, (int)state);
+    // Show current state name for easier debugging
+    const char* stateNames[] = { "Normal", "EnteringEdit", "WaitingKey" };
+    textOverlay.addTextF("Selected = %d  State = %s", selectedOption, stateNames[(int)state]);
+    textOverlay.addTextF("editDelay=%.2f  initialDelay=%.2f  postCfgDelay=%.2f", 
+                         editModeDelay, initialDelay, postConfigDelay);
 }
 
 void ConfigScreen::drawKeyName(SDL_Scancode key, int x, int y)
 {
-    const char* name = getKeyName(key);
+    const char* name = Keys::getKeyName(key);
     fontRenderer.text(name, x, y);
-}
-
-const char* ConfigScreen::getKeyName(SDL_Scancode scancode) const
-{
-    const char* name = SDL_GetScancodeName(scancode);
-    return name ? name : "Unknown";
 }
 
 void ConfigScreen::saveConfiguration()
@@ -264,9 +403,9 @@ void ConfigScreen::saveConfiguration()
     
     for (int player = 0; player < 2; player++)
     {
-        appData.getKeys()[player].setLeft(tempKeys[player][0]);
-        appData.getKeys()[player].setRight(tempKeys[player][1]);
-        appData.getKeys()[player].setShoot(tempKeys[player][2]);
+        appData.getKeys(player).setLeft(tempKeys[player][0]);
+        appData.getKeys(player).setRight(tempKeys[player][1]);
+        appData.getKeys(player).setShoot(tempKeys[player][2]);
     }
     
     int oldMode = globalmode;
@@ -274,8 +413,28 @@ void ConfigScreen::saveConfiguration()
     
     if (oldMode != globalmode)
     {
-        bool isFullscreen = (globalmode == RENDERMODE_EXCLUSIVE);
-        appData.graph.setFullScreen(isFullscreen);
+        // Update the mode in the graph instance
+        appData.graph.setMode(globalmode);
+        
+        // Handle mode transitions
+        if (globalmode == RENDERMODE_EXCLUSIVE)
+        {
+            // Switch to fullscreen
+            appData.graph.setFullScreen(true);
+        }
+        else if (oldMode == RENDERMODE_EXCLUSIVE)
+        {
+            // Switch from fullscreen to windowed
+            appData.graph.setFullScreen(false);
+        }
+        else
+        {
+            // Switching between windowed modes (1x <-> 2x)
+            // Just resize the window
+            int windowWidth = (globalmode == RENDERMODE_WINDOWED_2X) ? RES_X * 2 : RES_X;
+            int windowHeight = (globalmode == RENDERMODE_WINDOWED_2X) ? RES_Y * 2 : RES_Y;
+            appData.graph.setWindowSize(windowWidth, windowHeight);
+        }
     }
     
     appData.config.save();

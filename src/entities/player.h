@@ -171,7 +171,8 @@ public:
     // Setters
     // setX, setY are inherited
     void setPlaying(bool p) { playing = p; }
-    
+    void setLives(int l) { lives = l; }
+
     // For access during refactoring
     friend class Scene;
     friend class Shoot;

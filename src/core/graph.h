@@ -32,6 +32,13 @@ constexpr int RENDERMODE_NORMAL = 1;
 constexpr int RENDERMODE_EXCLUSIVE = 2;
 
 /**
+ * @brief Windowed 2x rendering mode
+ * 
+ * Windowed mode with 2x resolution (1280x960).
+ */
+constexpr int RENDERMODE_WINDOWED_2X = 3;
+
+/**
  * @brief Screen horizontal resolution in pixels
  */
 constexpr int RES_X = 640;
@@ -117,9 +124,11 @@ public:
      * @brief Initialize graphics system in normal windowed mode
      * 
      * @param title Window title to display
+     * @param windowWidth Window width in pixels
+     * @param windowHeight Window height in pixels
      * @return 0 on success, non-zero on failure
      */
-    int initNormal(const char* title);
+    int initNormal(const char* title, int windowWidth, int windowHeight);
 
     /**
      * @brief Initialize graphics system in exclusive mode
@@ -230,6 +239,21 @@ public:
      * @param fs If true, switch to fullscreen; if false, switch to windowed mode
      */
     void setFullScreen(bool fs);
+
+    /**
+     * @brief Set the window size
+     * 
+     * @param windowWidth Window width in pixels
+     * @param windowHeight Window height in pixels
+     */
+    void setWindowSize(int windowWidth, int windowHeight);
+
+    /**
+     * @brief Set the render mode
+     * 
+     * @param newMode The new render mode to set
+     */
+    void setMode(int newMode) { mode = newMode; }
 
     /**
      * @brief Draw text on screen

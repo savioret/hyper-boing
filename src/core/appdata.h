@@ -18,23 +18,27 @@ class GameState;
 /**
  * Keys class
  * Stores keyboard mapping for each player.
+ * Members are now private with proper getters/setters for encapsulation.
  */
 class Keys
 {
-public:
+private:
     SDL_Scancode left;
     SDL_Scancode right;
     SDL_Scancode shoot;
 
-    void setLeft(SDL_Scancode l) { left = l; }
-    void setRight(SDL_Scancode r) { right = r; }
-    void setShoot(SDL_Scancode s) { shoot = s; }
-    void set(SDL_Scancode lf, SDL_Scancode rg, SDL_Scancode sh)
-    {
-        left = lf;
-        right = rg;
-        shoot = sh;
-    }
+public:
+    // Getters
+    SDL_Scancode getLeft() const { return left; }
+    SDL_Scancode getRight() const { return right; }
+    SDL_Scancode getShoot() const { return shoot; }
+    
+    // Setters
+    void setLeft(SDL_Scancode l);
+    void setRight(SDL_Scancode r);
+    void setShoot(SDL_Scancode s);
+    void set(SDL_Scancode lf, SDL_Scancode rg, SDL_Scancode sh);
+    static const char* getKeyName(SDL_Scancode scancode);
 };
 
 /**
@@ -164,7 +168,7 @@ public:
 
     // Accessors for convenience (to ease migration)
     Player* getPlayer(int p) { return reinterpret_cast<Player**>(player)[p]; }
-    Keys* getKeys() { return playerKeys; }
+    Keys& getKeys(int playerIndex) { return playerKeys[playerIndex]; }
     GameBitmaps& getBmp() { return bitmaps; }
     StageResources& getStageRes() { return stageRes; }  ///< Get shared stage resources
     Stage* getStages() { return stages.data(); }

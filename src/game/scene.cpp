@@ -26,8 +26,7 @@ Scene::Scene(Stage* stg, std::unique_ptr<StageClear> pstgclr)
       moveTick(0), moveLastTick(0), moveCount(0),
       drawTick(0), drawLastTick(0), drawCount(0),
       boundingBoxes(false),
-      readyBlinkCount(0), readyBlinkTimer(0), readyVisible(true),
-      gameOverInputDelay(0)
+      readyVisible(true)
 {
     gameinf.isMenu() = false;
     if (pStageClear) pStageClear->scene = this;
@@ -52,9 +51,9 @@ int Scene::init()
     if (!pStageClear)
     {
         currentState = SceneState::Ready;
-        readyBlinkCount = 0;
-        readyBlinkTimer = 0;
         readyVisible = true;
+        // 13 toggles = 6.5 visible↔invisible cycles, ends invisible
+        readyBlinkAction = blink(&readyVisible, 0.2f, 9);
     }
 
     gameinf.getPlayer(PLAYER1)->setX((float)stage->xpos[PLAYER1]);
@@ -769,40 +768,30 @@ GameState* Scene::moveAll(float dt)
         return new Menu;
     }
 
-    // Handle ready screen blinking sequence
+    // Handle ready screen blinking sequence (time-based using BlinkAction)
     if (currentState == SceneState::Ready)
     {
-        if ( !readyBlinkCount && !readyBlinkTimer )
+        // Process time=0 objects on first frame of ready screen
+        if (once("ready_screen_shown"))
         {
-            // Process time=0 objects now that ready screen is shown
             checkSequence();
             LOG_DEBUG("Ready shown, processing time=0 stage objects.");
         }
 
-        readyBlinkTimer++;
-
-        // 200ms per blink at ~60fps = 12 frames per toggle
-        if (readyBlinkTimer >= 12)
+        // Update blinking action
+        if (readyBlinkAction && !readyBlinkAction->isFinished())
         {
-            readyBlinkTimer = 0;
-            readyVisible = !readyVisible;
+            readyBlinkAction->update(dt);
+        }
+        else
+        {
+            // Blinking complete, transition to Playing state
+            currentState = SceneState::Playing;
 
-            // Count a blink when going from visible to invisible
-            if (!readyVisible)
-            {
-                readyBlinkCount++;
-
-                // After 6 complete blinks, transition to Playing state
-                if (readyBlinkCount >= 6)
-                {
-                    currentState = SceneState::Playing;
-
-                    // Fire STAGE_STARTED event (countdown complete, gameplay begins)
-                    GameEventData startedEvent(GameEventType::STAGE_STARTED);
-                    startedEvent.stageStarted.stageId = stage->id;
-                    EVENT_MGR.trigger(startedEvent);
-                }
-            }
+            // Fire STAGE_STARTED event (countdown complete, gameplay begins)
+            GameEventData startedEvent(GameEventType::STAGE_STARTED);
+            startedEvent.stageStarted.stageId = stage->id;
+            EVENT_MGR.trigger(startedEvent);
         }
 
         // During ready screen, skip all game logic but allow exit
@@ -811,18 +800,29 @@ GameState* Scene::moveAll(float dt)
 
     if (gameOver)
     {
-        // Decrement input delay counter
-        if (gameOverInputDelay > 0)
+        // Update input delay action (time-based, not frame-based)
+        // NOTE: For more complex delayed callbacks, use ActionSequence:
+        //   auto action = std::make_unique<ActionSequence>();
+        //   action->then(delay(2.0f))           // Wait 2 seconds
+        //        ->then(call([]() {             // Then execute callback
+        //            LOG_INFO("Executed after 2 seconds");
+        //        }));
+        //
+        //   // Update each frame in moveAll():
+        //   if (action && !action->isFinished()) {
+        //       action->update(dt);
+        //   }
+        if (gameOverInputDelay && !gameOverInputDelay->isFinished())
         {
-            gameOverInputDelay--;
+            gameOverInputDelay->update(dt);
         }
-        
+
         for (i = 0; i < 2; i++)
         {
             if (gameinf.getPlayer(i))
             {
                 // Only accept input after delay has expired
-                if (gameOverInputDelay == 0 && appInput.key(gameinf.getKeys()[i].shoot))
+                if ((!gameOverInputDelay || gameOverInputDelay->isFinished()) && appInput.key(gameinf.getKeys(i).getShoot()))
                 {
                     if (gameOverSubState == GameOverSubState::ContinueCountdown)
                     {
@@ -856,9 +856,9 @@ GameState* Scene::moveAll(float dt)
                 !gameinf.getPlayer(i)->isDead() && 
                 gameinf.getPlayer(i)->isPlaying())
             {
-                if (appInput.key(gameinf.getKeys()[i].shoot)) { shoot(gameinf.getPlayer(i)); }
-                else if (appInput.key(gameinf.getKeys()[i].left)) gameinf.getPlayer(i)->moveLeft();
-                else if (appInput.key(gameinf.getKeys()[i].right)) gameinf.getPlayer(i)->moveRight();
+                if (appInput.key(gameinf.getKeys(i).getShoot())) { shoot(gameinf.getPlayer(i)); }
+                else if (appInput.key(gameinf.getKeys(i).getLeft())) gameinf.getPlayer(i)->moveLeft();
+                else if (appInput.key(gameinf.getKeys(i).getRight())) gameinf.getPlayer(i)->moveRight();
                 else gameinf.getPlayer(i)->stop();
             }
         }
@@ -880,7 +880,7 @@ GameState* Scene::moveAll(float dt)
                 {
                     gameOver = true;
                     gameOverCount = 10;
-                    gameOverInputDelay = 120;  // ~2 seconds at 60fps
+                    gameOverInputDelay = std::make_unique<DelayAction>(2.0f);  // 2 seconds (time-based)
                     currentState = SceneState::GameOver;  // Prevent player collisions during game over
                     gameOverSubState = GameOverSubState::ContinueCountdown;  // Allow continue
 
@@ -900,7 +900,7 @@ GameState* Scene::moveAll(float dt)
                 {
                     gameOver = true;
                     gameOverCount = 10;
-                    gameOverInputDelay = 120;  // ~2 seconds at 60fps
+                    gameOverInputDelay = std::make_unique<DelayAction>(2.0f);  // 2 seconds (time-based)
                     currentState = SceneState::GameOver;  // Prevent player collisions during game over
                     gameOverSubState = GameOverSubState::ContinueCountdown;  // Allow continue
 
@@ -984,7 +984,7 @@ GameState* Scene::moveAll(float dt)
         {
             gameOver = true;
             gameOverCount = 10;
-            gameOverInputDelay = 120;  // ~2 seconds at 60fps
+            gameOverInputDelay = std::make_unique<DelayAction>(2.0f);  // 2 seconds (time-based)
             currentState = SceneState::GameOver;
             gameOverSubState = GameOverSubState::ContinueCountdown;
 
@@ -1047,9 +1047,9 @@ GameState* Scene::moveAll(float dt)
             // Stage clear opening animation complete, enable ready screen
             pStageClear.reset();
             currentState = SceneState::Ready;
-            readyBlinkCount = 0;
-            readyBlinkTimer = 0;
             readyVisible = true;
+            // 13 toggles = 6.5 visible↔invisible cycles, ends invisible
+            readyBlinkAction = blink(&readyVisible, 0.2f, 13);
         }
     }
     else if (currentState == SceneState::Playing) // Only check sequence during playing state

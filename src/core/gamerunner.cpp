@@ -28,11 +28,7 @@ bool GameRunner::initialize()
     // Initialize random number generator with current time as seed
     std::srand(static_cast<unsigned int>(std::time(nullptr)));
     LOG_DEBUG("Random number generator initialized");
-    
-    // Load configuration
-    appData.config.load();
-    LOG_DEBUG("Configuration loaded");
-    
+
     // Initialize input subsystem
     if (!appData.input.init())
     {
@@ -40,14 +36,6 @@ bool GameRunner::initialize()
         return false;
     }
     LOG_SUCCESS("Input subsystem initialized");
-    
-    // Initialize graphics subsystem
-    if (!appData.graph.init("Hyper Boing", appData.renderMode))
-    {
-        LOG_ERROR("Failed to initialize graphics subsystem");
-        return false;
-    }
-    LOG_SUCCESS("Graphics subsystem initialized");
     
     // Initialize audio subsystem (SDL_mixer)
     if (!AudioManager::instance().init())
@@ -82,6 +70,18 @@ bool GameRunner::initialize()
     // Preload menu music to avoid delays when returning from other screens
     LOG_INFO("Preloading menu music...");
     appData.preloadMenuMusic();
+    
+    // Load configuration
+    appData.config.load();
+    LOG_DEBUG("Configuration loaded");
+
+    // Initialize graphics subsystem
+    if (!appData.graph.init("Hyper Boing", appData.renderMode))
+    {
+        LOG_ERROR("Failed to initialize graphics subsystem");
+        return false;
+    }
+    LOG_SUCCESS("Graphics subsystem initialized");
     
     // Create and initialize first screen (Menu)
     appData.currentScreen = std::make_unique<Menu>();

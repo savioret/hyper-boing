@@ -99,7 +99,7 @@ GameState* SelectPlayer::moveAll(float dt)
     if (appInput.key(SDL_SCANCODE_ESCAPE))
         return new Menu();
 
-    if (appInput.key(gameinf.getKeys()[PLAYER1].left) || appInput.key(gameinf.getKeys()[PLAYER1].right))
+    if (appInput.key(gameinf.getKeys(PLAYER1).getLeft()) || appInput.key(gameinf.getKeys(PLAYER1).getRight()))
     {
         if (!delayCounter)
         {
@@ -109,7 +109,7 @@ GameState* SelectPlayer::moveAll(float dt)
     }
     else if (!initDelay)
     {
-        if (appInput.key(SDL_SCANCODE_RETURN) || appInput.key(gameinf.getKeys()[PLAYER1].shoot))
+        if (appInput.key(SDL_SCANCODE_RETURN) || appInput.key(gameinf.getKeys(PLAYER1).getShoot()))
         {
             gameinf.player[PLAYER1] = std::make_unique<Player>(PLAYER1);
             if (option == PLAYER2)

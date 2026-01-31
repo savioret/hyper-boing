@@ -145,7 +145,7 @@ GameState* Menu::moveAll(float dt)
     // Enable menu interaction only after animations complete
     if (menuTitle && menuTitle->isAnimationFinished())
     {
-        if (appInput.key(SDL_SCANCODE_UP) || appInput.key(gameinf.getKeys()[PLAYER1].left))
+        if (appInput.key(SDL_SCANCODE_UP) || appInput.key(gameinf.getKeys(PLAYER1).getLeft()))
         {
             if (!upPressed)
             {
@@ -156,7 +156,7 @@ GameState* Menu::moveAll(float dt)
         }
         else upPressed = false;
 
-        if (appInput.key(SDL_SCANCODE_DOWN) || appInput.key(gameinf.getKeys()[PLAYER1].right))
+        if (appInput.key(SDL_SCANCODE_DOWN) || appInput.key(gameinf.getKeys(PLAYER1).getRight()))
         {
             if (!downPressed)
             {
@@ -167,7 +167,7 @@ GameState* Menu::moveAll(float dt)
         }
         else downPressed = false;
 
-        if (appInput.key(SDL_SCANCODE_RETURN) || appInput.key(gameinf.getKeys()[PLAYER1].shoot))
+        if (appInput.key(SDL_SCANCODE_RETURN) || appInput.key(gameinf.getKeys(PLAYER1).getShoot()))
         {
             if (!enterPressed)
             {

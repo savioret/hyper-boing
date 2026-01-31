@@ -15,6 +15,7 @@
 #include "app.h"
 #include "eventmanager.h"
 #include "oncehelper.h"
+#include "action.h"
 
 class StageClear;
 
@@ -137,13 +138,12 @@ private:
     // Debug and utility
     bool boundingBoxes;  ///< Debug mode: show collision bounding boxes
     
-    // Ready screen state
-    int readyBlinkCount;   ///< Number of blinks completed (0-6)
-    int readyBlinkTimer;   ///< Timer for blink intervals (12 frames = 200ms at 60fps)
-    bool readyVisible;     ///< Current visibility state for "Ready" text
+    // Ready screen state (time-based using BlinkAction)
+    std::unique_ptr<BlinkAction> readyBlinkAction;  ///< Time-based blinking (200ms interval, 13 toggles, ends invisible)
+    bool readyVisible;                               ///< Current visibility state for "Ready" text
     
-    // Game over input delay
-    int gameOverInputDelay;  ///< Frames to wait before accepting input on game over screen (prevents accidental skip)
+    // Game over input delay (time-based using Action system)
+    std::unique_ptr<DelayAction> gameOverInputDelay;  ///< Time-based delay (2 seconds) before accepting input on game over screen (prevents accidental skip)
 
     // Event subscriptions
     EventManager::ListenerHandle timeWarningHandle;  ///< Subscription for time warning sound

@@ -8,8 +8,9 @@
  */
 enum class ConfigState
 {
-    Normal,      // Estado normal, navegando por opciones
-    WaitingKey   // Esperando que el usuario pulse una tecla
+    Normal,         // Estado normal, navegando por opciones
+    EnteringEdit,   // Just entered edit mode, waiting for ENTER to be released
+    WaitingKey      // Esperando que el usuario pulse una tecla
 };
 
 /**
@@ -38,6 +39,26 @@ private:
     bool downPressed;
     bool leftPressed;
     bool rightPressed;
+    bool enterPressed;
+    bool escapePressed;
+    
+    // Edit mode delay to prevent capturing ENTER key
+    float editModeDelay;
+    static constexpr float EDIT_MODE_DELAY_TIME = 0.2f; // 200ms delay
+    
+    // Initial screen delay to prevent capturing ENTER from menu navigation
+    float initialDelay;
+    static constexpr float INITIAL_DELAY_TIME = 0.2f; // delay on screen entry
+    
+    // Post-configuration delay to prevent capturing navigation keys that were just bound
+    float postConfigDelay;
+    static constexpr float POST_CONFIG_DELAY_TIME = 0.2f; // delay after key config
+    
+    // Custom modal overlay for key configuration (separate from debug overlay)
+    TextOverlay configModalOverlay;
+    
+    void drawConfigModal();
+    
 public:
     ConfigScreen();
     virtual ~ConfigScreen() {}
@@ -53,7 +74,6 @@ public:
     void drawKeyName(SDL_Scancode key, int x, int y);
     void saveConfiguration();
     void cancelConfiguration();
-    const char* getKeyName(SDL_Scancode scancode) const;
 
     // Getters
     ConfigState getState() const { return state; }
