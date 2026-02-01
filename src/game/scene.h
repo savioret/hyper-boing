@@ -17,6 +17,7 @@
 #include "oncehelper.h"
 #include "action.h"
 #include "collisionsystem.h"
+#include "collisionrules.h"
 
 class StageClear;
 
@@ -139,8 +140,9 @@ private:
     // Ball management
     std::vector<Ball*> pendingBalls;  ///< Buffer for balls created from splits
 
-    // Collision system
-    CollisionSystem collisionSystem;  ///< Handles all collision detection and response
+    // Collision pipeline
+    CollisionSystem collisionSystem;  ///< Detects collisions and resolves physics
+    CollisionRules gameRules;              ///< Processes contacts and applies game logic
 
     /**
      * @brief Validates ball spawn position against floor collisions

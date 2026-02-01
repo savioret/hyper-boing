@@ -842,7 +842,8 @@ GameState* Scene::handlePlayingState(float dt)
         }
     }
 
-    // Check collisions using CollisionSystem
+    // === COLLISION PIPELINE ===
+    // Phase 1: Detect collisions and resolve physics
     CollisionSystem::Context ctx = {
         lsBalls,
         lsShoots,
@@ -850,7 +851,10 @@ GameState* Scene::handlePlayingState(float dt)
         { gameinf.player[PLAYER1].get(), gameinf.player[PLAYER2].get() },
         true  // checkPlayerCollisions = true during Playing state
     };
-    collisionSystem.checkAll(ctx);
+    ContactList contacts = collisionSystem.detectAndResolve(ctx);
+
+    // Phase 2: Apply game rules to contacts
+    gameRules.processContacts(contacts, this);
 
     return nullptr;
 }

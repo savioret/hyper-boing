@@ -2,6 +2,7 @@
 
 #include <list>
 #include <SDL.h>
+#include "contact.h"
 
 // Forward declarations
 class Ball;
@@ -27,14 +28,20 @@ public:
 
 /**
  * @class CollisionSystem
- * @brief Handles all collision detection and response for the game
+ * @brief Handles collision detection and physics resolution
  *
- * Separates collision logic from Scene, making it easier to test and maintain.
- * Checks four collision types:
- * - Ball vs Shot (destroy ball, add score)
- * - Ball vs Floor (bounce with direction reversal)
- * - Ball vs Player (kill player)
- * - Shot vs Floor (destroy shot)
+ * This system is responsible for:
+ * - Detecting overlaps between entities
+ * - Resolving physics (bouncing balls off walls)
+ * - Reporting what touched what (via ContactList)
+ *
+ * It does NOT handle:
+ * - Scoring
+ * - Killing entities
+ * - Firing gameplay events
+ * - Weapon-specific behaviors
+ *
+ * Those responsibilities belong to CollisionRules.
  */
 class CollisionSystem
 {
@@ -49,67 +56,50 @@ public:
         std::list<Shot*>& shots;         ///< Active shots
         std::list<Floor*>& floors;       ///< Active floors
         Player* players[2];              ///< Players (may be nullptr)
-        bool checkPlayerCollisions;      ///< Whether to check ball-player collisions (false during GameOver)
+        bool checkPlayerCollisions;      ///< Whether to check ball-player collisions
     };
 
     CollisionSystem() = default;
 
     /**
-     * @brief Run all collision checks for this frame
+     * @brief Detect all collisions and resolve physics
+     *
+     * Runs collision detection for all entity pairs, resolves
+     * physics (ball bounces), and returns a list of contacts
+     * for CollisionRules to process.
+     *
      * @param ctx Collision context with entity lists and flags
+     * @return List of contacts detected this frame
      */
-    void checkAll(Context& ctx);
+    ContactList detectAndResolve(Context& ctx);
 
 private:
     /**
-     * @brief Check ball vs shot collisions
-     * When a ball is hit by a shot:
-     * - Call shot->onBallHit(ball)
-     * - Add score to shooting player
-     * - Fire BALL_HIT event
-     * - Kill ball
+     * @brief Detect ball vs shot collisions
+     * Records contacts but does NOT kill balls or add score.
      */
-    void checkBallVsShot(Context& ctx);
+    void detectBallVsShot(Context& ctx, ContactList& contacts);
 
     /**
-     * @brief Check ball vs floor collisions
-     * When a ball hits a floor:
-     * - Reverse ball direction based on collision side
-     * - Handle complex multi-floor corner cases
+     * @brief Detect and resolve ball vs floor collisions
+     * Resolves physics immediately (bouncing), records contacts.
      */
-    void checkBallVsFloor(Context& ctx);
+    void detectBallVsFloor(Context& ctx, ContactList& contacts);
 
     /**
-     * @brief Check ball vs player collisions
-     * When a ball hits a player:
-     * - Fire PLAYER_HIT event
-     * - Kill player (unless immune)
+     * @brief Detect ball vs player collisions
+     * Records contacts but does NOT kill players.
      */
-    void checkBallVsPlayer(Context& ctx);
+    void detectBallVsPlayer(Context& ctx, ContactList& contacts);
 
     /**
-     * @brief Check shot vs floor collisions
-     * When a shot hits a floor:
-     * - Call shot->onFloorHit(floor)
+     * @brief Detect shot vs floor collisions
+     * Records contacts but does NOT call onFloorHit.
      */
-    void checkShotVsFloor(Context& ctx);
+    void detectShotVsFloor(Context& ctx, ContactList& contacts);
 
     /**
      * @brief Resolve ball-floor collision when multiple floors are hit
-     *
-     * Complex logic for handling corner cases where a ball hits
-     * two floors simultaneously (e.g., corner of an L-shape).
-     *
-     * @param b Ball that collided
-     * @param fc Array of floor collisions (size 2)
-     * @param moved Which direction was already processed (0=none, 1=X, 2=Y)
      */
     void resolveBallFloorCollision(Ball* b, FloorColision* fc, int moved);
-
-    /**
-     * @brief Calculate score for destroying an object
-     * @param diameter Object diameter (ball size indicator)
-     * @return Score value (1000 / diameter)
-     */
-    static int objectScore(int diameter);
 };

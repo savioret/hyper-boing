@@ -3,23 +3,27 @@
 #include "../entities/shot.h"
 #include "../entities/player.h"
 #include "floor.h"
-#include "../core/appdata.h"
-#include "../core/eventmanager.h"
 
-void CollisionSystem::checkAll(Context& ctx)
+ContactList CollisionSystem::detectAndResolve(Context& ctx)
 {
-    checkBallVsShot(ctx);
-    checkBallVsFloor(ctx);
+    ContactList contacts;
+    contacts.reserve(32);  // Pre-allocate for typical frame
+
+    // Detect all collisions
+    detectBallVsShot(ctx, contacts);
+    detectBallVsFloor(ctx, contacts);
 
     if (ctx.checkPlayerCollisions)
     {
-        checkBallVsPlayer(ctx);
+        detectBallVsPlayer(ctx, contacts);
     }
 
-    checkShotVsFloor(ctx);
+    detectShotVsFloor(ctx, contacts);
+
+    return contacts;
 }
 
-void CollisionSystem::checkBallVsShot(Context& ctx)
+void CollisionSystem::detectBallVsShot(Context& ctx, ContactList& contacts)
 {
     for (Ball* b : ctx.balls)
     {
@@ -32,24 +36,20 @@ void CollisionSystem::checkBallVsShot(Context& ctx)
 
             if (b->collision(sh))
             {
-                sh->onBallHit(b);  // Polymorphic call - handles weapon-specific behavior
-                sh->getPlayer()->addScore(objectScore(b->getDiameter()));
+                // Record the contact - CollisionRules will handle scoring, events, killing
+                contacts.push_back({
+                    ContactType::BallShot,
+                    b,   // entityA = ball
+                    sh   // entityB = shot
+                });
 
-                // Fire BALL_HIT event
-                GameEventData event(GameEventType::BALL_HIT);
-                event.ballHit.ball = b;
-                event.ballHit.shot = sh;
-                event.ballHit.shooter = sh->getPlayer();
-                EVENT_MGR.trigger(event);
-
-                b->kill();
                 break;  // Ball can only be hit once per frame
             }
         }
     }
 }
 
-void CollisionSystem::checkBallVsFloor(Context& ctx)
+void CollisionSystem::detectBallVsFloor(Context& ctx, ContactList& contacts)
 {
     for (Ball* b : ctx.balls)
     {
@@ -95,22 +95,36 @@ void CollisionSystem::checkBallVsFloor(Context& ctx)
             }
         }
 
-        // Resolve collision based on how many floors were hit
+        // Resolve physics immediately
         if (cont == 1)
         {
             if (flc[0].point.x)
                 b->setDirX(-b->getDirX());
             else
                 b->setDirY(-b->getDirY());
+
+            // Record contact (optional - currently no gameplay reaction)
+            contacts.push_back({
+                ContactType::BallFloor,
+                b,
+                flc[0].floor
+            });
         }
         else if (cont > 1)
         {
             resolveBallFloorCollision(b, flc, moved);
+
+            // Record contact for first floor
+            contacts.push_back({
+                ContactType::BallFloor,
+                b,
+                flc[0].floor
+            });
         }
     }
 }
 
-void CollisionSystem::checkBallVsPlayer(Context& ctx)
+void CollisionSystem::detectBallVsPlayer(Context& ctx, ContactList& contacts)
 {
     for (Ball* b : ctx.balls)
     {
@@ -124,20 +138,18 @@ void CollisionSystem::checkBallVsPlayer(Context& ctx)
 
             if (b->collision(ctx.players[i]))
             {
-                // Fire PLAYER_HIT event
-                GameEventData event(GameEventType::PLAYER_HIT);
-                event.playerHit.player = ctx.players[i];
-                event.playerHit.ball = b;
-                EVENT_MGR.trigger(event);
-
-                ctx.players[i]->kill();
-                // Frame is now set by PlayerDeadAction via event subscription
+                // Record the contact - CollisionRules will handle events and killing
+                contacts.push_back({
+                    ContactType::BallPlayer,
+                    b,             // entityA = ball
+                    ctx.players[i] // entityB = player
+                });
             }
         }
     }
 }
 
-void CollisionSystem::checkShotVsFloor(Context& ctx)
+void CollisionSystem::detectShotVsFloor(Context& ctx, ContactList& contacts)
 {
     for (Shot* sh : ctx.shots)
     {
@@ -147,7 +159,13 @@ void CollisionSystem::checkShotVsFloor(Context& ctx)
         {
             if (sh->collision(fl))
             {
-                sh->onFloorHit(fl);  // Polymorphic call - handles weapon-specific behavior
+                // Record the contact - CollisionRules will call onFloorHit
+                contacts.push_back({
+                    ContactType::ShotFloor,
+                    sh,  // entityA = shot
+                    fl   // entityB = floor
+                });
+
                 break;  // Shot can only hit one floor per frame
             }
         }
@@ -180,9 +198,4 @@ void CollisionSystem::resolveBallFloorCollision(Ball* b, FloorColision* fc, int 
             else
                 if (moved != 1) b->setDirX(-b->getDirX());
     }
-}
-
-int CollisionSystem::objectScore(int diameter)
-{
-    return 1000 / diameter;
 }
