@@ -273,17 +273,18 @@ void Ball::onDeath()
     }
 }
 
-void Ball::createChildren(Ball*& child1, Ball*& child2)
+std::pair<std::unique_ptr<Ball>, std::unique_ptr<Ball>> Ball::createChildren()
 {
-    child1 = nullptr;
-    child2 = nullptr;
-
     // Only create children if ball is large enough to split
-    if (size < 3)
+    if (size >= 3)
     {
-        child1 = new Ball(scene, this);
-        child2 = new Ball(scene, this);
-        child1->setDirX(-1);  // Left
-        child2->setDirX(1);   // Right
+        return { nullptr, nullptr };
     }
+
+    auto child1 = std::make_unique<Ball>(scene, this);
+    auto child2 = std::make_unique<Ball>(scene, this);
+    child1->setDirX(-1);  // Left
+    child2->setDirX(1);   // Right
+    
+    return { std::move(child1), std::move(child2) };
 }

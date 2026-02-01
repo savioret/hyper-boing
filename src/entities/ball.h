@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL.h>
+#include <memory>
 #include "gameobject.h"
 
 class Scene;
@@ -46,12 +47,12 @@ public:
      * @brief Create child balls when this ball is destroyed
      *
      * If ball is large enough (size < 3), creates two smaller balls.
-     * Caller is responsible for adding them to the scene.
+     * Returns a pair of unique_ptr, which will be nullptr if the ball
+     * is too small to split.
      *
-     * @param child1 Output pointer for first child (nullptr if no split)
-     * @param child2 Output pointer for second child (nullptr if no split)
+     * @return Pair of unique_ptr to child balls (nullptr if no split)
      */
-    void createChildren(Ball*& child1, Ball*& child2);
+    std::pair<std::unique_ptr<Ball>, std::unique_ptr<Ball>> createChildren();
 
     bool collision(Shot* shot);
     SDL_Point collision(Floor* floor);

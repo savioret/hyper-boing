@@ -1,6 +1,6 @@
 #pragma once
 
-#include <list>
+#include <vector>
 #include <memory>
 #include <climits>
 #include <string>
@@ -159,7 +159,10 @@ struct StageObject
     }
     
     // Move constructor
-    StageObject(StageObject&& other) noexcept = default;
+    StageObject(StageObject&& other) noexcept
+        : id(other.id), start(other.start), x(other.x), y(other.y), params(std::move(other.params))
+    {
+    }
     
     // Assignment operators
     StageObject& operator=(const StageObject& other)
@@ -178,7 +181,18 @@ struct StageObject
         return *this;
     }
     
-    StageObject& operator=(StageObject&& other) noexcept = default;
+    StageObject& operator=(StageObject&& other) noexcept
+    {
+        if (this != &other)
+        {
+            id = other.id;
+            start = other.start;
+            x = other.x;
+            y = other.y;
+            params = std::move(other.params);
+        }
+        return *this;
+    }
     
     // Helper to get typed params (returns nullptr if wrong type)
     template<typename T>
@@ -212,10 +226,11 @@ public:
     int xpos[2]; // initial positions for players 1 and 2 TODO: Review this
                    
 private:
-    std::list<StageObject*> sequence;
+    std::vector<std::unique_ptr<StageObject>> sequence;
+    size_t sequenceIndex;  // Track current position for pop()
 
 public:
-    Stage() : id(0), timelimit(0), itemsleft(0) {
+    Stage() : id(0), timelimit(0), itemsleft(0), sequenceIndex(0) {
         xpos[0] = xpos[1] = 0;
         back[0] = '\0';
         music[0] = '\0';
@@ -241,9 +256,9 @@ public:
     
     /**
      * Spawn an object with typed parameters
-     * @param obj StageObject with typed params
+     * @param obj StageObject with typed params (moved)
      */
-    void spawn(StageObject obj);
+    void spawn(StageObject&& obj);
     
     /**
      * Spawn a ball with full control

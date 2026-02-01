@@ -1,6 +1,7 @@
 #pragma once
 
 #include <list>
+#include <memory>
 #include <SDL.h>
 #include "contact.h"
 
@@ -52,11 +53,11 @@ public:
      */
     struct Context
     {
-        std::list<Ball*>& balls;         ///< Active balls
-        std::list<Shot*>& shots;         ///< Active shots
-        std::list<Floor*>& floors;       ///< Active floors
-        Player* players[2];              ///< Players (may be nullptr)
-        bool checkPlayerCollisions;      ///< Whether to check ball-player collisions
+        std::list<std::unique_ptr<Ball>>& balls;    ///< Active balls
+        std::list<std::unique_ptr<Shot>>& shots;    ///< Active shots
+        std::list<std::unique_ptr<Floor>>& floors;  ///< Active floors
+        Player* players[2];                         ///< Players (may be nullptr)
+        bool checkPlayerCollisions;                 ///< Whether to check ball-player collisions
     };
 
     CollisionSystem() = default;

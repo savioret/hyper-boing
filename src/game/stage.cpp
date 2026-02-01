@@ -7,11 +7,8 @@
 
 void Stage::reset()
 {
-    for (StageObject* obj : sequence)
-    {
-        delete obj;
-    }
-    sequence.clear();
+    sequence.clear();  // unique_ptr automatically deletes
+    sequenceIndex = 0;
     itemsleft = 0;
     id = 0;
 }
@@ -30,9 +27,13 @@ void Stage::setMusic(const char* musicFile)
 
 // NEW: Type-safe spawn methods
 
-void Stage::spawn(StageObject obj)
+void Stage::spawn(StageObject&& obj)
 {
-    StageObject* newObj = new StageObject(std::move(obj));
+    // Create unique_ptr and add to vector
+    sequence.push_back(std::make_unique<StageObject>(std::move(obj)));
+    
+    // Get reference to the object we just added
+    auto& newObj = sequence.back();
     
     // Simply copy coordinates from params (no positioning logic here)
     if (newObj->params)
@@ -40,14 +41,6 @@ void Stage::spawn(StageObject obj)
         newObj->x = newObj->params->x;
         newObj->y = newObj->params->y;
     }
-    
-    // Insert in sorted order by startTime to ensure pop() works correctly
-    // This allows objects to be added in any order but always processed chronologically
-    auto it = sequence.begin();
-    while (it != sequence.end() && (*it)->start <= newObj->start)
-        ++it;
-    
-    sequence.insert(it, newObj);
     
     if (newObj->id == OBJ_BALL)
         itemsleft++;
@@ -69,15 +62,21 @@ StageObject Stage::pop(int time)
 {
     StageObject res(OBJ_NULL);
 
-    if (!sequence.empty())
+    // Check if we have more objects to pop
+    if (sequenceIndex < sequence.size())
     {
-        StageObject* obj = sequence.front();
+        const auto& obj = sequence[sequenceIndex];
+        
         if (time >= obj->start)
         {
-            res = *obj;
-            delete obj;
-            sequence.pop_front();
+            // Move ownership out of the unique_ptr
+            res = std::move(*obj);
+            
+            // Update itemsleft before advancing
             if (res.id == OBJ_BALL) itemsleft--;
+            
+            // Advance to next object
+            sequenceIndex++;
             
             // Keep INT_MAX values intact - Scene will handle random position calculation
             // Update params to reflect current position (may still be INT_MAX)
@@ -112,8 +111,6 @@ StageObject Stage::pop(int time)
                 LOG_DEBUG("Pop object id:%d start:%d x:%d y:%d (no params)",
                     res.id, res.start, res.x, res.y);
             }
-            
-            return res;
         }
     }
     

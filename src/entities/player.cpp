@@ -242,7 +242,7 @@ void Player::update(float dt)
         case PlayerState::VICTORY:
             if (victoryAnim) {
                 victoryAnim->update(dtMs);
-                LOG_TRACE("Player %d victory anim update - frame: %d", id + 1, victoryAnim->getCurrentFrame());
+                //LOG_TRACE("Player %d victory anim update - frame: %d", id + 1, victoryAnim->getCurrentFrame());
             }
             break;
 

@@ -25,22 +25,22 @@ ContactList CollisionSystem::detectAndResolve(Context& ctx)
 
 void CollisionSystem::detectBallVsShot(Context& ctx, ContactList& contacts)
 {
-    for (Ball* b : ctx.balls)
+    for (const auto& b : ctx.balls)
     {
         if (b->isDead()) continue;
 
-        for (Shot* sh : ctx.shots)
+        for (const auto& sh : ctx.shots)
         {
             if (sh->isDead()) continue;
             if (sh->getPlayer()->isDead()) continue;
 
-            if (b->collision(sh))
+            if (b->collision(sh.get()))
             {
                 // Record the contact - CollisionRules will handle scoring, events, killing
                 contacts.push_back({
                     ContactType::BallShot,
-                    b,   // entityA = ball
-                    sh   // entityB = shot
+                    b.get(),   // entityA = ball (raw pointer for observer)
+                    sh.get()   // entityB = shot (raw pointer for observer)
                 });
 
                 break;  // Ball can only be hit once per frame
@@ -51,7 +51,7 @@ void CollisionSystem::detectBallVsShot(Context& ctx, ContactList& contacts)
 
 void CollisionSystem::detectBallVsFloor(Context& ctx, ContactList& contacts)
 {
-    for (Ball* b : ctx.balls)
+    for (const auto& b : ctx.balls)
     {
         if (b->isDead()) continue;
 
@@ -59,13 +59,13 @@ void CollisionSystem::detectBallVsFloor(Context& ctx, ContactList& contacts)
         int cont = 0;
         int moved = 0;
 
-        for (Floor* fl : ctx.floors)
+        for (const auto& fl : ctx.floors)
         {
-            SDL_Point col = b->collision(fl);
+            SDL_Point col = b->collision(fl.get());
 
             if (col.x)
             {
-                if (cont && flc[0].floor == fl)
+                if (cont && flc[0].floor == fl.get())
                 {
                     b->setDirX(-b->getDirX());
                     moved = 1;
@@ -74,13 +74,13 @@ void CollisionSystem::detectBallVsFloor(Context& ctx, ContactList& contacts)
                 if (cont < 2)
                 {
                     flc[cont].point.x = col.x;
-                    flc[cont].floor = fl;
+                    flc[cont].floor = fl.get();
                     cont++;
                 }
             }
             if (col.y)
             {
-                if (cont && flc[0].floor == fl)
+                if (cont && flc[0].floor == fl.get())
                 {
                     b->setDirY(-b->getDirY());
                     moved = 2;
@@ -89,7 +89,7 @@ void CollisionSystem::detectBallVsFloor(Context& ctx, ContactList& contacts)
                 if (cont < 2)
                 {
                     flc[cont].point.y = col.y;
-                    flc[cont].floor = fl;
+                    flc[cont].floor = fl.get();
                     cont++;
                 }
             }
@@ -106,18 +106,18 @@ void CollisionSystem::detectBallVsFloor(Context& ctx, ContactList& contacts)
             // Record contact (optional - currently no gameplay reaction)
             contacts.push_back({
                 ContactType::BallFloor,
-                b,
+                b.get(),
                 flc[0].floor
             });
         }
         else if (cont > 1)
         {
-            resolveBallFloorCollision(b, flc, moved);
+            resolveBallFloorCollision(b.get(), flc, moved);
 
             // Record contact for first floor
             contacts.push_back({
                 ContactType::BallFloor,
-                b,
+                b.get(),
                 flc[0].floor
             });
         }
@@ -126,7 +126,7 @@ void CollisionSystem::detectBallVsFloor(Context& ctx, ContactList& contacts)
 
 void CollisionSystem::detectBallVsPlayer(Context& ctx, ContactList& contacts)
 {
-    for (Ball* b : ctx.balls)
+    for (const auto& b : ctx.balls)
     {
         if (b->isDead()) continue;
 
@@ -141,8 +141,8 @@ void CollisionSystem::detectBallVsPlayer(Context& ctx, ContactList& contacts)
                 // Record the contact - CollisionRules will handle events and killing
                 contacts.push_back({
                     ContactType::BallPlayer,
-                    b,             // entityA = ball
-                    ctx.players[i] // entityB = player
+                    b.get(),         // entityA = ball (raw pointer for observer)
+                    ctx.players[i]   // entityB = player
                 });
             }
         }
@@ -151,19 +151,19 @@ void CollisionSystem::detectBallVsPlayer(Context& ctx, ContactList& contacts)
 
 void CollisionSystem::detectShotVsFloor(Context& ctx, ContactList& contacts)
 {
-    for (Shot* sh : ctx.shots)
+    for (const auto& sh : ctx.shots)
     {
         if (sh->isDead()) continue;
 
-        for (Floor* fl : ctx.floors)
+        for (const auto& fl : ctx.floors)
         {
-            if (sh->collision(fl))
+            if (sh->collision(fl.get()))
             {
                 // Record the contact - CollisionRules will call onFloorHit
                 contacts.push_back({
                     ContactType::ShotFloor,
-                    sh,  // entityA = shot
-                    fl   // entityB = floor
+                    sh.get(),  // entityA = shot (raw pointer for observer)
+                    fl.get()   // entityB = floor (raw pointer for observer)
                 });
 
                 break;  // Shot can only hit one floor per frame

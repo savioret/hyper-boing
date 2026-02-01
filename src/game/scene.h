@@ -138,7 +138,7 @@ private:
     OnceHelper stageOnceHelper;  ///< Helper for one-time actions per stage
     
     // Ball management
-    std::vector<Ball*> pendingBalls;  ///< Buffer for balls created from splits
+    std::vector<std::unique_ptr<Ball>> pendingBalls;  ///< Buffer for balls created from splits
 
     // Collision pipeline
     CollisionSystem collisionSystem;  ///< Detects collisions and resolves physics
@@ -167,7 +167,7 @@ private:
      * @param list The list to clean up
      */
     template<typename T>
-    void cleanupDeadObjects(std::list<T*>& list);
+    void cleanupDeadObjects(std::list<std::unique_ptr<T>>& list);
 
     /**
      * @brief Clean up dead balls and handle ball splitting
@@ -307,10 +307,10 @@ public:
     BmNumFont fontNum[3]; ///< Bitmap fonts (small, medium, large)
 
     // Entity lists
-    std::list<Ball*> lsBalls;    ///< Active balls in scene
-    std::list<Item*> lsItems;    ///< Active items (unused currently)
-    std::list<Floor*> lsFloor;   ///< Active floors/platforms
-    std::list<Shot*> lsShoots;   ///< Active weapon shots
+    std::list<std::unique_ptr<Ball>> lsBalls;     ///< Active balls in scene
+    std::list<std::unique_ptr<Item>> lsItems;     ///< Active items (unused currently)
+    std::list<std::unique_ptr<Floor>> lsFloor;    ///< Active floors/platforms
+    std::list<std::unique_ptr<Shot>> lsShoots;    ///< Active weapon shots
 
     /**
      * @brief Constructs a new Scene for the given stage
@@ -347,12 +347,6 @@ public:
     void addItem(int x, int y, int id);
     
     /**
-     * @brief Adds a shot from the player (deprecated, use shoot() instead)
-     * @param pl Player firing the shot
-     */
-    void addShoot(Player* pl);
-    
-    /**
      * @brief Adds a floor/platform to the scene
      * @param x X position
      * @param y Y position
@@ -386,9 +380,9 @@ public:
      * @param pl Player firing the shot
      * @param type Weapon type
      * @param xOffset Horizontal offset for multi-projectile weapons
-     * @return Pointer to created Shot object
+     * @return unique_ptr to created Shot object
      */
-    Shot* createShot(Player* pl, WeaponType type, int xOffset);
+    std::unique_ptr<Shot> createShot(Player* pl, WeaponType type, int xOffset);
 
     /**
      * @brief Triggers level win sequence
@@ -549,20 +543,11 @@ public:
 
 // Template implementation must be in header for C++14
 template<typename T>
-void Scene::cleanupDeadObjects(std::list<T*>& list)
+void Scene::cleanupDeadObjects(std::list<std::unique_ptr<T>>& list)
 {
-    for (auto it = list.begin(); it != list.end(); )
-    {
-        if ((*it)->isDead())
-        {
-            delete *it;
-            it = list.erase(it);
-        }
-        else
-        {
-            ++it;
-        }
-    }
+    list.remove_if([](const std::unique_ptr<T>& obj) {
+        return obj->isDead();
+    });
 }
 
 #endif

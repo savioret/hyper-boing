@@ -140,7 +140,7 @@ void Scene::subscribeToEvents()
                     if (channel >= 0 && !lsShoots.empty()) {
                         // The most recent shot(s) belong to this player
                         for (auto it = lsShoots.rbegin(); it != lsShoots.rend(); ++it) {
-                            Shot* shot = *it;
+                            Shot* shot = it->get();
                             if (shot->getPlayer() == data.playerShoot.player &&
                                 shot->getAudioChannel() < 0) {
                                 shot->setAudioChannel(channel);
@@ -244,8 +244,7 @@ void Scene::addBall(int x, int y, int size, int top, int dirX, int dirY, int id)
         checkValidPosition(x, y, ballDiameter);
     }
     
-    Ball* ball = new Ball(this, x, y, size, dirX, dirY, top, id);
-    lsBalls.push_back(ball);
+    lsBalls.push_back(std::make_unique<Ball>(this, x, y, size, dirX, dirY, top, id));
 }
 
 void Scene::checkValidPosition(int& x, int& y, int ballDiameter)
@@ -284,14 +283,14 @@ void Scene::checkValidPosition(int& x, int& y, int ballDiameter)
         Ball tempBall(this, x, y, 0, 1, 1, 0, 0);
         
         // Check for collisions with existing floors in scene using Ball's collision method
-        for (Floor* floor : lsFloor)
+        for (const auto& floor : lsFloor)
         {
             // Skip dead floors
             if (floor->isDead())
                 continue;
             
             // Use existing Ball::collision(Floor*) method
-            SDL_Point col = tempBall.collision(floor);
+            SDL_Point col = tempBall.collision(floor.get());
             
             // If any collision detected (x or y), position is invalid
             if (col.x != 0 || col.y != 0)
@@ -334,20 +333,12 @@ void Scene::checkValidPosition(int& x, int& y, int ballDiameter)
 
 void Scene::addItem(int x, int y, int id)
 {
-    Item* item = new Item(x, y, id);
-    lsItems.push_back(item);
+    lsItems.push_back(std::make_unique<Item>(x, y, id));
 }
 
 void Scene::addFloor(int x, int y, int id)
 {
-    Floor* floor = new Floor(this, x, y, id);
-    lsFloor.push_back(floor);
-}
-
-void Scene::addShoot(Player* pl)
-{
-    Shot* shotInstance = createShot(pl, pl->getWeapon(), 0);
-    lsShoots.push_back(shotInstance);
+    lsFloor.push_back(std::make_unique<Floor>(this, x, y, id));
 }
 
 /**
@@ -355,22 +346,22 @@ void Scene::addShoot(Player* pl)
  * @param pl Player firing the shot
  * @param type Weapon type
  * @param xOffset Horizontal offset for multi-projectile weapons
- * @return Pointer to created Shot object
+ * @return unique_ptr to created Shot object
  */
-Shot* Scene::createShot(Player* pl, WeaponType type, int xOffset)
+std::unique_ptr<Shot> Scene::createShot(Player* pl, WeaponType type, int xOffset)
 {
     switch (type)
     {
     case WeaponType::HARPOON:
     case WeaponType::HARPOON2:
-        return new HarpoonShot(this, pl, type, 0);
+        return std::make_unique<HarpoonShot>(this, pl, type, 0);
 
     case WeaponType::GUN:
-        return new GunShot(this, pl, &bmp.weapons.gunBullet, 0);
+        return std::make_unique<GunShot>(this, pl, &bmp.weapons.gunBullet, 0);
 
     default:
         // Fallback to harpoon for unknown types
-        return new HarpoonShot(this, pl, WeaponType::HARPOON, xOffset);
+        return std::make_unique<HarpoonShot>(this, pl, WeaponType::HARPOON, xOffset);
     }
 }
 
@@ -394,8 +385,7 @@ void Scene::shoot(Player* pl)
             xOffset = (int)((i - (projectileCount - 1) / 2.0f) * spacing);
         }
 
-        Shot* shotInstance = createShot(pl, pl->getWeapon(), xOffset);
-        lsShoots.push_back(shotInstance);
+        lsShoots.push_back(createShot(pl, pl->getWeapon(), xOffset));
     }
 
     pl->shoot();  // Updates player state and animation
@@ -542,19 +532,17 @@ void Scene::cleanupBalls()
     // Clean up dead balls and create children
     for (auto it = lsBalls.begin(); it != lsBalls.end(); )
     {
-        Ball* b = *it;
-        if (b->isDead())
+        if ((*it)->isDead())
         {
             // Ask ball to create its children
-            Ball* child1 = nullptr;
-            Ball* child2 = nullptr;
-            b->createChildren(child1, child2);
+            auto children = (*it)->createChildren();
+            
+            if (children.first) 
+                pendingBalls.push_back(std::move(children.first));
+            if (children.second) 
+                pendingBalls.push_back(std::move(children.second));
 
-            if (child1) pendingBalls.push_back(child1);
-            if (child2) pendingBalls.push_back(child2);
-
-            delete b;
-            it = lsBalls.erase(it);
+            it = lsBalls.erase(it);  // unique_ptr automatically deletes
         }
         else
         {
@@ -565,12 +553,16 @@ void Scene::cleanupBalls()
     // Check win condition after all removals
     if (lsBalls.empty() && pendingBalls.empty() && !stage->itemsleft)
     {
-        win();
+        // Only trigger win once - prevent calling every frame
+        if (currentState != SceneState::LevelClear)
+        {
+            win();
+        }
     }
 
     // Add children to active list
-    for (Ball* b : pendingBalls)
-        lsBalls.push_back(b);
+    for (auto& b : pendingBalls)
+        lsBalls.push_back(std::move(b));
     pendingBalls.clear();
 }
 
@@ -619,28 +611,21 @@ void Scene::updateFPSCounters()
 
 void Scene::updateEntities(float dt)
 {
-    Ball* ptb;
-    Shot* pts;
-    Floor* pfl;
-
     // === PHASE 1: Movement ===
     // Update all objects without modifying lists
-    for (Ball* pt : lsBalls)
+    for (const auto& ball : lsBalls)
     {
-        ptb = pt;
-        ptb->update(dt);
+        ball->update(dt);
     }
 
-    for (Shot* pt : lsShoots)
+    for (const auto& shot : lsShoots)
     {
-        pts = pt;
-        pts->update(dt);
+        shot->update(dt);
     }
 
-    for (Floor* pt : lsFloor)
+    for (const auto& floor : lsFloor)
     {
-        pfl = pt;
-        pfl->update(dt);
+        floor->update(dt);
     }
 }
 
@@ -650,7 +635,7 @@ void Scene::cleanupPhase()
     // Ball cleanup is special - creates children during cleanup
     cleanupBalls();
 
-    // Other entities use standard cleanup
+    // Standard cleanup for shots and floors (unique_ptr)
     cleanupDeadObjects(lsShoots);
     cleanupDeadObjects(lsFloor);
 }
@@ -968,17 +953,9 @@ int Scene::release()
     // Unsubscribe from all events
     unsubscribeFromEvents();
 
-    // Clean up entities
-    for (Ball* ball : lsBalls)
-        delete ball;
+    // Clean up entities - unique_ptr automatically deletes
     lsBalls.clear();
-
-    for (Shot* shot : lsShoots)
-        delete shot;
     lsShoots.clear();
-
-    for (Floor* floor : lsFloor)
-        delete floor;
     lsFloor.clear();
 
     // Release only scene-specific sprites (background, weapons)
@@ -1097,7 +1074,7 @@ void Scene::drawBoundingBoxes()
     }
 
     // Draw ball bounding boxes (circles represented as bounding squares)
-    for (Ball* b : lsBalls)
+    for (const auto& b : lsBalls)
     {
         int x = (int)b->getX();
         int y = (int)b->getY();
@@ -1107,7 +1084,7 @@ void Scene::drawBoundingBoxes()
 
     // Draw shot collision areas
     // Different visualization for Harpoon vs Gun
-    for (Shot* s : lsShoots)
+    for (const auto& s : lsShoots)
     {
         if (!s->isDead())
         {
@@ -1116,7 +1093,7 @@ void Scene::drawBoundingBoxes()
             int yInit = (int)s->getYInit();
 
             // Check if this is a GunShot
-            GunShot* gunShot = dynamic_cast<GunShot*>(s);
+            GunShot* gunShot = dynamic_cast<GunShot*>(s.get());
 
             if (gunShot)
             {
@@ -1145,7 +1122,7 @@ void Scene::drawBoundingBoxes()
     }
 
     // Draw floor bounding boxes
-    for (Floor* f : lsFloor)
+    for (const auto& f : lsFloor)
     {
         int x = f->getX();
         int y = f->getY();
@@ -1188,7 +1165,7 @@ void Scene::drawDebugOverlay()
     if (!lsBalls.empty())
     {
         int ballCount = 0;
-        for (Ball* ball : lsBalls)
+        for (const auto& ball : lsBalls)
         {
             if (ballCount >= 15) break; // Limit to 15 balls
 
@@ -1223,21 +1200,21 @@ void Scene::drawDebugOverlay()
 void Scene::drawEntities()
 {
     // Draw floors
-    for (Floor* pfl : lsFloor)
+    for (const auto& floor : lsFloor)
     {
-        draw(pfl);
+        draw(floor.get());
     }
 
     // Draw shots using polymorphic draw() method
-    for (Shot* pts : lsShoots)
+    for (const auto& shot : lsShoots)
     {
-        pts->draw(&appGraph);  // Polymorphic call
+        shot->draw(&appGraph);  // Polymorphic call
     }
 
     // Draw balls
-    for (Ball* ptb : lsBalls)
+    for (const auto& ball : lsBalls)
     {
-        draw(ptb);
+        draw(ball.get());
     }
 }
 
