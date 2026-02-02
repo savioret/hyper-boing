@@ -77,3 +77,16 @@ void HarpoonShot::draw(Graph* graph)
         graph->draw(sprites[1 + tail], (int)xPos, i);
     }
 }
+
+/**
+ * Get collision box for the harpoon chain
+ *
+ * The harpoon has a chain that extends from the head down to the bottom
+ * of the screen (MAX_Y). The collision box covers this entire vertical area.
+ */
+CollisionBox HarpoonShot::getCollisionBox() const
+{
+    int width = sprites[0]->getWidth();
+    int height = MAX_Y - (int)yPos;
+    return { (int)xPos, (int)yPos, width, height };
+}

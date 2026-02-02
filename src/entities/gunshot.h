@@ -38,6 +38,12 @@ public:
     void update(float dt) override;
     void draw(Graph* graph) override;
 
+    /**
+     * @brief Get collision box for the gun bullet sprite
+     * @return Collision box matching the current animated sprite frame
+     */
+    CollisionBox getCollisionBox() const override;
+
     // Override collision hooks for impact animation
     void onFloorHit(Floor* f) override;
     void onCeilingHit() override;

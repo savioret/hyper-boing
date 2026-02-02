@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vector>
+#include "../core/gameobject.h"
+#include "../core/collisionbox.h"
 
 // Forward declarations
 class Ball;
@@ -37,20 +39,53 @@ struct Contact
     // BallShot:   ball, shot
     // BallPlayer: ball, player
     // ShotFloor:  shot, floor
-    void* entityA;
-    void* entityB;
+    IGameObject* entityA;
+    IGameObject* entityB;
+
+    // Collision boxes captured at detection time
+    CollisionBox boxA;
+    CollisionBox boxB;
+
+    // Collision side - which side of B was hit by A (used for physics resolution)
+    // For BallFloor: which side of the floor the ball hit
+    CollisionSide side;
 
     // Convenience accessors with type safety
-    Ball* getBall() const { return static_cast<Ball*>(entityA); }
-    Shot* getShot() const { 
+    // Note: Using reinterpret_cast because forward declarations prevent static_cast
+    Ball* getBall() const { return reinterpret_cast<Ball*>(entityA); }
+    Shot* getShot() const {
         // For BallShot: shot is in entityB
         // For ShotFloor: shot is in entityA
-        return type == ContactType::ShotFloor 
-            ? static_cast<Shot*>(entityA) 
-            : static_cast<Shot*>(entityB); 
+        return type == ContactType::ShotFloor
+            ? reinterpret_cast<Shot*>(entityA)
+            : reinterpret_cast<Shot*>(entityB);
     }
-    Floor* getFloor() const { return static_cast<Floor*>(entityB); }
-    Player* getPlayer() const { return static_cast<Player*>(entityB); }
+    Floor* getFloor() const { return reinterpret_cast<Floor*>(entityB); }
+    Player* getPlayer() const { return reinterpret_cast<Player*>(entityB); }
+
+    /**
+     * @brief Get the contact point (center of overlap between collision boxes)
+     * @param outX Output x coordinate of contact point
+     * @param outY Output y coordinate of contact point
+     * @return true if overlap exists, false otherwise
+     *
+     * Use this to determine where to spawn visual effects (sparks, particles, etc.)
+     * when a collision occurs. Returns the center of the overlapping region.
+     */
+    bool getContactPoint(int& outX, int& outY) const {
+        return getOverlapCenter(boxA, boxB, outX, outY);
+    }
+
+    /**
+     * @brief Get the overlap rectangle for this contact
+     * @return CollisionBox representing the overlap region
+     *
+     * Useful if you need more than just the center point, such as
+     * for spawning multiple particles within the collision area.
+     */
+    CollisionBox getOverlapRect() const {
+        return ::getOverlapRect(boxA, boxB);
+    }
 };
 
 /**

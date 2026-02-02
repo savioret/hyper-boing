@@ -144,56 +144,22 @@ void Ball::setPos(int x, int y)
  */
 bool Ball::collision(Shot* sh)
 {
-    if (!sh->isDead())
-        if (sh->getX() > xPos && sh->getX() < xPos + diameter && yPos + diameter > sh->getY() && yPos < sh->getYInit())
-            return true;
+    if (sh->isDead())
+        return false;
 
-    return false;
+    // Use AABB collision detection with collision boxes
+    return intersects(getCollisionBox(), sh->getCollisionBox());
 }
 
-SDL_Point Ball::collision(Floor* fl)
+bool Ball::collision(Floor* fl)
 {
-    SDL_Point col = { 0, 0 };
-
-    if ((yPos + diameter > fl->getY() && yPos < fl->getY() + fl->getHeight()) || 
-        ((yPos + diameter >= fl->getY() && yPos <= fl->getY() + fl->getHeight()) && 
-         (yPos <= fl->getY() + fl->getHeight() || yPos + diameter > fl->getY() + fl->getHeight())))
-    {
-        if ((xPos + diameter >= fl->getX()) && (xPos <= fl->getX()) && dirX == 1) 
-            col.x = SIDE_LEFT;
-        else if ((xPos <= fl->getX() + fl->getWidth()) && (xPos + diameter > fl->getX() + fl->getWidth()) && dirX == -1) 
-            col.x = SIDE_RIGHT;
-    }
-
-    if ((xPos + diameter > fl->getX() && xPos < fl->getX() + fl->getWidth()) || 
-        ((xPos + diameter >= fl->getX() && xPos <= fl->getX() + fl->getWidth()) && 
-         (xPos <= fl->getX() + fl->getWidth() || xPos + diameter > fl->getX() + fl->getWidth())))
-    {
-        if ((yPos + diameter >= fl->getY()) && (yPos < fl->getY()) && dirY == 1) 
-            col.y = SIDE_TOP;
-        else if ((yPos <= fl->getY() + fl->getHeight()) && (yPos + diameter > fl->getY() + fl->getHeight()) && dirY == -1) 
-            col.y = SIDE_BOTTOM;	
-    }
-
-    return col;
+    return intersects(getCollisionBox(), fl->getCollisionBox());
 }
 
 bool Ball::collision(Player* pl)
 {
-    // Use Player's collision box (already in top-left coordinates with margins applied)
-    CollisionBox box = pl->getCollisionBox();
-
-    // Check Y: ball bottom must be below box top
-    if (yPos + diameter > box.y)
-    {
-        // Check X: ball must overlap box horizontally
-        if (xPos < box.x + box.w && xPos + diameter > box.x)
-        {
-            return true;
-        }
-    }
-
-    return false;
+    // Use AABB collision detection with collision boxes
+    return intersects(getCollisionBox(), pl->getCollisionBox());
 }
 
 /**

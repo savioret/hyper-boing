@@ -36,6 +36,12 @@ public:
     void update(float dt) override;
     void draw(Graph* graph) override;
 
+    /**
+     * @brief Get collision box for the harpoon chain
+     * @return Collision box covering the entire vertical chain from head to screen bottom
+     */
+    CollisionBox getCollisionBox() const override;
+
     // Accessors for Scene compatibility
     Sprite* getSprite(int index) const { return sprites[index]; }
     int getTail() const { return tailAnim->getCurrentFrame(); }

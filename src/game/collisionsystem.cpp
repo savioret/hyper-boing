@@ -3,15 +3,17 @@
 #include "../entities/shot.h"
 #include "../entities/player.h"
 #include "floor.h"
+#include <unordered_map>
+#include <vector>
 
 ContactList CollisionSystem::detectAndResolve(Context& ctx)
 {
     ContactList contacts;
     contacts.reserve(32);  // Pre-allocate for typical frame
 
-    // Detect all collisions
-    detectBallVsShot(ctx, contacts);
+    // Phase 1: Detection (const - only builds contacts)
     detectBallVsFloor(ctx, contacts);
+    detectBallVsShot(ctx, contacts);
 
     if (ctx.checkPlayerCollisions)
     {
@@ -20,10 +22,13 @@ ContactList CollisionSystem::detectAndResolve(Context& ctx)
 
     detectShotVsFloor(ctx, contacts);
 
+    // Phase 2: Physics resolution (modifies ball directions)
+    resolveBallFloorPhysics(ctx, contacts);
+
     return contacts;
 }
 
-void CollisionSystem::detectBallVsShot(Context& ctx, ContactList& contacts)
+void CollisionSystem::detectBallVsShot(const Context& ctx, ContactList& contacts) const
 {
     for (const auto& b : ctx.balls)
     {
@@ -34,13 +39,18 @@ void CollisionSystem::detectBallVsShot(Context& ctx, ContactList& contacts)
             if (sh->isDead()) continue;
             if (sh->getPlayer()->isDead()) continue;
 
-            if (b->collision(sh.get()))
+            CollisionBox ballBox = b->getCollisionBox();
+            CollisionBox shotBox = sh->getCollisionBox();
+
+            if (intersects(ballBox, shotBox))
             {
-                // Record the contact - CollisionRules will handle scoring, events, killing
                 contacts.push_back({
                     ContactType::BallShot,
-                    b.get(),   // entityA = ball (raw pointer for observer)
-                    sh.get()   // entityB = shot (raw pointer for observer)
+                    b.get(),
+                    sh.get(),
+                    ballBox,
+                    shotBox,
+                    getCollisionSide(ballBox, shotBox)
                 });
 
                 break;  // Ball can only be hit once per frame
@@ -49,82 +59,59 @@ void CollisionSystem::detectBallVsShot(Context& ctx, ContactList& contacts)
     }
 }
 
-void CollisionSystem::detectBallVsFloor(Context& ctx, ContactList& contacts)
+void CollisionSystem::detectBallVsFloor(const Context& ctx, ContactList& contacts) const
 {
     for (const auto& b : ctx.balls)
     {
         if (b->isDead()) continue;
 
-        FloorColision flc[2];
-        int cont = 0;
-        int moved = 0;
+        CollisionBox ballBox = b->getCollisionBox();
+        int dirX = b->getDirX();
+        int dirY = b->getDirY();
 
         for (const auto& fl : ctx.floors)
         {
-            SDL_Point col = b->collision(fl.get());
+            CollisionBox floorBox = fl->getCollisionBox();
 
-            if (col.x)
+            if (!intersects(ballBox, floorBox))
+                continue;
+
+            CollisionSide side = getCollisionSide(ballBox, floorBox);
+
+            // Check if ball is fully contained inside floor (emergency escape)
+            bool ballInsideFloor = containsBox(floorBox, ballBox);
+
+            // Only register collision if ball is moving TOWARD that side
+            // This prevents "sticking" when ball grazes a surface while moving parallel
+            // Exception: if ball is fully inside floor, always register to escape
+            bool validX = side.x && ((side.x == SIDE_LEFT && dirX == 1) ||
+                                     (side.x == SIDE_RIGHT && dirX == -1) ||
+                                     ballInsideFloor);
+            bool validY = side.y && ((side.y == SIDE_TOP && dirY == 1) ||
+                                     (side.y == SIDE_BOTTOM && dirY == -1) ||
+                                     ballInsideFloor);
+
+            if (validX || validY)
             {
-                if (cont && flc[0].floor == fl.get())
-                {
-                    b->setDirX(-b->getDirX());
-                    moved = 1;
-                    break;
-                }
-                if (cont < 2)
-                {
-                    flc[cont].point.x = col.x;
-                    flc[cont].floor = fl.get();
-                    cont++;
-                }
+                // Record only the valid collision sides
+                CollisionSide recordedSide;
+                if (validX) recordedSide.x = side.x;
+                if (validY) recordedSide.y = side.y;
+
+                contacts.push_back({
+                    ContactType::BallFloor,
+                    b.get(),
+                    fl.get(),
+                    ballBox,
+                    floorBox,
+                    recordedSide
+                });
             }
-            if (col.y)
-            {
-                if (cont && flc[0].floor == fl.get())
-                {
-                    b->setDirY(-b->getDirY());
-                    moved = 2;
-                    break;
-                }
-                if (cont < 2)
-                {
-                    flc[cont].point.y = col.y;
-                    flc[cont].floor = fl.get();
-                    cont++;
-                }
-            }
-        }
-
-        // Resolve physics immediately
-        if (cont == 1)
-        {
-            if (flc[0].point.x)
-                b->setDirX(-b->getDirX());
-            else
-                b->setDirY(-b->getDirY());
-
-            // Record contact (optional - currently no gameplay reaction)
-            contacts.push_back({
-                ContactType::BallFloor,
-                b.get(),
-                flc[0].floor
-            });
-        }
-        else if (cont > 1)
-        {
-            resolveBallFloorCollision(b.get(), flc, moved);
-
-            // Record contact for first floor
-            contacts.push_back({
-                ContactType::BallFloor,
-                b.get(),
-                flc[0].floor
-            });
         }
     }
 }
 
-void CollisionSystem::detectBallVsPlayer(Context& ctx, ContactList& contacts)
+void CollisionSystem::detectBallVsPlayer(const Context& ctx, ContactList& contacts) const
 {
     for (const auto& b : ctx.balls)
     {
@@ -136,20 +123,25 @@ void CollisionSystem::detectBallVsPlayer(Context& ctx, ContactList& contacts)
             if (ctx.players[i]->isImmune()) continue;
             if (ctx.players[i]->isDead()) continue;
 
-            if (b->collision(ctx.players[i]))
+            CollisionBox ballBox = b->getCollisionBox();
+            CollisionBox playerBox = ctx.players[i]->getCollisionBox();
+
+            if (intersects(ballBox, playerBox))
             {
-                // Record the contact - CollisionRules will handle events and killing
                 contacts.push_back({
                     ContactType::BallPlayer,
-                    b.get(),         // entityA = ball (raw pointer for observer)
-                    ctx.players[i]   // entityB = player
+                    b.get(),
+                    ctx.players[i],
+                    ballBox,
+                    playerBox,
+                    getCollisionSide(ballBox, playerBox)
                 });
             }
         }
     }
 }
 
-void CollisionSystem::detectShotVsFloor(Context& ctx, ContactList& contacts)
+void CollisionSystem::detectShotVsFloor(const Context& ctx, ContactList& contacts) const
 {
     for (const auto& sh : ctx.shots)
     {
@@ -157,13 +149,18 @@ void CollisionSystem::detectShotVsFloor(Context& ctx, ContactList& contacts)
 
         for (const auto& fl : ctx.floors)
         {
-            if (sh->collision(fl.get()))
+            CollisionBox shotBox = sh->getCollisionBox();
+            CollisionBox floorBox = fl->getCollisionBox();
+
+            if (intersects(shotBox, floorBox))
             {
-                // Record the contact - CollisionRules will call onFloorHit
                 contacts.push_back({
                     ContactType::ShotFloor,
-                    sh.get(),  // entityA = shot (raw pointer for observer)
-                    fl.get()   // entityB = floor (raw pointer for observer)
+                    sh.get(),
+                    fl.get(),
+                    shotBox,
+                    floorBox,
+                    getCollisionSide(shotBox, floorBox)
                 });
 
                 break;  // Shot can only hit one floor per frame
@@ -172,30 +169,109 @@ void CollisionSystem::detectShotVsFloor(Context& ctx, ContactList& contacts)
     }
 }
 
-void CollisionSystem::resolveBallFloorCollision(Ball* b, FloorColision* fc, int moved)
+void CollisionSystem::resolveBallFloorPhysics(const Context& ctx, ContactList& contacts)
 {
-    if (fc[0].floor->getId() == fc[1].floor->getId() || fc[0].point.y == fc[1].point.y)
-    {
-        if (fc[0].point.x)
-            if (moved != 1) b->setDirX(-b->getDirX());
+    // Group BallFloor contacts by ball pointer
+    std::unordered_map<Ball*, std::vector<Contact*>> ballContacts;
 
-        if (fc[0].point.y)
-            if (moved != 2) b->setDirY(-b->getDirY());
-        return;
+    for (auto& c : contacts)
+    {
+        if (c.type == ContactType::BallFloor)
+        {
+            ballContacts[c.getBall()].push_back(&c);
+        }
     }
 
-    if (fc[0].floor->getId() == fc[1].floor->getId())
+    // Resolve physics for each ball
+    for (auto& pair : ballContacts)
     {
-        if (fc[0].floor->getId() == 0)
-            if (moved != 2) b->setDirY(-b->getDirY());
-        if (fc[0].floor->getId() == 1)
-            if (moved != 1) b->setDirX(-b->getDirX());
+        Ball* ball = pair.first;
+        std::vector<Contact*>& floorHits = pair.second;
+
+        if (floorHits.size() == 1)
+        {
+            // Single floor hit - simple bounce based on collision side
+            const CollisionSide& side = floorHits[0]->side;
+            if (side.hasHorizontal()) ball->setDirX(-ball->getDirX());
+            if (side.hasVertical()) ball->setDirY(-ball->getDirY());
+        }
+        else
+        {
+            // Multiple floors hit - analyze alignment to determine bounce
+            resolveMultiFloorCollision(ball, floorHits);
+        }
+    }
+}
+
+void CollisionSystem::resolveMultiFloorCollision(Ball* ball, std::vector<Contact*>& floorHits)
+{
+    // Merge collision sides from all floor contacts
+    // Key insight: aligned floors form a single logical surface
+    //
+    // SCENARIO: Horizontally aligned floors (same Y position)
+    //   ┌────────┐ ┌────────┐
+    //   │ Floor1 │ │ Floor2 │   <- Same Y, form horizontal surface
+    //   └────────┘ └────────┘
+    //   Ball hitting from above should only bounce Y, not X
+    //
+    // SCENARIO: Vertically aligned floors (same X position)
+    //   ┌────────┐
+    //   │ Floor1 │
+    //   └────────┘
+    //   ┌────────┐
+    //   │ Floor2 │   <- Same X, form vertical surface
+    //   └────────┘
+    //   Ball hitting from side should only bounce X, not Y
+    //
+    // SCENARIO: Corner (L-shaped arrangement)
+    //   Ball should bounce both X and Y
+
+    bool bounceX = false;
+    bool bounceY = false;
+
+    // Check if all floors are aligned (share same Y or same X)
+    bool allSameY = true;
+    bool allSameX = true;
+    int firstY = floorHits[0]->boxB.y;
+    int firstX = floorHits[0]->boxB.x;
+
+    for (size_t i = 1; i < floorHits.size(); i++)
+    {
+        if (floorHits[i]->boxB.y != firstY) allSameY = false;
+        if (floorHits[i]->boxB.x != firstX) allSameX = false;
+    }
+
+    // Collect all collision sides
+    bool hasHorizontalHit = false;
+    bool hasVerticalHit = false;
+
+    for (const auto* contact : floorHits)
+    {
+        if (contact->side.hasHorizontal()) hasHorizontalHit = true;
+        if (contact->side.hasVertical()) hasVerticalHit = true;
+    }
+
+    if (allSameY && hasVerticalHit)
+    {
+        // Floors are horizontally aligned - they form a horizontal surface
+        // Only bounce vertically, ignore any spurious horizontal collisions
+        bounceY = true;
+    }
+    else if (allSameX && hasHorizontalHit)
+    {
+        // Floors are vertically aligned - they form a vertical surface
+        // Only bounce horizontally, ignore any spurious vertical collisions
+        bounceX = true;
     }
     else
     {
-        if (fc[0].floor->getY() == fc[1].floor->getY())
-            if (moved != 2) b->setDirY(-b->getDirY());
-            else
-                if (moved != 1) b->setDirX(-b->getDirX());
+        // Floors form a corner (L-shape or other arrangement)
+        // Bounce based on actual collision sides detected
+        bounceX = hasHorizontalHit;
+        bounceY = hasVerticalHit;
     }
+
+    // Apply bounces
+    if (bounceX) ball->setDirX(-ball->getDirX());
+    if (bounceY) ball->setDirY(-ball->getDirY());
 }

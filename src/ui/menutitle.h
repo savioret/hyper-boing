@@ -58,4 +58,9 @@ public:
 
     // Check if animation has completed
     bool isAnimationFinished() const;
+
+    // IGameObject interface - not used for UI elements
+    CollisionBox getCollisionBox() const override {
+        return { 0, 0, 0, 0 };  // UI element - no collision
+    }
 };

@@ -1,20 +1,13 @@
 #pragma once
 
 #include "../game/weapontype.h"
+#include "../game/collisionsystem.h"
 #include "eventmanager.h"
 #include <memory>
 #include "../core/gameobject.h"
 #include "../core/sprite2d.h"
 #include "../core/animcontroller.h"
 #include "../core/spritesheet.h"
-
-/**
- * Collision box in top-left coordinate space for AABB collision detection.
- * Used by Ball and other entities to check collision with Player.
- */
-struct CollisionBox {
-    int x, y, w, h;
-};
 
 class Scene;
 class Action;
@@ -156,7 +149,7 @@ public:
      * Player position is stored in bottom-middle coordinates, but collision
      * detection uses top-left AABB. This method handles the conversion.
      */
-    CollisionBox getCollisionBox() const;
+    CollisionBox getCollisionBox() const override;
 
     /**
      * Change player animation state with proper transitions

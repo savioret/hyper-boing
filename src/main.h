@@ -56,12 +56,6 @@ constexpr int FONT_BIG = 0;
 constexpr int FONT_SMALL = 1;
 constexpr int FONT_HUGE = 2;
 
-// Collision sides
-constexpr int SIDE_TOP = 1;
-constexpr int SIDE_BOTTOM = 2;
-constexpr int SIDE_LEFT = 3;
-constexpr int SIDE_RIGHT = 4;
-
 constexpr int GLOBAL_UPDATE_FRAMERATE = 60;
 
 // Legacy compatibility macros - for gradual migration

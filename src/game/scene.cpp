@@ -290,16 +290,13 @@ void Scene::checkValidPosition(int& x, int& y, int ballDiameter)
                 continue;
             
             // Use existing Ball::collision(Floor*) method
-            SDL_Point col = tempBall.collision(floor.get());
-            
-            // If any collision detected (x or y), position is invalid
-            if (col.x != 0 || col.y != 0)
+            if (tempBall.collision(floor.get()))
             {
                 // Collision detected! Generate new random position
                 validPosition = false;
 
-                LOG_DEBUG("Cannot spawn ball at (x=%d, y=%d) => (floor x=%d, y=%d, w=%d, h=%d) ## COL(%d, %d)", 
-                    x, y, floor->getX(), floor->getY(), floor->getWidth(), floor->getHeight(), col.x, col.y);
+                LOG_DEBUG("Cannot spawn ball at (x=%d, y=%d) => (floor x=%d, y=%d, w=%d, h=%d) ## COLLISION",
+                    x, y, floor->getX(), floor->getY(), floor->getWidth(), floor->getHeight());
                 
                 // Regenerate ONLY the coordinates that were originally random
                 if (xWasRandom)

@@ -1,11 +1,13 @@
 #pragma once
 
+#include "collisionbox.h"
+
 /**
  * IGameObject interface
- * 
+ *
  * Base class for game objects that need lifecycle management.
  * Enables safe deferred deletion pattern to avoid iterator invalidation.
- * 
+ *
  * Objects marked as "dead" via kill() are removed during the cleanup phase
  * of the game loop, not immediately.
  */
@@ -57,4 +59,10 @@ public:
      * Override in derived classes to emit events or perform cleanup.
      */
     virtual void onDeath() {}
+
+    /**
+     * Get collision box for AABB collision detection.
+     * @return Collision box in top-left coordinate space
+     */
+    virtual CollisionBox getCollisionBox() const = 0;
 };

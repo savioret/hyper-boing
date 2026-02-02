@@ -2,7 +2,10 @@
 
 #include <list>
 #include <memory>
+#include <vector>
 #include <SDL.h>
+#include <algorithm>
+#include "../core/collisionbox.h"
 #include "contact.h"
 
 // Forward declarations
@@ -12,24 +15,83 @@ class Floor;
 class Player;
 
 /**
- * @class FloorColision
- * @brief Auxiliary class for handling collisions between balls and floors
- *
- * Stores collision information when a ball intersects with a floor,
- * including which floor was hit and at what point.
+ * @brief Compute which side of target was hit by mover using minimum penetration depth
+ * @param mover The moving collision box
+ * @param target The target collision box being hit
+ * @return CollisionSide indicating which side(s) were hit
  */
-class FloorColision
+inline CollisionSide getCollisionSide(const CollisionBox& mover, const CollisionBox& target)
 {
-public:
-    Floor* floor;      ///< Pointer to the floor involved in collision
-    SDL_Point point;   ///< Collision point coordinates
+    CollisionSide side;
 
-    FloorColision() : floor(nullptr) { point.x = point.y = 0; }
-};
+    // Calculate penetration depth from each direction
+    int penetrationLeft = (mover.x + mover.w) - target.x;      // Mover hitting left side of target
+    int penetrationRight = (target.x + target.w) - mover.x;    // Mover hitting right side of target
+    int penetrationTop = (mover.y + mover.h) - target.y;       // Mover hitting top side of target
+    int penetrationBottom = (target.y + target.h) - mover.y;   // Mover hitting bottom side of target
+
+    // Find minimum penetration on each axis
+    int minPenetrationX = std::min(penetrationLeft, penetrationRight);
+    int minPenetrationY = std::min(penetrationTop, penetrationBottom);
+
+    // The axis with smaller penetration is the collision axis
+    if (minPenetrationX < minPenetrationY) {
+        // Horizontal collision
+        side.x = (penetrationLeft < penetrationRight) ? SIDE_LEFT : SIDE_RIGHT;
+    } else if (minPenetrationY < minPenetrationX) {
+        // Vertical collision
+        side.y = (penetrationTop < penetrationBottom) ? SIDE_TOP : SIDE_BOTTOM;
+    } else {
+        // Corner hit - equal penetration on both axes
+        side.x = (penetrationLeft < penetrationRight) ? SIDE_LEFT : SIDE_RIGHT;
+        side.y = (penetrationTop < penetrationBottom) ? SIDE_TOP : SIDE_BOTTOM;
+    }
+
+    return side;
+}
+
+/**
+ * @brief Get which side of entity A was hit by entity B
+ * @param c Contact containing collision information
+ * @return CollisionSide for entity A
+ */
+inline CollisionSide getCollisionSideA(const Contact& c)
+{
+    return getCollisionSide(c.boxB, c.boxA);
+}
+
+/**
+ * @brief Get which side of entity B was hit by entity A
+ * @param c Contact containing collision information
+ * @return CollisionSide for entity B
+ */
+inline CollisionSide getCollisionSideB(const Contact& c)
+{
+    return getCollisionSide(c.boxA, c.boxB);
+}
+
+/**
+ * @brief Check if two collision boxes intersect and compute midpoint (SDL_Point version)
+ * @param a First collision box
+ * @param b Second collision box
+ * @param outMidpoint Output parameter for midpoint of overlap region
+ * @return true if boxes overlap, false otherwise
+ *
+ * @note Prefer using getOverlapCenter() from collisionbox.h for new code.
+ *       This overload is provided for SDL_Point convenience.
+ */
+inline bool intersects(const CollisionBox& a, const CollisionBox& b, SDL_Point& outMidpoint)
+{
+    return getOverlapCenter(a, b, outMidpoint.x, outMidpoint.y);
+}
 
 /**
  * @class CollisionSystem
  * @brief Handles collision detection and physics resolution
+ *
+ * Architecture:
+ * - Phase 1 (Detection): const methods that only build ContactList
+ * - Phase 2 (Resolution): processes contacts to modify game state (ball bounces)
  *
  * This system is responsible for:
  * - Detecting overlaps between entities
@@ -65,9 +127,9 @@ public:
     /**
      * @brief Detect all collisions and resolve physics
      *
-     * Runs collision detection for all entity pairs, resolves
-     * physics (ball bounces), and returns a list of contacts
-     * for CollisionRules to process.
+     * Runs in two phases:
+     * 1. Detection: builds ContactList (const operations)
+     * 2. Resolution: applies physics (ball bounces)
      *
      * @param ctx Collision context with entity lists and flags
      * @return List of contacts detected this frame
@@ -75,32 +137,50 @@ public:
     ContactList detectAndResolve(Context& ctx);
 
 private:
-    /**
-     * @brief Detect ball vs shot collisions
-     * Records contacts but does NOT kill balls or add score.
-     */
-    void detectBallVsShot(Context& ctx, ContactList& contacts);
+    // ========== Phase 1: Detection (const - only builds contacts) ==========
 
     /**
-     * @brief Detect and resolve ball vs floor collisions
-     * Resolves physics immediately (bouncing), records contacts.
+     * @brief Detect ball vs shot collisions
+     * Records contacts. Does NOT modify any entities.
      */
-    void detectBallVsFloor(Context& ctx, ContactList& contacts);
+    void detectBallVsShot(const Context& ctx, ContactList& contacts) const;
+
+    /**
+     * @brief Detect ball vs floor collisions
+     * Records contacts with collision sides for later physics resolution.
+     * Does NOT modify any entities.
+     */
+    void detectBallVsFloor(const Context& ctx, ContactList& contacts) const;
 
     /**
      * @brief Detect ball vs player collisions
-     * Records contacts but does NOT kill players.
+     * Records contacts. Does NOT modify any entities.
      */
-    void detectBallVsPlayer(Context& ctx, ContactList& contacts);
+    void detectBallVsPlayer(const Context& ctx, ContactList& contacts) const;
 
     /**
      * @brief Detect shot vs floor collisions
-     * Records contacts but does NOT call onFloorHit.
+     * Records contacts. Does NOT modify any entities.
      */
-    void detectShotVsFloor(Context& ctx, ContactList& contacts);
+    void detectShotVsFloor(const Context& ctx, ContactList& contacts) const;
+
+    // ========== Phase 2: Physics Resolution (modifies ball directions) ==========
 
     /**
-     * @brief Resolve ball-floor collision when multiple floors are hit
+     * @brief Resolve ball-floor physics based on detected contacts
+     *
+     * Groups contacts by ball and determines bounce direction.
+     * For multiple floor hits, analyzes floor alignment to handle:
+     * - Horizontally aligned floors (same Y) → single horizontal surface
+     * - Vertically aligned floors (same X) → single vertical surface
+     * - L-shaped corners → bounce both directions
      */
-    void resolveBallFloorCollision(Ball* b, FloorColision* fc, int moved);
+    void resolveBallFloorPhysics(const Context& ctx, ContactList& contacts);
+
+    /**
+     * @brief Handle multi-floor collision by analyzing floor alignment
+     * @param ball The ball that hit multiple floors
+     * @param floorHits Vector of contacts with floors
+     */
+    void resolveMultiFloorCollision(Ball* ball, std::vector<Contact*>& floorHits);
 };

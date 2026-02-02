@@ -3,6 +3,7 @@
 #include <SDL.h>
 #include <memory>
 #include "gameobject.h"
+#include "../game/collisionsystem.h"
 
 class Scene;
 class Shot;
@@ -55,9 +56,9 @@ public:
     std::pair<std::unique_ptr<Ball>, std::unique_ptr<Ball>> createChildren();
 
     bool collision(Shot* shot);
-    SDL_Point collision(Floor* floor);
+    bool collision(Floor* floor);
     bool collision(Player* player);
-    
+
     void setDir(int dx, int dy);
     void setDirX(int dx);
     void setDirY(int dy);
@@ -69,4 +70,12 @@ public:
     int getSize() const { return size; }
     int getDiameter() const { return diameter; }
     Sprite* getSprite() const { return sprite; }
+
+    /**
+     * @brief Get collision box for AABB collision detection
+     * @return Collision box in top-left coordinate space
+     */
+    CollisionBox getCollisionBox() const override {
+        return { (int)xPos, (int)yPos, diameter, diameter };
+    }
 };

@@ -155,21 +155,13 @@ void GunShot::onBallHit(Ball* b)
 /**
  * Check collision with floor
  *
- * Overrides base Shot::collision() which uses xPos + 8.
- * Gun bullets use centered sprites with negative offsets, so the collision
- * point should be at xPos (the sprite's center), not xPos + 8.
+ * Uses AABB collision detection with the gun bullet's sprite bounds.
+ * The collision box properly represents the bullet sprite, so we can use
+ * the generic intersection test instead of custom point-based logic.
  */
 bool GunShot::collision(Floor* fl)
 {
-    // Use xPos directly as the collision point (sprite center)
-    // No +8 offset needed since gun bullet sprites are centered differently than harpoon
-    if (xPos > fl->getX() - 1 && xPos < fl->getX() + fl->getWidth() + 1 &&
-        fl->getY() + fl->getHeight() > yPos)
-    {
-        return true;
-    }
-
-    return false;
+    return intersects(getCollisionBox(), fl->getCollisionBox());
 }
 
 /**
@@ -179,4 +171,22 @@ bool GunShot::collision(Floor* fl)
 Sprite* GunShot::getCurrentSprite() const
 {
     return spriteSheet->getFrame(animController->getCurrentFrame());
+}
+
+/**
+ * Get collision box for the gun bullet
+ *
+ * Unlike harpoon which has a chain, gun bullets are small animated sprites.
+ * The collision box matches the current sprite frame dimensions.
+ */
+CollisionBox GunShot::getCollisionBox() const
+{
+    Sprite* sprite = getCurrentSprite();
+    if (!sprite)
+    {
+        // Fallback if sprite not found (shouldn't happen)
+        return { (int)xPos, (int)yPos, 16, 16 };
+    }
+
+    return { (int)xPos, (int)yPos, sprite->getWidth(), sprite->getHeight() };
 }

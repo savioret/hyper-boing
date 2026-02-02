@@ -72,18 +72,13 @@ void Shot::onCeilingHit()
  * Check collision with floor
  * @param fl Floor to check collision with
  * @return true if colliding, false otherwise
+ *
+ * Default implementation using AABB collision detection.
+ * Can be overridden by subclasses for specialized behavior.
  */
 bool Shot::collision(Floor* fl)
 {
-    float cx = xPos + 8;
-
-    if (cx > fl->getX() - 1 && cx < fl->getX() + fl->getWidth() + 1 &&
-        fl->getY() + fl->getHeight() > yPos)
-    {
-        return true;
-    }
-
-    return false;
+    return intersects(getCollisionBox(), fl->getCollisionBox());
 }
 
 /**

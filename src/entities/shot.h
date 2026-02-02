@@ -2,6 +2,7 @@
 
 #include "gameobject.h"
 #include "../game/weapontype.h"
+#include "../game/collisionsystem.h"
 
 // Forward declarations
 class Scene;
@@ -87,7 +88,16 @@ public:
     void setAudioChannel(int channel) { audioChannel = channel; }
     int getAudioChannel() const { return audioChannel; }
 
-    // Collision detection helper
+    // Collision detection
+    /**
+     * @brief Get collision box for AABB collision detection
+     * @return Collision box in top-left coordinate space
+     *
+     * Pure virtual - each weapon type defines its own collision bounds.
+     * Harpoon returns the chain area, gun returns the bullet sprite bounds.
+     */
+    CollisionBox getCollisionBox() const override = 0;
+
     /**
      * Check collision with floor
      * @param fl Floor to check collision with
