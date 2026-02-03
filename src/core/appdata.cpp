@@ -121,14 +121,12 @@ void AppData::initStageResources()
     stageRes.redball[1].init(&appGraph, "assets/graph/entities/ball-rd2.png");
     stageRes.redball[2].init(&appGraph, "assets/graph/entities/ball-rd3.png");
     stageRes.redball[3].init(&appGraph, "assets/graph/entities/ball-rd4.png");
-    for (i = 0; i < 4; i++)
-        appGraph.setColorKey(stageRes.redball[i].getBmp(), 0x00FF00);
+    //for (i = 0; i < 4; i++)
+    //    appGraph.setColorKey(stageRes.redball[i].getBmp(), 0x00FF00);
 
     // Load mini player icons
     stageRes.miniplayer[PLAYER1].init(&appGraph, "assets/graph/players/miniplayer1.png");
     stageRes.miniplayer[PLAYER2].init(&appGraph, "assets/graph/players/miniplayer2.png");
-    appGraph.setColorKey(stageRes.miniplayer[PLAYER1].getBmp(), 0x00FF00);
-    appGraph.setColorKey(stageRes.miniplayer[PLAYER2].getBmp(), 0x00FF00);
 
     // Load lives icons
     stageRes.lives[PLAYER1].init(&appGraph, "assets/graph/players/lives1p.png");
@@ -154,13 +152,10 @@ void AppData::initStageResources()
 
     // Load floor sprites
     stageRes.floor[0].init(&appGraph, "assets/graph/entities/floor1.png");
-    appGraph.setColorKey(stageRes.floor[0].getBmp(), 0x00FF00);
     stageRes.floor[1].init(&appGraph, "assets/graph/entities/floor2.png");
-    appGraph.setColorKey(stageRes.floor[1].getBmp(), 0x00FF00);
 
     // Load UI sprites
     stageRes.time.init(&appGraph, "assets/graph/ui/tiempo.png");
-    appGraph.setColorKey(stageRes.time.getBmp(), 0xFF0000);
 
     stageRes.gameover.init(&appGraph, "assets/graph/ui/gameover.png", 16, 16);
     stageRes.continu.init(&appGraph, "assets/graph/ui/continue.png", 16, 16);

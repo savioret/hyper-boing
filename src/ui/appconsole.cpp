@@ -178,6 +178,15 @@ void AppConsole::registerBuiltinCommands()
     
     registerCommand("lives", "Set player lives: /lives <player_num> <lives>",
         [this](const std::string& args) { cmdLives(args); });
+
+    registerCommand("ball", "Spawn a ball: /ball <x> <y> [size] [count] (-1 for random position)",
+        [this](const std::string& args) { cmdBall(args); });
+
+    registerCommand("floor", "Spawn a floor: /floor <x> <y> [type] (-1 for random position)",
+        [this](const std::string& args) { cmdFloor(args); });
+
+    registerCommand("immune", "Toggle player immunity: /immune [player_num] [0|1]",
+        [this](const std::string& args) { cmdImmune(args); });
 }
 
 void AppConsole::cmdHelp(const std::string& args)
@@ -564,6 +573,244 @@ void AppConsole::cmdLives(const std::string& args)
     // For now, let's add a public setter method to Player class
     player->setLives(newLives);
     LOG_SUCCESS("Player %d lives set to %d", playerNum, newLives);
+}
+
+/**
+ * Command: /ball <x> <y> [size]
+ *
+ * Spawns a ball at the specified position during gameplay.
+ * Use -1 for x or y to spawn at a random position.
+ * Size is optional and defaults to 0 (largest ball).
+ */
+void AppConsole::cmdBall(const std::string& args)
+{
+    if (args.empty())
+    {
+        LOG_WARNING("Usage: /ball <x> <y> [size]");
+        LOG_INFO("  x, y: Position (-1 for random)");
+        LOG_INFO("  size: 0 (largest) to 3 (smallest), default 0");
+        LOG_INFO("  Example: /ball 320 200 1");
+        LOG_INFO("  Example: /ball -1 -1 0  (random position, largest ball)");
+        return;
+    }
+
+    // Get current scene
+    AppData& appData = AppData::instance();
+    Scene* scene = dynamic_cast<Scene*>(appData.currentScreen.get());
+    if (!scene)
+    {
+        LOG_WARNING("Ball command only available during gameplay");
+        return;
+    }
+
+    // Parse arguments
+    std::istringstream iss(args);
+    int x = 0;
+    int y = 0;
+    int size = 0;  // Default to largest ball
+    int count = 1; // Number of balls to spawn
+    iss >> x >> y;
+
+    // Size is optional
+    if (!(iss >> size))
+    {
+        size = 0;  // Default to largest ball
+    }
+    else if (!(iss >> count))
+    {
+        count = 1;
+    }
+
+    // Validate size range (0-3)
+    if (size < 0 || size > 3)
+    {
+        LOG_ERROR("Invalid ball size: %d (must be 0-3)", size);
+        LOG_INFO("  0 = Largest (64px), 1 = Large (40px), 2 = Medium (24px), 3 = Smallest (16px)");
+        return;
+    }
+
+    // Convert -1 to INT_MAX for random positioning (Scene's convention)
+    if (x == -1) x = INT_MAX;
+    if (y == -1) y = INT_MAX;
+
+    // Spawn the ball with default physics parameters
+    // Using defaults from addBall signature: top=0 (auto), dirX=1, dirY=1, id=0 (red ball)
+    for(int i = 0; i < count; ++i)
+        scene->addBall(x, y, size);
+
+    const char* sizeNames[] = { "largest", "large", "medium", "smallest" };
+    const char* sizeName = (size >= 0 && size <= 3) ? sizeNames[size] : "unknown";
+
+    if (x == INT_MAX || y == INT_MAX)
+    {
+        LOG_SUCCESS("Spawning %s ball at random position", sizeName);
+    }
+    else
+    {
+        LOG_SUCCESS("Spawning %s ball at (%d, %d)", sizeName, x, y);
+    }
+}
+
+/**
+ * Command: /floor <x> <y> [type]
+ *
+ * Spawns a floor at the specified position during gameplay.
+ * Use -1 for x or y to spawn at a random position.
+ * Type is optional and defaults to 0 (horizontal floor).
+ */
+void AppConsole::cmdFloor(const std::string& args)
+{
+    if (args.empty())
+    {
+        LOG_WARNING("Usage: /floor <x> <y> [type]");
+        LOG_INFO("  x, y: Position (-1 for random)");
+        LOG_INFO("  type: 0 (horizontal) or 1 (vertical), default 0");
+        LOG_INFO("  Example: /floor 320 200 0");
+        LOG_INFO("  Example: /floor -1 -1 1  (random position, vertical floor)");
+        return;
+    }
+
+    // Get current scene
+    AppData& appData = AppData::instance();
+    Scene* scene = dynamic_cast<Scene*>(appData.currentScreen.get());
+    if (!scene)
+    {
+        LOG_WARNING("Floor command only available during gameplay");
+        return;
+    }
+
+    // Parse arguments
+    std::istringstream iss(args);
+    int x = 0;
+    int y = 0;
+    int type = 0;  // Default to horizontal floor
+    iss >> x >> y;
+
+    // Type is optional
+    if (!(iss >> type))
+    {
+        type = 0;  // Default to horizontal floor
+    }
+
+    // Validate type (0 or 1)
+    if (type < 0 || type > 1)
+    {
+        LOG_ERROR("Invalid floor type: %d (must be 0 or 1)", type);
+        LOG_INFO("  0 = Horizontal, 1 = Vertical");
+        return;
+    }
+
+    // Convert -1 to INT_MAX for random positioning (Scene's convention)
+    // if (x == -1) x = INT_MAX;
+    // if (y == -1) y = INT_MAX;
+
+    // Spawn the floor
+    scene->addFloor(x, y, type);
+
+    const char* typeNames[] = { "horizontal", "vertical" };
+    const char* typeName = (type >= 0 && type <= 1) ? typeNames[type] : "unknown";
+
+    if (x == INT_MAX || y == INT_MAX)
+    {
+        LOG_SUCCESS("Spawning %s floor at random position", typeName);
+    }
+    else
+    {
+        LOG_SUCCESS("Spawning %s floor at (%d, %d)", typeName, x, y);
+    }
+}
+
+/**
+ * Command: /immune [player_num] [0|1]
+ *
+ * Toggles player immunity to ball collisions.
+ * If player_num is omitted, applies to all active players.
+ * If 0|1 is omitted, toggles current immunity state.
+ */
+void AppConsole::cmdImmune(const std::string& args)
+{
+    // Get current scene
+    AppData& appData = AppData::instance();
+    Scene* scene = dynamic_cast<Scene*>(appData.currentScreen.get());
+    if (!scene)
+    {
+        LOG_WARNING("Immune command only available during gameplay");
+        return;
+    }
+
+    // Parse arguments
+    int playerNum = -1;  // -1 means all players
+    int enable = -1;     // -1 means toggle
+
+    if (!args.empty())
+    {
+        std::istringstream iss(args);
+        iss >> playerNum;
+        iss >> enable;
+    }
+
+    // Validate inputs
+    if (playerNum < -1 || playerNum > 2 || playerNum == 0)
+    {
+        LOG_ERROR("Invalid player number: %d (must be 1, 2, or omit for all)", playerNum);
+        return;
+    }
+
+    if (enable != -1 && enable != 0 && enable != 1)
+    {
+        LOG_ERROR("Invalid enable value: %d (must be 0, 1, or omit to toggle)", enable);
+        return;
+    }
+
+    // Apply to specified player(s)
+    bool changed = false;
+    const int INFINITE_IMMUNITY = 999999;  // Very high value for permanent immunity
+
+    auto togglePlayerImmunity = [&](Player* player, const char* playerName) {
+        if (!player) return;
+
+        if (enable == -1)
+        {
+            // Toggle: if immune, disable; if not immune, enable
+            if (player->isImmune())
+            {
+                player->setImmuneCounter(0);
+                LOG_SUCCESS("%s immunity disabled", playerName);
+            }
+            else
+            {
+                player->setImmuneCounter(INFINITE_IMMUNITY);
+                LOG_SUCCESS("%s immunity enabled", playerName);
+            }
+        }
+        else if (enable == 1)
+        {
+            player->setImmuneCounter(INFINITE_IMMUNITY);
+            LOG_SUCCESS("%s immunity enabled", playerName);
+        }
+        else
+        {
+            player->setImmuneCounter(0);
+            LOG_SUCCESS("%s immunity disabled", playerName);
+        }
+        changed = true;
+    };
+
+    if (playerNum == -1 || playerNum == 1)
+    {
+        Player* p1 = scene->getPlayer(0);
+        togglePlayerImmunity(p1, "Player 1");
+    }
+    if (playerNum == -1 || playerNum == 2)
+    {
+        Player* p2 = scene->getPlayer(1);
+        togglePlayerImmunity(p2, "Player 2");
+    }
+
+    if (!changed)
+    {
+        LOG_WARNING("No active players found");
+    }
 }
 
 void AppConsole::registerCommand(const std::string& name, const std::string& desc, CommandHandler handler)

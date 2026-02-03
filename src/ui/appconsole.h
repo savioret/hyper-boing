@@ -112,6 +112,9 @@ private:
     void cmdEvents(const std::string& args);
     void cmdTime(const std::string& args);
     void cmdLives(const std::string& args);
+    void cmdBall(const std::string& args);
+    void cmdFloor(const std::string& args);
+    void cmdImmune(const std::string& args);
 
 public:
     // Singleton accessor

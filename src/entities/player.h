@@ -165,6 +165,7 @@ public:
     // setX, setY are inherited
     void setPlaying(bool p) { playing = p; }
     void setLives(int l) { lives = l; }
+    void setImmuneCounter(int counter) { immuneCounter = counter; }
 
     // For access during refactoring
     friend class Scene;
