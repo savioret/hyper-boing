@@ -24,11 +24,11 @@ class ConfigScreen : public GameState
 {
 private:
     ConfigState state;
-    int selectedOption; // Opción seleccionada (0-6: 3 teclas por jugador + 1 modo pantalla)
+    int selectedOption; // Opción seleccionada (0-9: 5 teclas por jugador, 10: modo pantalla)
     int waitingForKey;
 
     // Teclas temporales (se guardan al confirmar)
-    SDL_Scancode tempKeys[2][3]; // [player][left/right/shoot]
+    SDL_Scancode tempKeys[2][5]; // [player][left/right/shoot/up/down]
 
     // Modo de renderizado temporal
     int tempRenderMode; // RENDERMODE_NORMAL o RENDERMODE_EXCLUSIVE

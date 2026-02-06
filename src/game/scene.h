@@ -10,6 +10,7 @@
 #include "shot.h"
 #include "spritesheet.h"
 #include "floor.h"
+#include "ladder.h"
 #include "item.h"
 #include "stage.h"
 #include "app.h"
@@ -94,8 +95,14 @@ struct SceneBitmaps
  */
 class Scene : public GameState
 {
-    
+
 private:
+    // Collision detection tolerances (extracted magic numbers)
+    static constexpr float GROUND_SNAP_TOLERANCE = 1.0f;    ///< Distance tolerance for snapping to ground
+    static constexpr int SURFACE_STEP_TOLERANCE = 2;        ///< Pixel tolerance for stepping onto surfaces
+    static constexpr int LADDER_ENTRY_TOLERANCE = 4;        ///< Pixel tolerance for ladder entry detection
+    static constexpr int SURFACE_CHECK_WIDTH = 20;          ///< Width used for floor/ladder standing checks
+
     // Scene state management
     SceneState currentState;           ///< Current scene state (Ready/Playing/GameOver/LevelClear)
     GameOverSubState gameOverSubState; ///< Current game over substate (Continue/Definitive)
@@ -310,6 +317,7 @@ public:
     std::list<std::unique_ptr<Ball>> lsBalls;     ///< Active balls in scene
     std::list<std::unique_ptr<Item>> lsItems;     ///< Active items (unused currently)
     std::list<std::unique_ptr<Floor>> lsFloor;    ///< Active floors/platforms
+    std::list<std::unique_ptr<Ladder>> lsLadders; ///< Active ladders (climbable)
     std::list<std::unique_ptr<Shot>> lsShoots;    ///< Active weapon shots
 
     /**
@@ -353,7 +361,56 @@ public:
      * @param id Floor type (0=horizontal, 1=vertical)
      */
     void addFloor(int x, int y, int id);
-    
+
+    /**
+     * @brief Adds a ladder to the scene
+     * @param x X position (center, bottom-middle anchor)
+     * @param y Y position (bottom of ladder)
+     * @param numTiles Number of vertical tiles
+     */
+    void addLadder(int x, int y, int numTiles);
+
+    /**
+     * @brief Gets the list of ladders
+     * @return Const reference to ladder list
+     */
+    const std::list<std::unique_ptr<Ladder>>& getLadders() const { return lsLadders; }
+
+    /**
+     * @brief Finds a ladder that the player can enter (50% overlap)
+     * @param player The player to check
+     * @return Pointer to ladder if found, nullptr otherwise
+     */
+    Ladder* findLadderAtPlayer(Player* player) const;
+
+    /**
+     * @brief Finds a ladder below the player (for climbing down from platforms)
+     * @param player The player to check
+     * @return Pointer to ladder if found, nullptr otherwise
+     */
+    Ladder* findLadderBelowPlayer(Player* player) const;
+
+    /**
+     * @brief Finds a floor directly under the player's feet
+     * @param player The player to check
+     * @return Pointer to floor if found, nullptr otherwise
+     */
+    Floor* findFloorUnderPlayer(Player* player) const;
+
+    /**
+     * @brief Finds the top of a ladder under the player's feet
+     * @param player The player to check
+     * @return Pointer to ladder if found, nullptr otherwise
+     */
+    Ladder* findLadderTopUnderPlayer(Player* player) const;
+
+    /**
+     * @brief Finds the ground level below the player (floor, ladder top, or MAX_Y)
+     * @param player The player to check
+     * @return Y coordinate of the nearest surface below the player
+     */
+    float findGroundLevel(Player* player) const;
+
     /**
      * @brief Fires a shot from the player
      * 

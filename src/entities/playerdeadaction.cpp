@@ -32,7 +32,7 @@ bool PlayerDeadAction::update(float dt)
 {
     if (isDone || !player) return false;
 
-    LOG_DEBUG("PlayerDeadAction update: rotation = %.2f", rotationMotion.value());
+    //LOG_DEBUG("PlayerDeadAction update: rotation = %.2f", rotationMotion.value());
 
     Sprite* sprite = player->getSprite();
     if (!sprite) return false;

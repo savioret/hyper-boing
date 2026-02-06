@@ -12,6 +12,7 @@
 class Scene;
 class Action;
 class Graph;
+class Ladder;
 
 /**
  * Player facing direction
@@ -29,6 +30,7 @@ enum class PlayerState
 {
     IDLE,      // Standing still (default pose)
     WALKING,   // Walking animation (from Aseprite JSON)
+    CLIMBING,  // On ladder, moving up/down (uses walk animation)
     SHOOTING,  // Shooting pose
     VICTORY,   // Victory celebration (from Aseprite JSON)
     DEAD       // Death animation (uses Action system)
@@ -84,6 +86,17 @@ private:
     EventManager::ListenerHandle levelClearHandle;
     EventManager::ListenerHandle stageLoadedHandle;
 
+    // Ladder/climbing state
+    Ladder* currentLadder;   // Ladder player is currently climbing (nullptr if not climbing)
+    float climbSpeed;        // Climb speed in pixels per frame
+
+    // Physics/gravity state
+    float yVelocity;         // Current vertical velocity (positive = falling)
+    bool grounded;           // Is player standing on something?
+    static constexpr float GRAVITY = 0.3f;            // Gravity acceleration per frame
+    static constexpr float MAX_FALL_SPEED = 7.0f;     // Terminal velocity
+    static constexpr float GROUND_SNAP_TOLERANCE = 1.0f;  // Distance tolerance for snapping to ground
+
 public:
     Player(int id);
     ~Player();
@@ -104,11 +117,26 @@ public:
 
     void init();
     // void setFrame(int frame); // Inherited from Sprite2D
-    void update(float dt);
+    void update(float dt, Scene* scene);
+    void updatePhysics(float dt, Scene* scene);
     void addScore(int num);
     void moveLeft();
     void moveRight();
     void stop();
+
+    // Climbing methods
+    void startClimbing(Ladder* ladder);
+    void stopClimbing();
+    void climbUp();
+    void climbDown();
+    bool isClimbing() const { return currentState == PlayerState::CLIMBING; }
+    bool canEnterLadder(Ladder* ladder) const;
+    Ladder* getCurrentLadder() const { return currentLadder; }
+    float getClimbSpeed() const { return climbSpeed; }
+
+    // Physics getters
+    bool isGrounded() const { return grounded; }
+    float getYVelocity() const { return yVelocity; }
 
     bool canShoot() const;
     void shoot();

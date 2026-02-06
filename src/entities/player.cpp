@@ -3,6 +3,8 @@
 #include "playerdeadaction.h"
 #include "asepriteloader.h"
 #include "logger.h"
+#include "ladder.h"
+#include "../game/scene.h"
 #include "../core/coordhelper.h"
 #include <cstring>
 #include <SDL.h>
@@ -61,7 +63,15 @@ void Player::init()
     score = 0;
     moveIncrement = 3;
     facing = FacingDirection::RIGHT;  // Default facing right
-    
+
+    // Climbing initialization
+    currentLadder = nullptr;
+    climbSpeed = 2.0f;
+
+    // Physics initialization
+    yVelocity = 0.0f;
+    grounded = true;  // Start grounded at MAX_Y
+
     // Initialize sprites from global resources
     clearSprites();
     // Load 9 player sprite frames (0-8: walk, shoot, win, dead)
@@ -134,6 +144,11 @@ void Player::revive()
     animSpeed = shotCounter = 10;
     facing = FacingDirection::RIGHT;  // Reset facing on revive
 
+    // Reset physics state
+    yVelocity = 0.0f;
+    grounded = true;
+    currentLadder = nullptr;
+
     // Reset animation state to idle
     setState(PlayerState::IDLE);
 
@@ -158,7 +173,12 @@ void Player::moveLeft()
     setFlipH(true);
     // X is center; check if left edge (x - width/2) stays within bounds
     if (x - getWidth() / 2.0f > MIN_X - 10)
+    {
+        float oldX = x;
         x -= moveIncrement;
+        LOG_TRACE("Player %d moveLeft: x=%.1f -> %.1f, y=%.1f, grounded=%d",
+                  id + 1, oldX, x, y, grounded);
+    }
 
     // Transition to walk animation if not already walking
     if (currentState != PlayerState::WALKING &&
@@ -175,7 +195,12 @@ void Player::moveRight()
     setFlipH(false);
     // X is center; check if right edge (x + width/2) stays within bounds
     if (x + getWidth() / 2.0f < MAX_X - 5)
+    {
+        float oldX = x;
         x += moveIncrement;
+        LOG_TRACE("Player %d moveRight: x=%.1f -> %.1f, y=%.1f, grounded=%d",
+                  id + 1, oldX, x, y, grounded);
+    }
 
     // Transition to walk animation if not already walking
     if (currentState != PlayerState::WALKING &&
@@ -206,7 +231,13 @@ void Player::shoot()
 {
     numShoots++;
     shotCounter = shotInterval;
-    setState(PlayerState::SHOOTING);
+
+    // Don't change state if climbing - stay in climbing mode
+    // (shooting animation can be shown separately if needed)
+    if (currentState != PlayerState::CLIMBING)
+    {
+        setState(PlayerState::SHOOTING);
+    }
 }
 
 void Player::stop()
@@ -229,7 +260,78 @@ void Player::stop()
         x = (float)(MAX_X - 16) - getWidth() / 2.0f;
 }
 
-void Player::update(float dt)
+// Climbing methods
+
+void Player::startClimbing(Ladder* ladder)
+{
+    if (!ladder || isDead()) return;
+
+    currentLadder = ladder;
+    setState(PlayerState::CLIMBING);
+
+    // Center player on ladder horizontally
+    x = (float)ladder->getCenterX();
+}
+
+void Player::stopClimbing()
+{
+    currentLadder = nullptr;
+    setState(PlayerState::IDLE);
+}
+
+void Player::climbUp()
+{
+    if (!currentLadder || isDead()) return;
+
+    float newY = y - climbSpeed;
+    float ladderTop = (float)currentLadder->getTopY();
+
+    if (newY <= ladderTop)
+    {
+        // Reached top - stand on ladder top
+        LOG_TRACE("Player %d REACHED LADDER TOP: y=%.1f -> ladderTop=%.1f, ladderCenterX=%d",
+                  id + 1, y, ladderTop, currentLadder->getCenterX());
+        y = ladderTop;
+        stopClimbing();
+    }
+    else
+    {
+        y = newY;
+    }
+
+    // Animation is updated in Player::update() using proper dt
+}
+
+void Player::climbDown()
+{
+    if (!currentLadder || isDead()) return;
+
+    float newY = y + climbSpeed;
+    float ladderBottom = (float)currentLadder->getBottomY();
+
+    if (newY >= ladderBottom)
+    {
+        // Reached bottom - exit ladder at ground
+        y = ladderBottom;
+        stopClimbing();
+    }
+    else
+    {
+        y = newY;
+    }
+
+    // Animation is updated in Player::update() using proper dt
+}
+
+bool Player::canEnterLadder(Ladder* ladder) const
+{
+    if (!ladder) return false;
+
+    // Use 50% horizontal overlap rule from collisionbox.h
+    return has50PercentOverlap(getCollisionBox(), ladder->getCollisionBox());
+}
+
+void Player::update(float dt, Scene* scene)
 {
     if (shotCounter > 0) shotCounter--;
 
@@ -247,6 +349,13 @@ void Player::update(float dt)
             break;
 
         case PlayerState::WALKING:
+            if (walkAnim) {
+                walkAnim->update(dtMs);
+            }
+            break;
+
+        case PlayerState::CLIMBING:
+            // Use walking animation for climbing (updated every frame with proper dt)
             if (walkAnim) {
                 walkAnim->update(dtMs);
             }
@@ -286,12 +395,67 @@ void Player::update(float dt)
     }
     else
     {
+        // Apply gravity/platform physics
+        updatePhysics(dt, scene);
+
         // Handle immunity blinking effect
         if (immuneCounter)
         {
             immuneCounter--;
             visible = !visible;
             if (!immuneCounter) visible = true;
+        }
+    }
+}
+
+void Player::updatePhysics(float dt, Scene* scene)
+{
+    // Don't apply gravity while climbing or dead
+    // Check both state AND currentLadder for safety (prevents falling if state desyncs)
+    if (isClimbing() || currentLadder != nullptr || isDead()) return;
+
+    // Find what's below us
+    float groundY = scene->findGroundLevel(this);
+
+    // Are we on the ground?
+    float feetY = getY();  // Player Y is already feet position (bottom-middle)
+    float distToGround = groundY - feetY;
+
+    if (distToGround <= GROUND_SNAP_TOLERANCE)  // On ground or within tolerance
+    {
+        // On ground
+        if (!grounded)
+        {
+            // Just landed
+            LOG_TRACE("Player %d LANDED: feetY=%.1f, groundY=%.1f, distToGround=%.1f",
+                      id + 1, feetY, groundY, distToGround);
+            grounded = true;
+            yVelocity = 0.0f;
+        }
+        y = groundY;  // Snap to ground
+    }
+    else
+    {
+        // In air - apply gravity
+        if (grounded)
+        {
+            LOG_TRACE("Player %d START FALLING: feetY=%.1f, groundY=%.1f, distToGround=%.1f",
+                      id + 1, feetY, groundY, distToGround);
+        }
+        grounded = false;
+        yVelocity += GRAVITY;
+        if (yVelocity > MAX_FALL_SPEED) yVelocity = MAX_FALL_SPEED;
+
+        y += yVelocity;
+
+        // Check if we've passed through ground
+        if (y >= groundY)
+        {
+            LOG_TRACE("Player %d LANDED (passed through): y=%.1f -> groundY=%.1f",
+                      id + 1, y, groundY);
+            y = groundY;
+            grounded = true;
+            yVelocity = 0.0f;
         }
     }
 }
@@ -428,6 +592,12 @@ Sprite* Player::getActiveSprite() const
                 return victorySheet->getFrame(victoryAnim->getCurrentFrame());
             break;
 
+        case PlayerState::CLIMBING:
+            // Use walk animation for climbing
+            if (walkAnim && walkSheet)
+                return walkSheet->getFrame(walkAnim->getCurrentFrame());
+            break;
+
         case PlayerState::IDLE:
         case PlayerState::SHOOTING:
         case PlayerState::DEAD:
@@ -467,6 +637,14 @@ void Player::setState(PlayerState newState)
 {
     if (currentState == newState) return;
 
+    // Safety: Clear currentLadder when transitioning OUT of CLIMBING state
+    // Must check BEFORE assignment since we compare old vs new state
+    if (currentState == PlayerState::CLIMBING && newState != PlayerState::CLIMBING && currentLadder != nullptr)
+    {
+        LOG_TRACE("Player %d: setState clearing currentLadder (was climbing, now %d)", id + 1, (int)newState);
+        currentLadder = nullptr;
+    }
+
     currentState = newState;
 
     switch (newState)
@@ -477,6 +655,13 @@ void Player::setState(PlayerState newState)
             break;
 
         case PlayerState::WALKING:
+            if (walkAnim) {
+                walkAnim->reset();
+            }
+            break;
+
+        case PlayerState::CLIMBING:
+            // Use walking animation for climbing (no separate climb anim yet)
             if (walkAnim) {
                 walkAnim->reset();
             }

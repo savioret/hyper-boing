@@ -147,3 +147,39 @@ inline bool getOverlapCenter(const CollisionBox& a, const CollisionBox& b, int& 
     overlap.getCenter(outX, outY);
     return true;
 }
+
+/**
+ * @brief Calculate horizontal overlap between two ranges
+ * @param left1 Left edge of first range
+ * @param right1 Right edge of first range
+ * @param left2 Left edge of second range
+ * @param right2 Right edge of second range
+ * @return Overlap width in pixels (0 if no overlap)
+ */
+inline int calculateHorizontalOverlap(int left1, int right1, int left2, int right2)
+{
+    int overlapLeft = (left1 > left2) ? left1 : left2;
+    int overlapRight = (right1 < right2) ? right1 : right2;
+    int overlap = overlapRight - overlapLeft;
+    return (overlap > 0) ? overlap : 0;
+}
+
+/**
+ * @brief Check if two collision boxes have 50% horizontal overlap
+ *
+ * Uses the "50% rule": the narrower box must be at least 50% inside
+ * the wider box horizontally. Used for ladder entry detection.
+ *
+ * @param a First collision box
+ * @param b Second collision box
+ * @return true if 50% overlap criteria is met
+ */
+inline bool has50PercentOverlap(const CollisionBox& a, const CollisionBox& b)
+{
+    int overlapWidth = calculateHorizontalOverlap(
+        a.x, a.x + a.w,
+        b.x, b.x + b.w
+    );
+    int narrower = (a.w < b.w) ? a.w : b.w;
+    return overlapWidth >= narrower / 2;
+}

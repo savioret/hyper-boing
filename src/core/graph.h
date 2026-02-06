@@ -177,7 +177,7 @@ public:
 
     /**
      * @brief Draw a sprite scaled to specified dimensions
-     * 
+     *
      * @param spr Pointer to the sprite to draw
      * @param x X coordinate on screen
      * @param y Y coordinate on screen
@@ -185,6 +185,19 @@ public:
      * @param h Target height in pixels
      */
     void drawScaled(Sprite* spr, int x, int y, int w, int h);
+
+    /**
+     * @brief Draw a sprite with vertical clipping (top portion only)
+     *
+     * Draws only the top portion of the sprite, useful for chain tiles
+     * that shouldn't extend past a boundary.
+     *
+     * @param spr Pointer to the sprite to draw
+     * @param x X coordinate on screen
+     * @param y Y coordinate on screen
+     * @param visibleHeight Number of pixels to draw from top of sprite
+     */
+    void drawClipped(Sprite* spr, int x, int y, int visibleHeight);
 
     /**
      * @brief Draw a texture or portion of a texture

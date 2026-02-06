@@ -26,6 +26,8 @@ int ConfigScreen::init()
         tempKeys[player][0] = gameinf.getKeys(player).getLeft();
         tempKeys[player][1] = gameinf.getKeys(player).getRight();
         tempKeys[player][2] = gameinf.getKeys(player).getShoot();
+        tempKeys[player][3] = gameinf.getKeys(player).getUp();
+        tempKeys[player][4] = gameinf.getKeys(player).getDown();
     }
     
     tempRenderMode = globalmode;
@@ -121,8 +123,8 @@ GameState* ConfigScreen::moveAll(float dt)
             
             if (keystate[scancode])
             {
-                int player = selectedOption / 3;
-                int keyIndex = selectedOption % 3;
+                int player = selectedOption / 5;
+                int keyIndex = selectedOption % 5;
                 tempKeys[player][keyIndex] = scancode;
                 
                 state = ConfigState::Normal;
@@ -149,7 +151,7 @@ GameState* ConfigScreen::moveAll(float dt)
             if (!upPressed)
             {
                 selectedOption--;
-                if (selectedOption < 0) selectedOption = 6;
+                if (selectedOption < 0) selectedOption = 10;
                 upPressed = true;
             }
         }
@@ -160,7 +162,7 @@ GameState* ConfigScreen::moveAll(float dt)
             if (!downPressed)
             {
                 selectedOption++;
-                if (selectedOption > 6) selectedOption = 0;
+                if (selectedOption > 10) selectedOption = 0;
                 downPressed = true;
             }
         }
@@ -170,7 +172,7 @@ GameState* ConfigScreen::moveAll(float dt)
         {
             if (!enterPressed)
             {
-                if (selectedOption < 6)
+                if (selectedOption < 10)
                 {
                     state = ConfigState::EnteringEdit;
                     waitingForKey = selectedOption;
@@ -181,7 +183,7 @@ GameState* ConfigScreen::moveAll(float dt)
         }
         else enterPressed = false;
         
-        if (selectedOption == 6)
+        if (selectedOption == 10)
         {
             if (appInput.key(SDL_SCANCODE_LEFT))
             {
@@ -264,11 +266,15 @@ void ConfigScreen::drawConfigModal()
     // Prepare text content
     const char* actionNames[] = {
         "PLAYER 1 - LEFT",
-        "PLAYER 1 - RIGHT", 
+        "PLAYER 1 - RIGHT",
         "PLAYER 1 - SHOOT",
+        "PLAYER 1 - UP",
+        "PLAYER 1 - DOWN",
         "PLAYER 2 - LEFT",
         "PLAYER 2 - RIGHT",
-        "PLAYER 2 - SHOOT"
+        "PLAYER 2 - SHOOT",
+        "PLAYER 2 - UP",
+        "PLAYER 2 - DOWN"
     };
     
     // Clear and populate modal overlay
@@ -308,35 +314,51 @@ void ConfigScreen::drawUI()
     drawText("Left:", xLabel + 20, y, selectedOption == 0);
     drawKeyName(tempKeys[0][0], xKey, y);
     y += lineHeight;
-    
+
     drawText("Right:", xLabel + 20, y, selectedOption == 1);
     drawKeyName(tempKeys[0][1], xKey, y);
     y += lineHeight;
-    
+
     drawText("Shoot:", xLabel + 20, y, selectedOption == 2);
     drawKeyName(tempKeys[0][2], xKey, y);
+    y += lineHeight;
+
+    drawText("Up:", xLabel + 20, y, selectedOption == 3);
+    drawKeyName(tempKeys[0][3], xKey, y);
+    y += lineHeight;
+
+    drawText("Down:", xLabel + 20, y, selectedOption == 4);
+    drawKeyName(tempKeys[0][4], xKey, y);
     y += lineHeight + 10;
     
     drawText("PLAYER 2:", xLabel, y, false);
     y += lineHeight;
     
-    drawText("Left:", xLabel + 20, y, selectedOption == 3);
+    drawText("Left:", xLabel + 20, y, selectedOption == 5);
     drawKeyName(tempKeys[1][0], xKey, y);
     y += lineHeight;
-    
-    drawText("Right:", xLabel + 20, y, selectedOption == 4);
+
+    drawText("Right:", xLabel + 20, y, selectedOption == 6);
     drawKeyName(tempKeys[1][1], xKey, y);
     y += lineHeight;
-    
-    drawText("Shoot:", xLabel + 20, y, selectedOption == 5);
+
+    drawText("Shoot:", xLabel + 20, y, selectedOption == 7);
     drawKeyName(tempKeys[1][2], xKey, y);
+    y += lineHeight;
+
+    drawText("Up:", xLabel + 20, y, selectedOption == 8);
+    drawKeyName(tempKeys[1][3], xKey, y);
+    y += lineHeight;
+
+    drawText("Down:", xLabel + 20, y, selectedOption == 9);
+    drawKeyName(tempKeys[1][4], xKey, y);
     y += lineHeight + 10;
     
     SDL_SetRenderDrawColor(appGraph.getRenderer(), 255, 255, 255, 255);
     SDL_RenderDrawLine(appGraph.getRenderer(), 60, y, 580, y);
     y += 10;
     
-    drawText("Screen Mode:", xLabel, y, selectedOption == 6);
+    drawText("Screen Mode:", xLabel, y, selectedOption == 10);
     const char* modeText;
     if (tempRenderMode == RENDERMODE_NORMAL)
         modeText = "Windowed 1x";
@@ -406,6 +428,8 @@ void ConfigScreen::saveConfiguration()
         appData.getKeys(player).setLeft(tempKeys[player][0]);
         appData.getKeys(player).setRight(tempKeys[player][1]);
         appData.getKeys(player).setShoot(tempKeys[player][2]);
+        appData.getKeys(player).setUp(tempKeys[player][3]);
+        appData.getKeys(player).setDown(tempKeys[player][4]);
     }
     
     int oldMode = globalmode;

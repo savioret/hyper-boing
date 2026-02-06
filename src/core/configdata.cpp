@@ -32,14 +32,18 @@ void ConfigData::initPath()
 void ConfigData::loadDefaults()
 {
     globalmode = RENDERMODE_NORMAL;
-    
+
     gameinf.getKeys(PLAYER1).setLeft(SDL_SCANCODE_LEFT);
     gameinf.getKeys(PLAYER1).setRight(SDL_SCANCODE_RIGHT);
     gameinf.getKeys(PLAYER1).setShoot(SDL_SCANCODE_SPACE);
-    
+    gameinf.getKeys(PLAYER1).setUp(SDL_SCANCODE_UP);
+    gameinf.getKeys(PLAYER1).setDown(SDL_SCANCODE_DOWN);
+
     gameinf.getKeys(PLAYER2).setLeft(SDL_SCANCODE_A);
     gameinf.getKeys(PLAYER2).setRight(SDL_SCANCODE_D);
     gameinf.getKeys(PLAYER2).setShoot(SDL_SCANCODE_LCTRL);
+    gameinf.getKeys(PLAYER2).setUp(SDL_SCANCODE_W);
+    gameinf.getKeys(PLAYER2).setDown(SDL_SCANCODE_S);
 }
 
 bool ConfigData::load()
@@ -69,12 +73,20 @@ bool ConfigData::load()
                 gameinf.getKeys(PLAYER1).setRight((SDL_Scancode)std::atoi(value));
             else if (skey == "P1_Shoot")
                 gameinf.getKeys(PLAYER1).setShoot((SDL_Scancode)std::atoi(value));
+            else if (skey == "P1_Up")
+                gameinf.getKeys(PLAYER1).setUp((SDL_Scancode)std::atoi(value));
+            else if (skey == "P1_Down")
+                gameinf.getKeys(PLAYER1).setDown((SDL_Scancode)std::atoi(value));
             else if (skey == "P2_Left")
                 gameinf.getKeys(PLAYER2).setLeft((SDL_Scancode)std::atoi(value));
             else if (skey == "P2_Right")
                 gameinf.getKeys(PLAYER2).setRight((SDL_Scancode)std::atoi(value));
             else if (skey == "P2_Shoot")
                 gameinf.getKeys(PLAYER2).setShoot((SDL_Scancode)std::atoi(value));
+            else if (skey == "P2_Up")
+                gameinf.getKeys(PLAYER2).setUp((SDL_Scancode)std::atoi(value));
+            else if (skey == "P2_Down")
+                gameinf.getKeys(PLAYER2).setDown((SDL_Scancode)std::atoi(value));
             else if (skey == "RenderMode")
                 globalmode = std::atoi(value);
         }
@@ -101,11 +113,15 @@ bool ConfigData::save()
     std::fprintf(fp, "[Keys]\n");
     std::fprintf(fp, "P1_Left=%d\n", gameinf.getKeys(PLAYER1).getLeft());
     std::fprintf(fp, "P1_Right=%d\n", gameinf.getKeys(PLAYER1).getRight());
-    std::fprintf(fp, "P1_Shoot=%d\n\n", gameinf.getKeys(PLAYER1).getShoot());
-    
+    std::fprintf(fp, "P1_Shoot=%d\n", gameinf.getKeys(PLAYER1).getShoot());
+    std::fprintf(fp, "P1_Up=%d\n", gameinf.getKeys(PLAYER1).getUp());
+    std::fprintf(fp, "P1_Down=%d\n\n", gameinf.getKeys(PLAYER1).getDown());
+
     std::fprintf(fp, "P2_Left=%d\n", gameinf.getKeys(PLAYER2).getLeft());
     std::fprintf(fp, "P2_Right=%d\n", gameinf.getKeys(PLAYER2).getRight());
-    std::fprintf(fp, "P2_Shoot=%d\n\n", gameinf.getKeys(PLAYER2).getShoot());
+    std::fprintf(fp, "P2_Shoot=%d\n", gameinf.getKeys(PLAYER2).getShoot());
+    std::fprintf(fp, "P2_Up=%d\n", gameinf.getKeys(PLAYER2).getUp());
+    std::fprintf(fp, "P2_Down=%d\n\n", gameinf.getKeys(PLAYER2).getDown());
     
     std::fprintf(fp, "[Graphics]\n");
     std::fprintf(fp, "RenderMode=%d  # 1=Windowed 1x, 2=Fullscreen, 3=Windowed 2x\n", globalmode);

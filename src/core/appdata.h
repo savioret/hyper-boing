@@ -26,18 +26,24 @@ private:
     SDL_Scancode left;
     SDL_Scancode right;
     SDL_Scancode shoot;
+    SDL_Scancode up;
+    SDL_Scancode down;
 
 public:
     // Getters
     SDL_Scancode getLeft() const { return left; }
     SDL_Scancode getRight() const { return right; }
     SDL_Scancode getShoot() const { return shoot; }
-    
+    SDL_Scancode getUp() const { return up; }
+    SDL_Scancode getDown() const { return down; }
+
     // Setters
     void setLeft(SDL_Scancode l);
     void setRight(SDL_Scancode r);
     void setShoot(SDL_Scancode s);
-    void set(SDL_Scancode lf, SDL_Scancode rg, SDL_Scancode sh);
+    void setUp(SDL_Scancode u);
+    void setDown(SDL_Scancode d);
+    void set(SDL_Scancode lf, SDL_Scancode rg, SDL_Scancode sh, SDL_Scancode up, SDL_Scancode dn);
     static const char* getKeyName(SDL_Scancode scancode);
 };
 
@@ -64,7 +70,10 @@ struct StageResources
     
     // Floor sprites
     Sprite floor[2];    ///< Floor sprites (0=horizontal, 1=vertical)
-    
+
+    // Ladder sprite
+    Sprite ladder;      ///< Ladder tile sprite (tiled vertically)
+
     // Weapon sprites (kept for compatibility)
     Sprite shoot[3];    ///< Legacy weapon sprites
     

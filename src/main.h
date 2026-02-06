@@ -29,6 +29,7 @@ constexpr int OBJ_FLOOR = 3;
 constexpr int OBJ_ITEM = 4;
 constexpr int OBJ_PLAYER = 5;
 constexpr int OBJ_ACTION = 6;
+constexpr int OBJ_LADDER = 7;
 
 // Animation frames
 constexpr int ANIM_WALK = 0;

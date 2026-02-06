@@ -35,17 +35,31 @@ void Keys::setRight(SDL_Scancode r)
     LOG_DEBUG("Set Right key to %d %s", r, Keys::getKeyName(r));
 }
 
-void Keys::setShoot(SDL_Scancode s) 
-{ 
+void Keys::setShoot(SDL_Scancode s)
+{
     shoot = s;
     LOG_DEBUG("Set Shoot key to %d %s", s, Keys::getKeyName(s));
 }
 
-void Keys::set(SDL_Scancode lf, SDL_Scancode rg, SDL_Scancode sh)
+void Keys::setUp(SDL_Scancode u)
+{
+    up = u;
+    LOG_DEBUG("Set Up key to %d %s", u, Keys::getKeyName(u));
+}
+
+void Keys::setDown(SDL_Scancode d)
+{
+    down = d;
+    LOG_DEBUG("Set Down key to %d %s", d, Keys::getKeyName(d));
+}
+
+void Keys::set(SDL_Scancode lf, SDL_Scancode rg, SDL_Scancode sh, SDL_Scancode up, SDL_Scancode dn)
 {
     setLeft(lf);
     setRight(rg);
     setShoot(sh);
+    setUp(up);
+    setDown(dn);
 }
 
 const char* Keys::getKeyName(SDL_Scancode scancode)
@@ -97,9 +111,11 @@ void AppData::init()
 {
     inMenu = true;
 
-    // Initialize default key bindings
-    playerKeys[PLAYER1].set(SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT, SDL_SCANCODE_SPACE);
-    playerKeys[PLAYER2].set(SDL_SCANCODE_A, SDL_SCANCODE_S, SDL_SCANCODE_LCTRL);
+    // Initialize default key bindings (left, right, shoot, up, down)
+    playerKeys[PLAYER1].set(SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT, SDL_SCANCODE_SPACE,
+                            SDL_SCANCODE_UP, SDL_SCANCODE_DOWN);
+    playerKeys[PLAYER2].set(SDL_SCANCODE_A, SDL_SCANCODE_D, SDL_SCANCODE_LCTRL,
+                            SDL_SCANCODE_W, SDL_SCANCODE_S);
 }
 
 /**
@@ -153,6 +169,9 @@ void AppData::initStageResources()
     // Load floor sprites
     stageRes.floor[0].init(&appGraph, "assets/graph/entities/floor1.png");
     stageRes.floor[1].init(&appGraph, "assets/graph/entities/floor2.png");
+
+    // Load ladder sprite
+    stageRes.ladder.init(&appGraph, "assets/graph/entities/ladder.png");
 
     // Load UI sprites
     stageRes.time.init(&appGraph, "assets/graph/ui/tiempo.png");
@@ -231,7 +250,10 @@ void AppData::initStages()
         stages[i].spawn(StageObjectBuilder::floor().at(250, 250).type(0).time(0));
         stages[i].spawn(StageObjectBuilder::floor().at(350, 150).type(1).time(0));
         stages[i].spawn(StageObjectBuilder::floor().at(550, 150).type(1).time(0));
-        
+
+        // Test ladder - 10 tiles high at ground level
+        stages[i].spawn(StageObjectBuilder::ladder().at(100, MAX_Y).height(10).time(0));
+
         // Balls at top with random X
         stages[i].spawn(StageObjectBuilder::ball().time(1).atMaxY());
         stages[i].spawn(StageObjectBuilder::ball().time(20).atMaxY());
@@ -434,6 +456,7 @@ void AppData::release()
             stageRes.miniplayer[i].release();
             stageRes.lives[i].release();
         }
+        stageRes.ladder.release();
         for (int i = 0; i < 3; i++)
         {
             stageRes.shoot[i].release();

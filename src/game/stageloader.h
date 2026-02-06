@@ -25,6 +25,7 @@ class Stage;
  * at 0:
  *   floor: x=550, y=50, type=0
  *   floor: x=250, y=250, type=0
+ *   ladder: x=100, y=384, height=10
  *
  * at 1:
  *   ball: y_max=true
@@ -51,6 +52,10 @@ class Stage;
  * Floor properties:
  * - x, y: Position (required)
  * - type: Floor type (0=horizontal, 1=vertical)
+ *
+ * Ladder properties:
+ * - x, y: Position (required, bottom-middle coordinates)
+ * - height: Number of tiles (default=3)
  *
  * Actions:
  * - Lines starting with / are console commands executed at spawn time
@@ -100,5 +105,6 @@ private:
     // Process accumulated object data and spawn it
     static void processBallObject(Stage& stage, float time, const std::map<std::string, std::string>& params);
     static void processFloorObject(Stage& stage, float time, const std::map<std::string, std::string>& params);
+    static void processLadderObject(Stage& stage, float time, const std::map<std::string, std::string>& params);
     static void processActionObject(Stage& stage, float time, const std::string& command);
 };

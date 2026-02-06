@@ -21,23 +21,32 @@ Shot::Shot(Scene* scn, Player* pl, WeaponType type, int xOffset)
     const WeaponConfig& config = WeaponConfig::get(type);
     weaponSpeed = config.speed;
 
-    // Player X is center; calculate spawn position based on facing direction
-    float halfWidth = pl->getWidth() / 2.0f;
-    float spriteOffset = pl->getSprite()->getXOff();
-
-    // When facing left, spawn on left side; when facing right, spawn on right side
-    if (pl->getFacing() == FacingDirection::LEFT)
+    if (pl->isClimbing())
     {
-        // Convert center to left edge, then apply offsets
-        xPos = xInit = pl->getX() - halfWidth + spriteOffset - 2.0f + xOffset;
+        // While climbing, spawn centered on player's X (bottom-middle pivot)
+        xPos = xInit = pl->getX() + xOffset;
     }
-    else  // FacingDirection::RIGHT
+    else
     {
-        // Player X is already center; add offset for right-side spawn
-        xPos = xInit = pl->getX() + spriteOffset + 5.0f + xOffset;
+        // Player X is center; calculate spawn position based on facing direction
+        float halfWidth = pl->getWidth() / 2.0f;
+        float spriteOffset = pl->getSprite()->getXOff();
+
+        // When facing left, spawn on left side; when facing right, spawn on right side
+        if (pl->getFacing() == FacingDirection::LEFT)
+        {
+            // Convert center to left edge, then apply offsets
+            xPos = xInit = pl->getX() - halfWidth + spriteOffset - 2.0f + xOffset;
+        }
+        else  // FacingDirection::RIGHT
+        {
+            // Player X is already center; add offset for right-side spawn
+            xPos = xInit = pl->getX() + spriteOffset + 5.0f + xOffset;
+        }
     }
 
-    // Player Y is bottom (MAX_Y when standing); harpoon spawns from ground level
+    // Player Y is feet (bottom-middle pivot = Y is the bottom of the sprite).
+    // yInit anchors the chain bottom at feet level.
     yPos = yInit = pl->getY();
 }
 

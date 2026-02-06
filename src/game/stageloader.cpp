@@ -130,6 +130,10 @@ bool StageLoader::parseObjectLine(Stage& stage, float currentTime, const std::st
     {
         processFloorObject(stage, currentTime, params);
     }
+    else if (objectType == "ladder")
+    {
+        processLadderObject(stage, currentTime, params);
+    }
     else
     {
         LOG_WARNING("Unknown object type: %s", objectType.c_str());
@@ -211,6 +215,25 @@ void StageLoader::processFloorObject(Stage& stage, float time, const std::map<st
     // Floor-specific properties
     if (params.count("type"))
         builder.type(std::stoi(params.at("type")));
+
+    stage.spawn(builder);
+}
+
+void StageLoader::processLadderObject(Stage& stage, float time, const std::map<std::string, std::string>& params)
+{
+    // Use StageObjectBuilder for consistency
+    auto builder = StageObjectBuilder::ladder();
+
+    // Set spawn time
+    builder.time(static_cast<int>(time));
+
+    // Position (ladders use bottom-middle coordinates)
+    if (params.count("x") && params.count("y"))
+        builder.at(std::stoi(params.at("x")), std::stoi(params.at("y")));
+
+    // Ladder-specific properties
+    if (params.count("height"))
+        builder.height(std::stoi(params.at("height")));
 
     stage.spawn(builder);
 }

@@ -23,6 +23,20 @@ HarpoonShot::HarpoonShot(Scene* scn, Player* pl, WeaponType type, int xOffset)
     sprites[0] = &scene->bmp.weapons.harpoonHead;
     sprites[1] = &scene->bmp.weapons.harpoonTail1;
     sprites[2] = &scene->bmp.weapons.harpoonTail2;
+
+    // Coordinate system:
+    // - yInit = player's feet Y (chain bottom anchor, never changes)
+    // - yPos = harpoon head top-left (moves upward during flight)
+    //
+    // Initially, position the head so its bottom aligns with player's feet.
+    // This means yPos = yInit - headHeight
+    yPos -= sprites[0]->getHeight();
+
+    // When climbing, center the harpoon head on the player
+    if (pl->isClimbing())
+    {
+        xPos = xInit = xInit - sprites[0]->getWidth() / 2.0f;
+    }
 }
 
 HarpoonShot::~HarpoonShot()
@@ -61,20 +75,38 @@ void HarpoonShot::update(float dt)
  * Draw the harpoon chain
  *
  * Renders the head sprite at the current position, then draws the tail
- * chain extending downward to the bottom of the screen.
+ * chain extending downward to the anchor point (yInit = player's feet).
+ * The last tile is clipped to not extend past yInit.
  */
 void HarpoonShot::draw(Graph* graph)
 {
-    // Draw head sprite
+    // Draw head sprite (yPos already accounts for sprite height offset)
     graph->draw(sprites[0], (int)xPos, (int)yPos);
 
-    // Draw tail chain from head to bottom of screen
+    // Draw tail chain from head bottom down to the anchor point (yInit)
     int tail = tailAnim->getCurrentFrame();
-    for (int i = (int)yPos + sprites[0]->getHeight();
-         i < MAX_Y;
-         i += sprites[1]->getHeight())
+    int tileHeight = sprites[1]->getHeight();
+    int chainTop = (int)yPos + sprites[0]->getHeight();
+    int chainBottom = (int)yInit;
+
+    for (int tileY = chainTop; tileY < chainBottom; tileY += tileHeight)
     {
-        graph->draw(sprites[1 + tail], (int)xPos, i);
+        // Check if this tile would extend past the anchor point
+        if (tileY + tileHeight <= chainBottom)
+        {
+            // Full tile fits - draw normally
+            graph->draw(sprites[1 + tail], (int)xPos, tileY);
+        }
+        else
+        {
+            // Last tile would extend past anchor - draw clipped
+            // Use SDL_RenderCopy with a source rect to clip the sprite
+            int visibleHeight = chainBottom - tileY;
+            if (visibleHeight > 0)
+            {
+                graph->drawClipped(sprites[1 + tail], (int)xPos, tileY, visibleHeight);
+            }
+        }
     }
 }
 
@@ -87,6 +119,6 @@ void HarpoonShot::draw(Graph* graph)
 CollisionBox HarpoonShot::getCollisionBox() const
 {
     int width = sprites[0]->getWidth();
-    int height = MAX_Y - (int)yPos;
+    int height = (int)yInit - (int)yPos;
     return { (int)xPos, (int)yPos, width, height };
 }

@@ -338,6 +338,194 @@ void Scene::addFloor(int x, int y, int id)
     lsFloor.push_back(std::make_unique<Floor>(this, x, y, id));
 }
 
+void Scene::addLadder(int x, int y, int numTiles)
+{
+    lsLadders.push_back(std::make_unique<Ladder>(this, x, y, numTiles));
+}
+
+Ladder* Scene::findLadderAtPlayer(Player* player) const
+{
+    if (!player) return nullptr;
+
+    CollisionBox playerBox = player->getCollisionBox();
+
+    for (const auto& ladder : lsLadders)
+    {
+        if (ladder->isDead()) continue;
+
+        CollisionBox ladderBox = ladder->getCollisionBox();
+
+        // Check if player is within ladder's vertical extent
+        int playerBottom = playerBox.y + playerBox.h;
+        int ladderTop = ladderBox.y;
+        int ladderBottom = ladderBox.y + ladderBox.h;
+
+        if (playerBottom >= ladderTop && playerBox.y <= ladderBottom)
+        {
+            // Check horizontal overlap using 50% rule
+            if (has50PercentOverlap(playerBox, ladderBox))
+            {
+                return ladder.get();
+            }
+        }
+    }
+    return nullptr;
+}
+
+Ladder* Scene::findLadderBelowPlayer(Player* player) const
+{
+    if (!player) return nullptr;
+
+    CollisionBox playerBox = player->getCollisionBox();
+    int playerBottom = playerBox.y + playerBox.h;
+
+    for (const auto& ladder : lsLadders)
+    {
+        if (ladder->isDead()) continue;
+
+        // Check if ladder top is at or just below player's feet
+        int ladderTop = ladder->getTopY();
+        if (ladderTop >= playerBottom - LADDER_ENTRY_TOLERANCE &&
+            ladderTop <= playerBottom + LADDER_ENTRY_TOLERANCE)
+        {
+            CollisionBox ladderBox = ladder->getCollisionBox();
+
+            // Check horizontal overlap using 50% rule
+            if (has50PercentOverlap(playerBox, ladderBox))
+            {
+                return ladder.get();
+            }
+        }
+    }
+    return nullptr;
+}
+
+Floor* Scene::findFloorUnderPlayer(Player* player) const
+{
+    if (!player) return nullptr;
+
+    // Use player's logical position (stable across sprite changes) instead of collision box
+    // Player Y is feet position (bottom-middle), X is horizontal center
+    float playerFeetY = player->getY();
+    float playerCenterX = player->getX();
+
+    // Use a consistent width for floor checks (doesn't change with sprite)
+    // This prevents floor detection from breaking when sprite changes (e.g., shooting)
+    int playerLeft = (int)(playerCenterX - SURFACE_CHECK_WIDTH / 2);
+    int playerRight = (int)(playerCenterX + SURFACE_CHECK_WIDTH / 2);
+
+    Floor* bestFloor = nullptr;
+    int closestY = MAX_Y + 1;
+
+    for (const auto& floor : lsFloor)
+    {
+        if (floor->isDead()) continue;
+
+        CollisionBox floorBox = floor->getCollisionBox();
+        int floorLeft = floorBox.x;
+        int floorRight = floorBox.x + floorBox.w;
+        int floorTopY = floorBox.y;
+
+        // Floor top must be at or below player's feet (within tolerance for landing)
+        if (floorTopY < (int)playerFeetY - SURFACE_STEP_TOLERANCE) continue;
+
+        // Check horizontal overlap - player BB must overlap floor BB by at least 1 pixel
+        int overlapWidth = calculateHorizontalOverlap(playerLeft, playerRight, floorLeft, floorRight);
+        if (overlapWidth < 1) continue;
+
+        // Find closest floor below (or at feet level)
+        if (floorTopY < closestY)
+        {
+            closestY = floorTopY;
+            bestFloor = floor.get();
+        }
+    }
+
+    return bestFloor;
+}
+
+Ladder* Scene::findLadderTopUnderPlayer(Player* player) const
+{
+    if (!player) return nullptr;
+
+    // Use player's logical position (stable across sprite changes)
+    float playerFeetY = player->getY();
+    float playerCenterX = player->getX();
+
+    // Use consistent width for ladder checks (matches floor check)
+    int playerLeft = (int)(playerCenterX - SURFACE_CHECK_WIDTH / 2);
+    int playerRight = (int)(playerCenterX + SURFACE_CHECK_WIDTH / 2);
+
+    Ladder* bestLadder = nullptr;
+    int closestY = MAX_Y + 1;
+
+    for (const auto& ladder : lsLadders)
+    {
+        if (ladder->isDead()) continue;
+
+        int ladderTopY = ladder->getTopY();
+        int ladderLeft = ladder->getCenterX() - ladder->getTileWidth() / 2;
+        int ladderRight = ladder->getCenterX() + ladder->getTileWidth() / 2;
+
+        // Ladder top must be at or below player's feet (within tolerance)
+        if (ladderTopY < (int)playerFeetY - SURFACE_STEP_TOLERANCE) continue;
+
+        // Check horizontal overlap - player BB must overlap ladder BB by at least 1 pixel
+        int overlapWidth = calculateHorizontalOverlap(playerLeft, playerRight, ladderLeft, ladderRight);
+        if (overlapWidth < 1) continue;
+
+        // Find closest ladder top below (or at feet level)
+        if (ladderTopY < closestY)
+        {
+            closestY = ladderTopY;
+            bestLadder = ladder.get();
+            LOG_TRACE("Ladder top candidate: ladderTopY=%d, playerFeetY=%.1f, overlapW=%d",
+                      ladderTopY, playerFeetY, overlapWidth);
+        }
+    }
+
+    return bestLadder;
+}
+
+float Scene::findGroundLevel(Player* player) const
+{
+    if (!player) return (float)MAX_Y;
+
+    float groundY = (float)MAX_Y;  // Default to screen bottom
+    const char* groundSource = "MAX_Y";
+
+    // Check floors
+    Floor* floor = findFloorUnderPlayer(player);
+    if (floor)
+    {
+        float floorY = (float)floor->getCollisionBox().y;
+        if (floorY < groundY)
+        {
+            groundY = floorY;
+            groundSource = "floor";
+        }
+    }
+
+    // Check ladder tops
+    Ladder* ladder = findLadderTopUnderPlayer(player);
+    if (ladder)
+    {
+        float ladderTopY = (float)ladder->getTopY();
+        if (ladderTopY < groundY)
+        {
+            groundY = ladderTopY;
+            groundSource = "ladder_top";
+        }
+    }
+
+    CollisionBox playerBox = player->getCollisionBox();
+    int playerFeetY = playerBox.y + playerBox.h;
+    //LOG_TRACE("findGroundLevel: playerFeetY=%d, groundY=%.1f, source=%s",
+    //          playerFeetY, groundY, groundSource);
+
+    return groundY;
+}
+
 /**
  * Factory method to create appropriate Shot subclass based on weapon type
  * @param pl Player firing the shot
@@ -510,6 +698,28 @@ void Scene::checkSequence()
             }
             break;
 
+        case OBJ_LADDER:
+            if (obj.params)
+            {
+                if (auto* ladder = obj.getParams<LadderParams>())
+                {
+                    addLadder(obj.x, obj.y, ladder->numTiles);
+
+                    // Fire STAGE_OBJECT_SPAWNED event
+                    GameEventData event(GameEventType::STAGE_OBJECT_SPAWNED);
+                    event.objectSpawned.id = obj.id;
+                    event.objectSpawned.x = obj.x;
+                    event.objectSpawned.y = obj.y;
+                    EVENT_MGR.trigger(event);
+                }
+            }
+            else
+            {
+                // Fallback: default ladder (3 tiles high)
+                addLadder(obj.x, obj.y, 3);
+            }
+            break;
+
         case OBJ_ACTION:
             if (obj.params)
             {
@@ -624,6 +834,11 @@ void Scene::updateEntities(float dt)
     {
         floor->update(dt);
     }
+
+    for (const auto& ladder : lsLadders)
+    {
+        ladder->update(dt);
+    }
 }
 
 void Scene::cleanupPhase()
@@ -632,9 +847,10 @@ void Scene::cleanupPhase()
     // Ball cleanup is special - creates children during cleanup
     cleanupBalls();
 
-    // Standard cleanup for shots and floors (unique_ptr)
+    // Standard cleanup for shots, floors, and ladders (unique_ptr)
     cleanupDeadObjects(lsShoots);
     cleanupDeadObjects(lsFloor);
+    cleanupDeadObjects(lsLadders);
 }
 
 void Scene::updateTimer(float dt)
@@ -770,14 +986,87 @@ GameState* Scene::handlePlayingState(float dt)
     // Player input is only processed during Playing state
     for (i = 0; i < 2; i++)
     {
-        if (gameinf.getPlayer(i) &&
-            !gameinf.getPlayer(i)->isDead() &&
-            gameinf.getPlayer(i)->isPlaying())
+        Player* player = gameinf.getPlayer(i);
+        if (player && !player->isDead() && player->isPlaying())
         {
-            if (appInput.key(gameinf.getKeys(i).getShoot())) { shoot(gameinf.getPlayer(i)); }
-            else if (appInput.key(gameinf.getKeys(i).getLeft())) gameinf.getPlayer(i)->moveLeft();
-            else if (appInput.key(gameinf.getKeys(i).getRight())) gameinf.getPlayer(i)->moveRight();
-            else gameinf.getPlayer(i)->stop();
+            // Get UP/DOWN keys from configuration
+            SDL_Scancode upKey = gameinf.getKeys(i).getUp();
+            SDL_Scancode downKey = gameinf.getKeys(i).getDown();
+
+            // Handle shooting (can shoot while climbing)
+            if (appInput.key(gameinf.getKeys(i).getShoot()))
+            {
+                shoot(player);
+            }
+
+            // Handle climbing
+            if (player->isClimbing())
+            {
+                // On ladder - UP/DOWN to climb, LEFT/RIGHT to detach and fall
+                if (appInput.key(gameinf.getKeys(i).getLeft()) || appInput.key(gameinf.getKeys(i).getRight()))
+                {
+                    // Detach from ladder and start falling
+                    player->stopClimbing();
+                }
+                else if (appInput.key(upKey))
+                {
+                    player->climbUp();
+                }
+                else if (appInput.key(downKey))
+                {
+                    player->climbDown();
+                }
+            }
+            else
+            {
+                // Not climbing - normal movement + ladder entry
+                if (appInput.key(upKey))
+                {
+                    // Try to enter ladder (works both grounded and while falling)
+                    Ladder* ladder = findLadderAtPlayer(player);
+                    if (ladder && player->canEnterLadder(ladder))
+                    {
+                        // Don't allow entering if player is already at or above the ladder top
+                        // (prevents toggling when holding UP at ladder top)
+                        float playerFeetY = player->getY();
+                        float ladderTopY = (float)ladder->getTopY();
+
+                        if (playerFeetY > ladderTopY + 2.0f)  // 2px tolerance
+                        {
+                            player->startClimbing(ladder);
+                        }
+                    }
+                }
+                else if (appInput.key(downKey))
+                {
+                    // Try to climb down from platform/ladder top
+                    Ladder* ladder = findLadderBelowPlayer(player);
+                    if (ladder && player->canEnterLadder(ladder))
+                    {
+                        player->startClimbing(ladder);
+                        // Start moving down slightly to enter the ladder
+                        player->setY(player->getY() + player->getClimbSpeed());
+                    }
+                }
+                else if (player->getState() == PlayerState::SHOOTING)
+                {
+                    // Frozen during shooting animation - call stop() to handle
+                    // SHOOTING → IDLE transition when shotCounter expires
+                    player->stop();
+                }
+                else if (appInput.key(gameinf.getKeys(i).getLeft()))
+                {
+                    player->moveLeft();
+                }
+                else if (appInput.key(gameinf.getKeys(i).getRight()))
+                {
+                    player->moveRight();
+                }
+                else
+                {
+                    player->stop();
+                }
+            }
         }
     }
 
@@ -786,7 +1075,7 @@ GameState* Scene::handlePlayingState(float dt)
     {
         if (gameinf.getPlayer(i))
         {
-            gameinf.getPlayer(i)->update(dt);
+            gameinf.getPlayer(i)->update(dt, this);
         }
     }
 
@@ -848,7 +1137,7 @@ GameState* Scene::handleLevelClearState(float dt)
     {
         if (gameinf.getPlayer(i) && gameinf.getPlayer(i)->isPlaying())
         {
-            gameinf.getPlayer(i)->update(dt);
+            gameinf.getPlayer(i)->update(dt, this);
         }
     }
 
@@ -954,6 +1243,7 @@ int Scene::release()
     lsBalls.clear();
     lsShoots.clear();
     lsFloor.clear();
+    lsLadders.clear();
 
     // Release only scene-specific sprites (background, weapons)
     bmp.back.release();
@@ -1127,6 +1417,18 @@ void Scene::drawBoundingBoxes()
         int h = f->getHeight();
         appGraph.rectangle(x, y, x + w, y + h);
     }
+
+    // Draw ladder bounding boxes (green color to distinguish)
+    appGraph.setDrawColor(0, 255, 0, 255);
+    for (const auto& ladder : lsLadders)
+    {
+        CollisionBox box = ladder->getCollisionBox();
+        appGraph.rectangle(box.x, box.y, box.x + box.w, box.y + box.h);
+
+        // Also draw the "standing" top area (thin line at top)
+        CollisionBox topBox = ladder->getTopStandingBox();
+        appGraph.rectangle(topBox.x, topBox.y, topBox.x + topBox.w, topBox.y + topBox.h);
+    }
 }
 
 void Scene::drawDebugOverlay()
@@ -1179,10 +1481,11 @@ void Scene::drawDebugOverlay()
     }
 
     // Add game state info to default section
-    textOverlay.addTextF("Objects: Balls=%d Shoots=%d Floors=%d",
+    textOverlay.addTextF("Objects: Balls=%d Shoots=%d Floors=%d Ladders=%d",
             (int)lsBalls.size(),
             (int)lsShoots.size(),
-            (int)lsFloor.size());
+            (int)lsFloor.size(),
+            (int)lsLadders.size());
 
     textOverlay.addTextF("Stage: %d  Time=%d  Timeline=%d",
             stage->id, timeRemaining, timeLine);
@@ -1200,6 +1503,12 @@ void Scene::drawEntities()
     for (const auto& floor : lsFloor)
     {
         draw(floor.get());
+    }
+
+    // Draw ladders (over floors, below shots/balls/players)
+    for (const auto& ladder : lsLadders)
+    {
+        ladder->draw(appGraph);
     }
 
     // Draw shots using polymorphic draw() method

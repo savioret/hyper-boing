@@ -101,6 +101,35 @@ struct FloorParams : public StageObjectParams
 };
 
 /**
+ * LadderParams struct
+ *
+ * Type-safe parameters for ladder objects.
+ *
+ * Fields:
+ * - numTiles: Number of vertical tiles (height of ladder)
+ */
+struct LadderParams : public StageObjectParams
+{
+    int numTiles = 3;  // Default 3 tiles high
+
+    LadderParams() = default;
+
+    std::unique_ptr<StageObjectParams> clone() const override
+    {
+        return std::make_unique<LadderParams>(*this);
+    }
+
+    /**
+     * Validate ladder parameters
+     * @return true if all parameters are within valid ranges
+     */
+    bool validate() const
+    {
+        return numTiles > 0;
+    }
+};
+
+/**
  * ActionParams struct
  *
  * Parameters for action objects (console commands executed at spawn time).
@@ -349,6 +378,14 @@ public:
     }
 
     /**
+     * Create a ladder object builder
+     */
+    static StageObjectBuilder ladder()
+    {
+        return StageObjectBuilder(7, std::make_unique<LadderParams>()); // 7 = OBJ_LADDER
+    }
+
+    /**
      * Set exact position (both X and Y)
      * @param x X coordinate
      * @param y Y coordinate
@@ -442,7 +479,20 @@ public:
         }
         return *this;
     }
-    
+
+    /**
+     * Set ladder height in tiles (ladder objects only)
+     * @param tiles Number of vertical tiles
+     */
+    StageObjectBuilder& height(int tiles)
+    {
+        if (auto* ladder = dynamic_cast<LadderParams*>(objectParams.get()))
+        {
+            ladder->numTiles = tiles;
+        }
+        return *this;
+    }
+
     /**
      * Set object type
      * - For balls: ball type/color (default=0 for red)

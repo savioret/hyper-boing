@@ -176,6 +176,19 @@ void Graph::drawScaled(Sprite* spr, int x, int y, int w, int h) {
     SDL_RenderCopy(renderer, spr->bmp, &srcRect, &dstRect);
 }
 
+void Graph::drawClipped(Sprite* spr, int x, int y, int visibleHeight) {
+    if (visibleHeight <= 0 || !spr || !spr->bmp) return;
+
+    // Clamp visibleHeight to sprite's actual height
+    int clampedHeight = (visibleHeight < spr->sy) ? visibleHeight : spr->sy;
+
+    // Source rect: top portion of sprite only
+    SDL_Rect srcRect = { spr->srcX, spr->srcY, spr->sx, clampedHeight };
+    // Dest rect: same size as clipped source
+    SDL_Rect dstRect = { x + spr->xoff, y + spr->yoff, spr->sx, clampedHeight };
+    SDL_RenderCopy(renderer, spr->bmp, &srcRect, &dstRect);
+}
+
 void Graph::draw(SDL_Texture* texture, const SDL_Rect* srcRect, int x, int y) {
     SDL_Rect dstRect = { x, y, srcRect->w, srcRect->h };
     SDL_RenderCopy(renderer, texture, srcRect, &dstRect);
