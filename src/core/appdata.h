@@ -4,6 +4,8 @@
 #include <vector>
 #include <SDL.h>
 #include "sprite.h"
+#include "spritesheet.h"
+#include "animcontroller.h"
 #include "graph.h"
 #include "minput.h"
 #include "configdata.h"
@@ -74,8 +76,12 @@ struct StageResources
     // Ladder sprite
     Sprite ladder;      ///< Ladder tile sprite (tiled vertically)
 
-    // Weapon sprites (kept for compatibility)
-    Sprite shoot[3];    ///< Legacy weapon sprites
+    // Weapon sprites
+    Sprite harpoonTip;                        ///< Harpoon tip sprite
+    SpriteSheet harpoonChain;                 ///< Harpoon chain animated sprite sheet (shared texture)
+    std::unique_ptr<IAnimController> harpoonAnim;  ///< Template animation for harpoon chain (cloned per shot)
+    SpriteSheet gunBullet;                    ///< Gun bullet animated sprite sheet
+    std::unique_ptr<IAnimController> gunBulletAnim;  ///< Template animation for gun bullet (cloned per shot)
     
     // Border/marker sprites
     Sprite mark[5];     ///< Border marker sprites

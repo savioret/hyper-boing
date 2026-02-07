@@ -81,10 +81,10 @@ void Player::init()
 
     // Initialize animation controller with state machine
     animController = std::make_unique<StateMachineAnim>();
-    animController->addState("idle", {ANIM_SHOOT}, 1, true);
-    animController->addState("shoot", {ANIM_SHOOT + 1}, 1, true);
-    animController->addState("win", {ANIM_WIN}, 1, true);
-    animController->addState("dead", {ANIM_DEAD}, 1, true);
+    animController->addState("idle", {ANIM_SHOOT}, 1, 0);  // 0 = infinite loop
+    animController->addState("shoot", {ANIM_SHOOT + 1}, 1, 0);  // 0 = infinite loop
+    animController->addState("win", {ANIM_WIN}, 1, 0);  // 0 = infinite loop
+    animController->addState("dead", {ANIM_DEAD}, 1, 0);  // 0 = infinite loop
     animController->setState("idle");
 
     // Load walk animation from Aseprite JSON
@@ -108,6 +108,33 @@ void Player::init()
     if (!victoryAnim)
     {
         LOG_WARNING("Failed to load victory animation for player %d", id + 1);
+    }
+
+    // Load climbing animation from Aseprite JSON with frameTags
+    climbSheet = std::make_unique<SpriteSheet>();
+    climbAnim = AsepriteLoader::loadAsStateMachine(&appGraph, "assets/graph/players/climbing.json", *climbSheet);
+
+    // The JSON frameTags create states:
+    // - "climb" (frames 0-3, 200ms each, looping)
+    // - "standup" (frame 4, 100ms, looping ← WRONG)
+    //
+    // AsepriteLoader hardcodes loop=true for all states, so we need to override "standup"
+    // to make it one-shot with 300ms duration instead of 100ms
+
+    if (climbAnim) {
+        //if (auto* stateMachine = dynamic_cast<StateMachineAnim*>(climbAnim.get())) {
+
+            // Set callback for when standup completes → transition to IDLE
+            climbAnim->setOnStateComplete([this](const std::string& stateName) {
+                if (stateName == "standup" && currentState == PlayerState::WAKING_UP) {
+                    currentLadder = nullptr;  // Clear ladder reference
+                    setState(PlayerState::IDLE);
+                }
+            });
+
+            // Set initial state to "climb" (looping climb animation)
+            //stateMachine->setState("climb");
+        //}
     }
 
     // Set initial state
@@ -269,8 +296,12 @@ void Player::startClimbing(Ladder* ladder)
     currentLadder = ladder;
     setState(PlayerState::CLIMBING);
 
-    // Center player on ladder horizontally
-    x = (float)ladder->getCenterX();
+    // Align player's grip point (hands) with ladder center
+    // The climbing sprite's grip point is offset from the canvas center,
+    // so we need to adjust the player's X position accordingly
+
+    Sprite* climbSprite = climbSheet->getFrame(0);  // Use first frame as reference
+    x = (float)ladder->getCenterX() + ladder->getTileWidth() / 2;
 }
 
 void Player::stopClimbing()
@@ -288,11 +319,18 @@ void Player::climbUp()
 
     if (newY <= ladderTop)
     {
-        // Reached top - stand on ladder top
+        // Reached top - transition to WAKING_UP state
         LOG_TRACE("Player %d REACHED LADDER TOP: y=%.1f -> ladderTop=%.1f, ladderCenterX=%d",
                   id + 1, y, ladderTop, currentLadder->getCenterX());
         y = ladderTop;
-        stopClimbing();
+        setState(PlayerState::WAKING_UP);
+
+        // Set animation to "standup" state (frame 4, 300ms, one-shot)
+        if (climbAnim) {
+            if (auto* stateMachine = dynamic_cast<StateMachineAnim*>(climbAnim.get())) {
+                stateMachine->setState("standup");
+            }
+        }
     }
     else
     {
@@ -355,9 +393,9 @@ void Player::update(float dt, Scene* scene)
             break;
 
         case PlayerState::CLIMBING:
-            // Use walking animation for climbing (updated every frame with proper dt)
-            if (walkAnim) {
-                walkAnim->update(dtMs);
+        case PlayerState::WAKING_UP:
+            if (climbAnim) {
+                climbAnim->update(dtMs);
             }
             break;
 
@@ -513,7 +551,7 @@ void Player::onPlayerHit()
 
     // Create death action with trajectory
     // Thrown to the right with upward velocity
-    int xVel = (facing == FacingDirection::RIGHT) ? 5 : -5;
+    float xVel = (facing == FacingDirection::RIGHT) ? 5 : -5;
     deathAction = std::make_unique<PlayerDeadAction>(this, xVel, -12.0f);
     deathAction->start();
 }
@@ -593,9 +631,9 @@ Sprite* Player::getActiveSprite() const
             break;
 
         case PlayerState::CLIMBING:
-            // Use walk animation for climbing
-            if (walkAnim && walkSheet)
-                return walkSheet->getFrame(walkAnim->getCurrentFrame());
+        case PlayerState::WAKING_UP:
+            if (climbAnim && climbSheet)
+                return climbSheet->getFrame(climbAnim->getCurrentFrame());
             break;
 
         case PlayerState::IDLE:
@@ -637,9 +675,11 @@ void Player::setState(PlayerState newState)
 {
     if (currentState == newState) return;
 
-    // Safety: Clear currentLadder when transitioning OUT of CLIMBING state
+    // Safety: Clear currentLadder when transitioning OUT of climbing states to non-climbing states
     // Must check BEFORE assignment since we compare old vs new state
-    if (currentState == PlayerState::CLIMBING && newState != PlayerState::CLIMBING && currentLadder != nullptr)
+    if ((currentState == PlayerState::CLIMBING || currentState == PlayerState::WAKING_UP) &&
+        (newState != PlayerState::CLIMBING && newState != PlayerState::WAKING_UP) &&
+        currentLadder != nullptr)
     {
         LOG_TRACE("Player %d: setState clearing currentLadder (was climbing, now %d)", id + 1, (int)newState);
         currentLadder = nullptr;
@@ -661,9 +701,20 @@ void Player::setState(PlayerState newState)
             break;
 
         case PlayerState::CLIMBING:
-            // Use walking animation for climbing (no separate climb anim yet)
-            if (walkAnim) {
-                walkAnim->reset();
+            if (climbAnim) {
+                climbAnim->reset();
+                // Ensure we're in "climb" state (not "standup")
+                if (auto* stateMachine = dynamic_cast<StateMachineAnim*>(climbAnim.get())) {
+                    stateMachine->setState("climb");
+                }
+            }
+            break;
+
+        case PlayerState::WAKING_UP:
+            if (climbAnim) {
+                if (auto* stateMachine = dynamic_cast<StateMachineAnim*>(climbAnim.get())) {
+                    stateMachine->setState("standup");
+                }
             }
             break;
 

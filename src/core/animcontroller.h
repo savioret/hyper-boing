@@ -42,6 +42,12 @@ public:
      * Check if animation has completed (for non-looping animations)
      */
     virtual bool isComplete() const { return false; }
+
+    /**
+     * Create a copy of this animation controller
+     * @return A new independent copy of the animation controller
+     */
+    virtual std::unique_ptr<IAnimController> clone() const = 0;
 };
 
 /**
@@ -50,15 +56,15 @@ public:
  * Supports:
  * - Linear playback (0, 1, 2, 3, 4...)
  * - Custom sequences (0, 1, 2, 1, 0 for ping-pong)
- * - Looping or one-shot
+ * - Loop count control (0 = infinite, 1 = play once, 2+ = repeat N times)
  * - Completion callback
  *
  * Example:
- *   // Walk animation: frames 0-4, 10 ticks per frame, looping
- *   FrameSequenceAnim walkAnim({0, 1, 2, 3, 4}, 10, true);
+ *   // Walk animation: frames 0-4, 10ms per frame, infinite loop
+ *   FrameSequenceAnim walkAnim({0, 1, 2, 3, 4}, 10, 0);
  *
  *   // Or use convenience constructor:
- *   auto anim = FrameSequenceAnim::range(0, 4, 10, true);
+ *   auto anim = FrameSequenceAnim::range(0, 4, 10, 0);
  */
 class FrameSequenceAnim : public IAnimController
 {
@@ -68,7 +74,8 @@ private:
     int currentIndex = 0;              // Index into frames vector
     int defaultDuration;               // Default duration in milliseconds
     float timeAccumulator = 0.0f;      // Accumulated time in milliseconds
-    bool loop = true;
+    int loops = 0;                     // 0 = infinite, 1 = play once, 2+ = repeat N times
+    int loopsRemaining = 0;            // Remaining loops (0 when complete)
     bool complete = false;
     bool usePerFrameDurations = false; // Whether to use per-frame durations
     std::function<void()> onComplete;
@@ -78,22 +85,22 @@ public:
      * Create a sequential animation with uniform duration
      * @param frameSequence Vector of frame indices to play
      * @param durationMs Duration in milliseconds for each frame
-     * @param shouldLoop Whether to loop when reaching the end
+     * @param loopCount 0 = infinite loop, 1 = play once, 2+ = repeat N times
      */
-    FrameSequenceAnim(std::vector<int> frameSequence, int durationMs, bool shouldLoop = true);
+    FrameSequenceAnim(std::vector<int> frameSequence, int durationMs, int loopCount = 0);
 
     /**
      * Create a sequential animation with per-frame durations
      * @param frameSequence Vector of frame indices to play
      * @param durationsMs Duration in milliseconds for each frame
-     * @param shouldLoop Whether to loop when reaching the end
+     * @param loopCount 0 = infinite loop, 1 = play once, 2+ = repeat N times
      */
-    FrameSequenceAnim(std::vector<int> frameSequence, std::vector<int> durationsMs, bool shouldLoop = true);
+    FrameSequenceAnim(std::vector<int> frameSequence, std::vector<int> durationsMs, int loopCount = 0);
 
     /**
      * Convenience: Create animation from start to end frame (inclusive)
      */
-    static FrameSequenceAnim range(int startFrame, int endFrame, int durationMs, bool loop = true);
+    static FrameSequenceAnim range(int startFrame, int endFrame, int durationMs, int loopCount = 0);
 
     /**
      * Convenience: Create looping animation that oscillates between two frames
@@ -119,6 +126,22 @@ public:
      * Set the default frame duration in milliseconds
      */
     void setDefaultDuration(int durationMs) { defaultDuration = durationMs; }
+
+    /**
+     * Get loop count (0 = infinite, 1 = play once, etc.)
+     */
+    int getLoops() const { return loops; }
+
+    /**
+     * Set loop count (0 = infinite, 1 = play once, etc.)
+     * Resets loopsRemaining to match
+     */
+    void setLoops(int loopCount) { loops = loopCount; loopsRemaining = loopCount; }
+
+    /**
+     * Create a copy of this animation controller
+     */
+    std::unique_ptr<IAnimController> clone() const override;
 };
 
 /**
@@ -150,6 +173,11 @@ public:
     void update(float dt = 1.0f) override;  // dt in milliseconds
     int getCurrentFrame() const override { return currentFrame; }
     void reset() override;
+
+    /**
+     * Create a copy of this animation controller
+     */
+    std::unique_ptr<IAnimController> clone() const override;
 };
 
 /**
@@ -160,9 +188,9 @@ public:
  *
  * Example:
  *   StateMachineAnim anim;
- *   anim.addState("flight", {0, 1, 2, 3, 4}, 9, false, "flight_loop");
- *   anim.addState("flight_loop", {3, 4}, 9, true);
- *   anim.addState("impact", {5, 6}, 9, false);
+ *   anim.addState("flight", {0, 1, 2, 3, 4}, 9, 1, "flight_loop");  // Play once
+ *   anim.addState("flight_loop", {3, 4}, 9, 0);  // Infinite loop
+ *   anim.addState("impact", {5, 6}, 9, 1);  // Play once
  *   anim.setState("flight");
  *
  *   // When "flight" completes, it auto-transitions to "flight_loop"
@@ -176,7 +204,8 @@ public:
         std::vector<int> frames;           // Frame sequence for this state
         std::vector<int> frameDurations;   // Duration in milliseconds for each frame (if per-frame)
         int defaultDuration;               // Default duration in milliseconds
-        bool loop;                         // Whether to loop
+        int loops;                         // 0 = infinite, 1 = play once, 2+ = repeat N times
+        int loopsRemaining;                // Remaining loops (decremented each cycle)
         bool usePerFrameDurations;         // Whether to use per-frame durations
         std::string nextState;             // Auto-transition to this state when complete (empty = stay)
     };
@@ -197,22 +226,22 @@ public:
      * @param name State name (used for transitions)
      * @param frames Frame sequence
      * @param durationMs Duration in milliseconds for each frame
-     * @param loop Whether to loop
+     * @param loopCount 0 = infinite loop, 1 = play once, 2+ = repeat N times
      * @param nextState Auto-transition target when complete (empty = stay in state)
      */
     void addState(const std::string& name, std::vector<int> frames, int durationMs,
-                  bool loop = true, const std::string& nextState = "");
+                  int loopCount = 0, const std::string& nextState = "");
 
     /**
      * Add a state with per-frame durations
      * @param name State name (used for transitions)
      * @param frames Frame sequence
      * @param durationsMs Duration in milliseconds for each frame
-     * @param loop Whether to loop
+     * @param loopCount 0 = infinite loop, 1 = play once, 2+ = repeat N times
      * @param nextState Auto-transition target when complete (empty = stay in state)
      */
     void addState(const std::string& name, std::vector<int> frames, std::vector<int> durationsMs,
-                  bool loop = true, const std::string& nextState = "");
+                  int loopCount = 0, const std::string& nextState = "");
 
     /**
      * Transition to a different state
@@ -241,4 +270,9 @@ public:
     {
         onStateComplete = std::move(callback);
     }
+
+    /**
+     * Create a copy of this animation controller
+     */
+    std::unique_ptr<IAnimController> clone() const override;
 };

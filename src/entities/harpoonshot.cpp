@@ -2,8 +2,10 @@
 #include "harpoonshot.h"
 #include "../game/scene.h"
 #include "player.h"
+#include "logger.h"
 #include "../core/graph.h"
 #include "../core/sprite.h"
+#include "../core/spritesheet.h"
 
 /**
  * HarpoonShot constructor
@@ -12,17 +14,19 @@
  *
  * @param scn The scene this shot belongs to
  * @param pl The player who fired the shot
- * @param type The weapon type (HARPOON or HARPOON2)
- * @param xOffset Horizontal offset for multi-projectile weapons
+ * @param type The weapon type (HARPOON)
  */
-HarpoonShot::HarpoonShot(Scene* scn, Player* pl, WeaponType type, int xOffset)
-    : Shot(scn, pl, type, xOffset)
-    , tailAnim(std::make_unique<ToggleAnim>(0, 1, 33))  // Toggle between 0 and 1 every 33ms (2 frames at 60fps)
+HarpoonShot::HarpoonShot(Scene* scn, Player* pl, WeaponType type)
+    : Shot(scn, pl, type)
+    //, tailAnim(std::make_unique<ToggleAnim>(0, 1, 33))  // Toggle between 0 and 1 every 33ms (2 frames at 60fps)
 {
-    // Use scene's harpoon weapon sprites
-    sprites[0] = &scene->bmp.weapons.harpoonHead;
-    sprites[1] = &scene->bmp.weapons.harpoonTail1;
-    sprites[2] = &scene->bmp.weapons.harpoonTail2;
+    // Get harpoon sprites from shared resources in AppData
+    StageResources& res = gameinf.getStageRes();
+    tipSprite = &res.harpoonTip;
+    chainSpriteSheet = &res.harpoonChain;
+
+    // Clone the animation template from AppData (each shot gets its own independent animation)
+    tailAnim = res.harpoonAnim->clone();
 
     // Coordinate system:
     // - yInit = player's feet Y (chain bottom anchor, never changes)
@@ -30,12 +34,17 @@ HarpoonShot::HarpoonShot(Scene* scn, Player* pl, WeaponType type, int xOffset)
     //
     // Initially, position the head so its bottom aligns with player's feet.
     // This means yPos = yInit - headHeight
-    yPos -= sprites[0]->getHeight();
+    yPos -= tipSprite->getHeight();
 
     // When climbing, center the harpoon head on the player
     if (pl->isClimbing())
     {
-        xPos = xInit = xInit - sprites[0]->getWidth() / 2.0f;
+        xPos = xInit = xInit - tipSprite->getWidth() / 2.0f;
+    }
+    else
+    {
+		int off = pl->getFacing() == FacingDirection::LEFT ? -4 : 12;
+        xPos = xInit = pl->getX() + off;
     }
 }
 
@@ -74,19 +83,23 @@ void HarpoonShot::update(float dt)
 /**
  * Draw the harpoon chain
  *
- * Renders the head sprite at the current position, then draws the tail
+ * Renders the tip sprite at the current position, then draws the animated
  * chain extending downward to the anchor point (yInit = player's feet).
  * The last tile is clipped to not extend past yInit.
  */
 void HarpoonShot::draw(Graph* graph)
 {
-    // Draw head sprite (yPos already accounts for sprite height offset)
-    graph->draw(sprites[0], (int)xPos, (int)yPos);
+    // Draw tip sprite (yPos already accounts for sprite height offset)
+    graph->draw(tipSprite, (int)xPos, (int)yPos);
 
-    // Draw tail chain from head bottom down to the anchor point (yInit)
-    int tail = tailAnim->getCurrentFrame();
-    int tileHeight = sprites[1]->getHeight();
-    int chainTop = (int)yPos + sprites[0]->getHeight();
+    // Draw animated chain from tip bottom down to the anchor point (yInit)
+    int frameIndex = tailAnim->getCurrentFrame();
+    Sprite* chainFrame = chainSpriteSheet->getFrame(frameIndex);
+    LOG_DEBUG("Harpoon tailAnim frame: %d", frameIndex);
+    if (!chainFrame) return;  // Safety check
+
+    int tileHeight = chainFrame->getHeight();
+    int chainTop = (int)yPos + tipSprite->getHeight();
     int chainBottom = (int)yInit;
 
     for (int tileY = chainTop; tileY < chainBottom; tileY += tileHeight)
@@ -95,7 +108,7 @@ void HarpoonShot::draw(Graph* graph)
         if (tileY + tileHeight <= chainBottom)
         {
             // Full tile fits - draw normally
-            graph->draw(sprites[1 + tail], (int)xPos, tileY);
+            graph->draw(chainFrame, (int)xPos, tileY);
         }
         else
         {
@@ -104,7 +117,7 @@ void HarpoonShot::draw(Graph* graph)
             int visibleHeight = chainBottom - tileY;
             if (visibleHeight > 0)
             {
-                graph->drawClipped(sprites[1 + tail], (int)xPos, tileY, visibleHeight);
+                graph->drawClipped(chainFrame, (int)xPos, tileY, visibleHeight);
             }
         }
     }
@@ -113,12 +126,12 @@ void HarpoonShot::draw(Graph* graph)
 /**
  * Get collision box for the harpoon chain
  *
- * The harpoon has a chain that extends from the head down to the bottom
+ * The harpoon has a chain that extends from the tip down to the bottom
  * of the screen (MAX_Y). The collision box covers this entire vertical area.
  */
 CollisionBox HarpoonShot::getCollisionBox() const
 {
-    int width = sprites[0]->getWidth();
+    int width = tipSprite->getWidth();
     int height = (int)yInit - (int)yPos;
     return { (int)xPos, (int)yPos, width, height };
 }

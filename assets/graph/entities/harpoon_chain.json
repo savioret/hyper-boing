@@ -1,0 +1,29 @@
+{ "frames": [
+   {
+    "filename": "weapon2 0.png",
+    "frame": { "x": 0, "y": 0, "w": 16, "h": 47 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 47 },
+    "sourceSize": { "w": 16, "h": 47 },
+    "duration": 70
+   },
+   {
+    "filename": "weapon2 1.png",
+    "frame": { "x": 16, "y": 0, "w": 16, "h": 47 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 47 },
+    "sourceSize": { "w": 16, "h": 47 },
+    "duration": 70
+   }
+ ],
+ "meta": {
+  "app": "https://www.aseprite.org/",
+  "version": "1.3.16-beta3",
+  "image": "harpoon_chain.png",
+  "format": "RGBA8888",
+  "size": { "w": 32, "h": 47 },
+  "scale": "1"
+ }
+}

@@ -54,22 +54,13 @@ enum class GameOverSubState
 /**
  * @struct SceneBitmaps
  * @brief Contains sprites specific to the current scene
- * 
+ *
  * This includes the background and stage-specific sprites.
- * Shared sprites (balls, UI elements, etc.) are stored in AppData.
+ * Shared sprites (balls, UI elements, weapons, etc.) are stored in AppData.
  */
 struct SceneBitmaps
 {
     Sprite back;  ///< Stage-specific background image
-
-    // Weapon-specific sprites (loaded per scene for now)
-    struct
-    {
-        Sprite harpoonHead;
-        Sprite harpoonTail1;
-        Sprite harpoonTail2;
-        SpriteSheet gunBullet;
-    } weapons;
 };
 
 /**
@@ -436,10 +427,9 @@ public:
      * 
      * @param pl Player firing the shot
      * @param type Weapon type
-     * @param xOffset Horizontal offset for multi-projectile weapons
      * @return unique_ptr to created Shot object
      */
-    std::unique_ptr<Shot> createShot(Player* pl, WeaponType type, int xOffset);
+    std::unique_ptr<Shot> createShot(Player* pl, WeaponType type);
 
     /**
      * @brief Triggers level win sequence

@@ -15,21 +15,24 @@ class Sprite;
  *
  * This preserves the original HARPOON weapon behavior from the Shoot class.
  */
+class SpriteSheet;
+
 class HarpoonShot : public Shot
 {
 private:
-    Sprite* sprites[3];  // Head + 2 tail variants
-    std::unique_ptr<ToggleAnim> tailAnim;  // Toggles between 0 and 1 for tail selection
+    Sprite* tipSprite;              // Harpoon tip
+    SpriteSheet* chainSpriteSheet;  // Animated chain sprite sheet
+    std::unique_ptr<IAnimController> tailAnim;  // Animation controller for chain (owns the animation)
 
 public:
     /**
      * Constructor
      * @param scn Scene this shot belongs to
      * @param pl Player who fired the shot
-     * @param type Weapon type (HARPOON or HARPOON2)
+     * @param type Weapon type (HARPOON)
      * @param xOffset Horizontal offset for multi-projectile weapons
      */
-    HarpoonShot(Scene* scn, Player* pl, WeaponType type, int xOffset);
+    HarpoonShot(Scene* scn, Player* pl, WeaponType type);
     ~HarpoonShot();
 
     // Implement abstract interface from Shot
@@ -41,8 +44,4 @@ public:
      * @return Collision box covering the entire vertical chain from head to screen bottom
      */
     CollisionBox getCollisionBox() const override;
-
-    // Accessors for Scene compatibility
-    Sprite* getSprite(int index) const { return sprites[index]; }
-    int getTail() const { return tailAnim->getCurrentFrame(); }
 };

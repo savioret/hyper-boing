@@ -19,20 +19,18 @@ class Graph;
  * Usage:
  *   SpriteSheet sheet;
  *   auto anim = AsepriteLoader::load(&graph, "victory.json", sheet);
- *   
- *   // sheet now contains all frames
- *   // anim contains controller if frameTags were defined
+ *
+ *   // Typed specializations (no casting needed):
+ *   auto sm = AsepriteLoader::loadAsStateMachine(&graph, "player.json", sheet);
+ *   auto seq = AsepriteLoader::loadAsSequence(&graph, "walk.json", sheet);
  */
 class AsepriteLoader
 {
 public:
     /**
-     * Load Aseprite JSON and populate sprite sheet
-     * 
-     * @param graph Graphics context for loading texture
-     * @param jsonPath Path to Aseprite JSON file
-     * @param sheet SpriteSheet to populate with frames
-     * @return AnimController if frameTags found, nullptr otherwise
+     * Load Aseprite JSON and populate sprite sheet.
+     * Auto-detects animation type: StateMachineAnim if frameTags found,
+     * FrameSequenceAnim otherwise.
      */
     static std::unique_ptr<IAnimController> load(
         Graph* graph,
@@ -40,21 +38,39 @@ public:
         SpriteSheet& sheet);
 
     /**
-     * Load only the animation controller from JSON (assumes sheet already loaded)
-     * 
-     * @param jsonPath Path to Aseprite JSON file
-     * @return AnimController if frameTags found, nullptr otherwise
+     * Load only animation controller from JSON (no sprite sheet loading).
+     * Auto-detects animation type: StateMachineAnim if frameTags found,
+     * FrameSequenceAnim otherwise.
      */
     static std::unique_ptr<IAnimController> loadAnimOnly(const std::string& jsonPath);
 
-private:
     /**
-     * Read entire file into string
+     * Load as StateMachineAnim with sprite sheet.
+     * If no frameTags, all frames go into a "default" state.
      */
-    static std::string readFile(const std::string& path);
+    static std::unique_ptr<StateMachineAnim> loadAsStateMachine(
+        Graph* graph,
+        const std::string& jsonPath,
+        SpriteSheet& sheet);
 
     /**
-     * Extract directory path from file path
+     * Load animation only as StateMachineAnim (no sprite sheet loading).
+     * If no frameTags, all frames go into a "default" state.
      */
-    static std::string getDirectory(const std::string& path);
+    static std::unique_ptr<StateMachineAnim> loadAsStateMachine(const std::string& jsonPath);
+
+    /**
+     * Load as FrameSequenceAnim with sprite sheet.
+     * Ignores frameTags - loads all frames as a single sequential animation.
+     */
+    static std::unique_ptr<FrameSequenceAnim> loadAsSequence(
+        Graph* graph,
+        const std::string& jsonPath,
+        SpriteSheet& sheet);
+
+    /**
+     * Load animation only as FrameSequenceAnim (no sprite sheet loading).
+     * Ignores frameTags - loads all frames as a single sequential animation.
+     */
+    static std::unique_ptr<FrameSequenceAnim> loadAsSequence(const std::string& jsonPath);
 };

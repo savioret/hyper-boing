@@ -120,7 +120,6 @@ void Scene::subscribeToEvents()
 
             switch (data.playerShoot.weapon) {
                 case WeaponType::HARPOON:
-                case WeaponType::HARPOON2:
                     soundId = "harpoon";
                     isHarpoon = true;
                     break;
@@ -184,26 +183,8 @@ int Scene::initBitmaps()
 {
     char txt[MAX_PATH];
 
-    // Load weapon-specific sprites (scene-specific for now)
-    // HARPOON sprites
-    bmp.weapons.harpoonHead.init(&appGraph, "assets/graph/entities/weapon1.png");
-    bmp.weapons.harpoonTail1.init(&appGraph, "assets/graph/entities/weapon2.png");
-    bmp.weapons.harpoonTail2.init(&appGraph, "assets/graph/entities/weapon3.png");
-    appGraph.setColorKey(bmp.weapons.harpoonHead.getBmp(), 0x00FF00);
-    appGraph.setColorKey(bmp.weapons.harpoonTail1.getBmp(), 0x00FF00);
-    appGraph.setColorKey(bmp.weapons.harpoonTail2.getBmp(), 0x00FF00);
-
-    // GUN sprite sheet with 7 frames
-    bmp.weapons.gunBullet.init(&appGraph, "assets/graph/entities/gun_bullet.png");
-    // Frame data from gun_bullet.png specification
-    bmp.weapons.gunBullet.addFrame(4, 1, 4, 8, -2, 0);      // Frame 0
-    bmp.weapons.gunBullet.addFrame(16, 1, 8, 8, -4, 0);     // Frame 1
-    bmp.weapons.gunBullet.addFrame(32, 1, 12, 8, -6, 0);    // Frame 2
-    bmp.weapons.gunBullet.addFrame(52, 2, 16, 7, -8, 0);     // Frame 3
-    bmp.weapons.gunBullet.addFrame(76, 0, 14, 9, -7, 0);   // Frame 4
-    bmp.weapons.gunBullet.addFrame(98, 4, 10, 5, -5, -1);  // Frame 5 (impact)
-    bmp.weapons.gunBullet.addFrame(116, 4, 14, 5, -7, -1); // Frame 6 (impact)
-    appGraph.setColorKey(bmp.weapons.gunBullet.getTexture(), 0x00FF00);
+    // Weapon sprites are now loaded in AppData::initStageResources()
+    // This ensures they're shared across all scenes and only loaded once
 
     // Load stage-specific background
     std::snprintf(txt, sizeof(txt), "assets/graph/bg/%s", stage->back);
@@ -530,23 +511,23 @@ float Scene::findGroundLevel(Player* player) const
  * Factory method to create appropriate Shot subclass based on weapon type
  * @param pl Player firing the shot
  * @param type Weapon type
- * @param xOffset Horizontal offset for multi-projectile weapons
  * @return unique_ptr to created Shot object
  */
-std::unique_ptr<Shot> Scene::createShot(Player* pl, WeaponType type, int xOffset)
+std::unique_ptr<Shot> Scene::createShot(Player* pl, WeaponType type)
 {
+    StageResources& res = gameinf.getStageRes();
+
     switch (type)
     {
     case WeaponType::HARPOON:
-    case WeaponType::HARPOON2:
-        return std::make_unique<HarpoonShot>(this, pl, type, 0);
+        return std::make_unique<HarpoonShot>(this, pl, type);
 
     case WeaponType::GUN:
-        return std::make_unique<GunShot>(this, pl, &bmp.weapons.gunBullet, 0);
+        return std::make_unique<GunShot>(this, pl, &res.gunBullet);
 
     default:
         // Fallback to harpoon for unknown types
-        return std::make_unique<HarpoonShot>(this, pl, WeaponType::HARPOON, xOffset);
+        return std::make_unique<HarpoonShot>(this, pl, WeaponType::HARPOON);
     }
 }
 
@@ -556,22 +537,7 @@ void Scene::shoot(Player* pl)
 
     const WeaponConfig& config = WeaponConfig::get(pl->getWeapon());
 
-    // Create multiple projectiles based on weapon config
-    int projectileCount = config.projectileCount;
-    int spacing = config.projectileSpacing;
-
-    for (int i = 0; i < projectileCount; i++)
-    {
-        // Calculate horizontal offset for each projectile
-        // Center them around the player
-        int xOffset = 0;
-        if (projectileCount > 1)
-        {
-            xOffset = (int)((i - (projectileCount - 1) / 2.0f) * spacing);
-        }
-
-        lsShoots.push_back(createShot(pl, pl->getWeapon(), xOffset));
-    }
+    lsShoots.push_back(createShot(pl, pl->getWeapon()));
 
     pl->shoot();  // Updates player state and animation
 
@@ -1002,11 +968,18 @@ GameState* Scene::handlePlayingState(float dt)
             // Handle climbing
             if (player->isClimbing())
             {
-                // On ladder - UP/DOWN to climb, LEFT/RIGHT to detach and fall
-                if (appInput.key(gameinf.getKeys(i).getLeft()) || appInput.key(gameinf.getKeys(i).getRight()))
+                // On ladder - UP/DOWN to climb, LEFT/RIGHT to detach and walk
+                if (appInput.key(gameinf.getKeys(i).getLeft()))
                 {
-                    // Detach from ladder and start falling
-                    player->stopClimbing();
+                    // Detach from ladder and walk left
+                    player->stopClimbing();  // Clears ladder, sets IDLE
+                    player->moveLeft();      // Sets WALKING, updates facing, moves left
+                }
+                else if (appInput.key(gameinf.getKeys(i).getRight()))
+                {
+                    // Detach from ladder and walk right
+                    player->stopClimbing();  // Clears ladder, sets IDLE
+                    player->moveRight();     // Sets WALKING, updates facing, moves right
                 }
                 else if (appInput.key(upKey))
                 {
@@ -1016,6 +989,11 @@ GameState* Scene::handlePlayingState(float dt)
                 {
                     player->climbDown();
                 }
+            }
+            else if (player->getState() == PlayerState::WAKING_UP)
+            {
+                // Frozen during waking up animation (300ms) - no input processed
+                // Animation will auto-transition to IDLE via callback
             }
             else
             {
@@ -1245,14 +1223,10 @@ int Scene::release()
     lsFloor.clear();
     lsLadders.clear();
 
-    // Release only scene-specific sprites (background, weapons)
+    // Release only scene-specific sprites (background)
     bmp.back.release();
-    bmp.weapons.harpoonHead.release();
-    bmp.weapons.harpoonTail1.release();
-    bmp.weapons.harpoonTail2.release();
-    // Note: SpriteSheet releases automatically in destructor
 
-    // Shared resources (balls, floors, UI, fonts) are managed by AppData
+    // Shared resources (balls, floors, UI, fonts, weapons) are managed by AppData
     // and persist across scene transitions
 
     CloseMusic();

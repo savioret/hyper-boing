@@ -16,18 +16,15 @@
  * @param sheet Sprite sheet containing all gun bullet frames
  * @param xOffset Horizontal offset for multi-projectile weapons
  */
-GunShot::GunShot(Scene* scn, Player* pl, SpriteSheet* sheet, int xOffset)
-    : Shot(scn, pl, WeaponType::GUN, xOffset)
+GunShot::GunShot(Scene* scn, Player* pl, SpriteSheet* sheet)
+    : Shot(scn, pl, WeaponType::GUN)
     , spriteSheet(sheet)
-    , animController(std::make_unique<StateMachineAnim>())
 {
-    // Set up animation states
-    // flight_intro: 0→1→2→3→4, then auto-transition to flight_loop
-    animController->addState("flight_intro", {0, 1, 2, 3, 4}, 150, false, "flight_loop");
-    // flight_loop: oscillate 3↔4 forever
-    animController->addState("flight_loop", {3, 4}, 150, true);
-    // impact: 5→6, then stays on 6 (we check for completion to kill)
-    animController->addState("impact", {5, 6}, 150, false);
+    // Clone animation template from AppData (no need to redefine states for each bullet)
+    auto clonedAnim = AppData::instance().stageRes.gunBulletAnim->clone();
+    animController = std::unique_ptr<StateMachineAnim>(
+        dynamic_cast<StateMachineAnim*>(clonedAnim.release())
+    );
 
     // Set callback to kill shot when impact animation completes
     animController->setOnStateComplete([this](const std::string& state) {
@@ -48,12 +45,12 @@ GunShot::GunShot(Scene* scn, Player* pl, SpriteSheet* sheet, int xOffset)
     if (pl->getFacing() == FacingDirection::LEFT)
     {
         // Convert center to left edge, then apply offsets
-        xPos = xInit = pl->getX() - halfWidth + spriteOffset + 5 + xOffset;
+        xPos = xInit = pl->getX() - halfWidth + spriteOffset + 5;
     }
     else  // FacingDirection::RIGHT
     {
         // Player X is already center; add offset for right-side spawn
-        xPos = xInit = pl->getX() + spriteOffset + 14 + xOffset;
+        xPos = xInit = pl->getX() + spriteOffset + 14;
     }
 
     // Player Y is bottom; convert to top and add offset for weapon position

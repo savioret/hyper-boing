@@ -13,9 +13,8 @@
  * @param scn The scene this shot belongs to
  * @param pl The player who fired the shot
  * @param type The weapon type being used
- * @param xOffset Horizontal offset for multi-projectile weapons
  */
-Shot::Shot(Scene* scn, Player* pl, WeaponType type, int xOffset)
+Shot::Shot(Scene* scn, Player* pl, WeaponType type)
     : scene(scn), player(pl), weaponType(type), audioChannel(-1)
 {
     const WeaponConfig& config = WeaponConfig::get(type);
@@ -24,7 +23,7 @@ Shot::Shot(Scene* scn, Player* pl, WeaponType type, int xOffset)
     if (pl->isClimbing())
     {
         // While climbing, spawn centered on player's X (bottom-middle pivot)
-        xPos = xInit = pl->getX() + xOffset;
+        xPos = xInit = pl->getX();
     }
     else
     {
@@ -36,12 +35,12 @@ Shot::Shot(Scene* scn, Player* pl, WeaponType type, int xOffset)
         if (pl->getFacing() == FacingDirection::LEFT)
         {
             // Convert center to left edge, then apply offsets
-            xPos = xInit = pl->getX() - halfWidth + spriteOffset - 2.0f + xOffset;
+            xPos = xInit = pl->getX() - halfWidth + spriteOffset - 2.0f;
         }
         else  // FacingDirection::RIGHT
         {
             // Player X is already center; add offset for right-side spawn
-            xPos = xInit = pl->getX() + spriteOffset + 5.0f + xOffset;
+            xPos = xInit = pl->getX() + spriteOffset + 5.0f;
         }
     }
 

@@ -4,9 +4,21 @@
 #include "logger.h"
 #include <fstream>
 #include <sstream>
-#include <algorithm>
 
-std::string AsepriteLoader::readFile(const std::string& path)
+// ============================================================================
+// Internal helpers (anonymous namespace)
+// ============================================================================
+namespace {
+
+struct FrameTimingData
+{
+    int totalFrames = 0;
+    std::vector<int> frameDurations;
+    bool hasVariableDurations = false;
+    int uniformDuration = 100;
+};
+
+std::string readFile(const std::string& path)
 {
     std::ifstream file(path);
     if (!file.is_open())
@@ -20,7 +32,7 @@ std::string AsepriteLoader::readFile(const std::string& path)
     return buffer.str();
 }
 
-std::string AsepriteLoader::getDirectory(const std::string& path)
+std::string getDirectory(const std::string& path)
 {
     size_t lastSlash = path.find_last_of("/\\");
     if (lastSlash != std::string::npos)
@@ -30,56 +42,53 @@ std::string AsepriteLoader::getDirectory(const std::string& path)
     return "";
 }
 
-std::unique_ptr<IAnimController> AsepriteLoader::load(
-    Graph* graph,
-    const std::string& jsonPath,
-    SpriteSheet& sheet)
+bool parseJson(const std::string& jsonPath, JsonValue& root)
 {
-    // Read JSON file
-    std::string jsonContent = readFile(jsonPath);
-    if (jsonContent.empty())
+    std::string content = readFile(jsonPath);
+    if (content.empty())
     {
         LOG_ERROR("AsepriteLoader: Failed to read JSON file");
-        return nullptr;
+        return false;
     }
 
-    // Parse JSON
-    JsonValue root = JsonParser::parse(jsonContent);
+    root = JsonParser::parse(content);
     if (!root.isObject())
     {
         LOG_ERROR("AsepriteLoader: Invalid JSON format");
-        return nullptr;
+        return false;
     }
 
-    // Get meta section for image path
     if (!root.has("meta"))
     {
         LOG_ERROR("AsepriteLoader: No 'meta' section found");
-        return nullptr;
+        return false;
     }
 
+    if (!root.has("frames") || !root["frames"].isArray())
+    {
+        LOG_ERROR("AsepriteLoader: No 'frames' array found");
+        return false;
+    }
+
+    return true;
+}
+
+bool loadSpriteSheet(Graph* graph, const JsonValue& root, const std::string& jsonPath, SpriteSheet& sheet)
+{
     JsonValue meta = root["meta"];
     if (!meta.has("image"))
     {
         LOG_ERROR("AsepriteLoader: No 'image' field in meta");
-        return nullptr;
+        return false;
     }
 
-    // Load texture
     std::string dir = getDirectory(jsonPath);
-    std::string imagePath = dir + meta["image"].asString(); 
-    
+    std::string imagePath = dir + meta["image"].asString();
+
     if (!sheet.init(graph, imagePath))
     {
         LOG_ERROR("AsepriteLoader: Failed to load texture: %s", imagePath.c_str());
-        return nullptr;
-    }
-
-    // Parse frames
-    if (!root.has("frames") || !root["frames"].isArray())
-    {
-        LOG_ERROR("AsepriteLoader: No 'frames' array found");
-        return nullptr;
+        return false;
     }
 
     JsonValue frames = root["frames"];
@@ -93,19 +102,16 @@ std::unique_ptr<IAnimController> AsepriteLoader::load(
             continue;
         }
 
-        // Get frame position and size in texture
         JsonValue frame = frameData["frame"];
         int x = frame["x"].asInt();
         int y = frame["y"].asInt();
         int w = frame["w"].asInt();
         int h = frame["h"].asInt();
 
-        // Get sprite source offset (for trimmed sprites)
         JsonValue spriteSource = frameData["spriteSourceSize"];
         int xOff = spriteSource["x"].asInt();
         int yOff = spriteSource["y"].asInt();
 
-        // Get original canvas size (for bottom-middle positioning)
         int srcW = 0, srcH = 0;
         if (frameData.has("sourceSize"))
         {
@@ -114,411 +120,366 @@ std::unique_ptr<IAnimController> AsepriteLoader::load(
             srcH = sourceSize["h"].asInt();
         }
 
-        // Add frame to sprite sheet with sourceSize info
         sheet.addFrame(x, y, w, h, xOff, yOff, srcW, srcH);
     }
 
     LOG_INFO("AsepriteLoader: Loaded %zu frames from %s", frames.size(), imagePath.c_str());
+    return true;
+}
 
-    int totalFrames = static_cast<int>(frames.size());
-    if (totalFrames == 0)
-    {
-        return nullptr;
-    }
+FrameTimingData extractTimingData(const JsonValue& frames)
+{
+    FrameTimingData data;
+    data.totalFrames = static_cast<int>(frames.size());
+    data.frameDurations.resize(data.totalFrames, 100);
 
-    // Collect per-frame durations
-    std::vector<int> frameDurations(totalFrames, 100);  // Default 100ms
-    bool hasVariableDurations = false;
-    
-    for (int i = 0; i < totalFrames; i++)
+    for (int i = 0; i < data.totalFrames; i++)
     {
         if (frames[i].has("duration"))
         {
             int duration = frames[i]["duration"].asInt();
-            frameDurations[i] = duration;
-            if (i > 0 && duration != frameDurations[0])
+            data.frameDurations[i] = duration;
+            if (i > 0 && duration != data.frameDurations[0])
             {
-                hasVariableDurations = true;
+                data.hasVariableDurations = true;
             }
         }
     }
-    
-    // If all durations are the same, use uniform duration for efficiency
-    int uniformDuration = frameDurations[0];
-    if (!hasVariableDurations)
+
+    data.uniformDuration = data.frameDurations.empty() ? 100 : data.frameDurations[0];
+
+    if (!data.hasVariableDurations)
     {
-        LOG_INFO("AsepriteLoader: Using uniform duration of %dms for all frames", uniformDuration);
+        LOG_INFO("AsepriteLoader: Using uniform duration of %dms for all frames", data.uniformDuration);
     }
     else
     {
         LOG_INFO("AsepriteLoader: Using per-frame durations (variable)");
     }
 
-    // Parse frameTags to create animation controller
-    if (meta.has("frameTags") && meta["frameTags"].isArray())
-    {
-        JsonValue frameTags = meta["frameTags"];
-        
-        if (frameTags.size() > 0)
-        {
-            // Create state machine with states for tagged and untagged frame ranges
-            auto anim = std::make_unique<StateMachineAnim>();
-            
-            // Track which frames are covered by tags
-            std::vector<bool> covered(totalFrames, false);
-            
-            // Process all tags
-            for (size_t tagIdx = 0; tagIdx < frameTags.size(); tagIdx++)
-            {
-                JsonValue tag = frameTags[tagIdx];
-                
-                int from = tag["from"].asInt();
-                int to = tag["to"].asInt();
-                std::string direction = tag.has("direction") ? tag["direction"].asString() : "forward";
-                std::string tagName = tag.has("name") ? tag["name"].asString() : ("tag" + std::to_string(tagIdx));
-                
-                // Mark frames as covered
-                for (int i = from; i <= to && i < totalFrames; i++)
-                {
-                    covered[i] = true;
-                }
-                
-                // Create sequence based on direction
-                std::vector<int> sequence;
-                std::vector<int> sequenceDurations;
-                
-                if (direction == "pingpong")
-                {
-                    // Forward
-                    for (int i = from; i <= to; i++)
-                    {
-                        sequence.push_back(i);
-                        sequenceDurations.push_back(frameDurations[i]);
-                    }
-                    // Backward (excluding endpoints)
-                    for (int i = to - 1; i > from; i--)
-                    {
-                        sequence.push_back(i);
-                        sequenceDurations.push_back(frameDurations[i]);
-                    }
-                }
-                else if (direction == "reverse")
-                {
-                    for (int i = to; i >= from; i--)
-                    {
-                        sequence.push_back(i);
-                        sequenceDurations.push_back(frameDurations[i]);
-                    }
-                }
-                else // "forward"
-                {
-                    for (int i = from; i <= to; i++)
-                    {
-                        sequence.push_back(i);
-                        sequenceDurations.push_back(frameDurations[i]);
-                    }
-                }
-                
-                // Use per-frame durations if variable, otherwise uniform
-                if (hasVariableDurations)
-                {
-                    anim->addState(tagName, sequence, sequenceDurations, true);
-                }
-                else
-                {
-                    anim->addState(tagName, sequence, uniformDuration, true);
-                }
-                
-                LOG_INFO("AsepriteLoader: Created state '%s' (%s, frames %d-%d)", 
-                        tagName.c_str(), direction.c_str(), from, to);
-            }
-            
-            // Create states for untagged frame ranges
-            int defaultCount = 0;
-            int rangeStart = -1;
-            
-            for (int i = 0; i <= totalFrames; i++)
-            {
-                bool isCovered = (i < totalFrames) ? covered[i] : true; // Force end at totalFrames
-                
-                if (!isCovered && rangeStart == -1)
-                {
-                    // Start of untagged range
-                    rangeStart = i;
-                }
-                else if (isCovered && rangeStart != -1)
-                {
-                    // End of untagged range
-                    std::vector<int> sequence;
-                    std::vector<int> sequenceDurations;
-                    
-                    for (int j = rangeStart; j < i; j++)
-                    {
-                        sequence.push_back(j);
-                        sequenceDurations.push_back(frameDurations[j]);
-                    }
-                    
-                    std::string stateName = (defaultCount == 0) ? "default" : ("default" + std::to_string(defaultCount));
-                    
-                    if (hasVariableDurations)
-                    {
-                        anim->addState(stateName, sequence, sequenceDurations, true);
-                    }
-                    else
-                    {
-                        anim->addState(stateName, sequence, uniformDuration, true);
-                    }
-                    
-                    LOG_INFO("AsepriteLoader: Created state '%s' (frames %d-%d)", 
-                            stateName.c_str(), rangeStart, i - 1);
-                    
-                    defaultCount++;
-                    rangeStart = -1;
-                }
-            }
-            
-            // Set initial state (first state added, whether tagged or default)
-            if (!covered[0])
-            {
-                anim->setState("default");
-            }
-            else
-            {
-                // Find first tag that covers frame 0
-                for (size_t tagIdx = 0; tagIdx < frameTags.size(); tagIdx++)
-                {
-                    JsonValue tag = frameTags[tagIdx];
-                    int from = tag["from"].asInt();
-                    int to = tag["to"].asInt();
-                    
-                    if (from <= 0 && to >= 0)
-                    {
-                        std::string tagName = tag.has("name") ? tag["name"].asString() : ("tag" + std::to_string(tagIdx));
-                        anim->setState(tagName);
-                        break;
-                    }
-                }
-            }
+    return data;
+}
 
-            return anim;
+void buildDirectionSequence(
+    const std::string& direction,
+    int from, int to,
+    const std::vector<int>& frameDurations,
+    std::vector<int>& sequence,
+    std::vector<int>& sequenceDurations)
+{
+    if (direction == "pingpong")
+    {
+        for (int i = from; i <= to; i++)
+        {
+            sequence.push_back(i);
+            sequenceDurations.push_back(frameDurations[i]);
+        }
+        for (int i = to - 1; i > from; i--)
+        {
+            sequence.push_back(i);
+            sequenceDurations.push_back(frameDurations[i]);
         }
     }
-
-    // No tags - create simple forward animation with all frames
-    if (hasVariableDurations)
+    else if (direction == "reverse")
     {
-        std::vector<int> allFrames;
-        for (int i = 0; i < totalFrames; i++)
+        for (int i = to; i >= from; i--)
         {
-            allFrames.push_back(i);
+            sequence.push_back(i);
+            sequenceDurations.push_back(frameDurations[i]);
         }
-        auto anim = std::make_unique<FrameSequenceAnim>(allFrames, frameDurations, true);
-        LOG_INFO("AsepriteLoader: Created simple animation with per-frame durations (frames 0-%d)", totalFrames - 1);
-        return anim;
+    }
+    else // "forward"
+    {
+        for (int i = from; i <= to; i++)
+        {
+            sequence.push_back(i);
+            sequenceDurations.push_back(frameDurations[i]);
+        }
+    }
+}
+
+void addAnimState(
+    StateMachineAnim& anim,
+    const std::string& name,
+    const std::vector<int>& sequence,
+    const std::vector<int>& sequenceDurations,
+    const FrameTimingData& timing,
+    int loopCount)
+{
+    if (timing.hasVariableDurations)
+    {
+        anim.addState(name, sequence, sequenceDurations, loopCount);
     }
     else
     {
-        auto anim = FrameSequenceAnim::range(0, totalFrames - 1, uniformDuration, true);
-        LOG_INFO("AsepriteLoader: Created simple animation (frames 0-%d, %dms per frame)", totalFrames - 1, uniformDuration);
+        anim.addState(name, sequence, timing.uniformDuration, loopCount);
+    }
+}
+
+bool hasFrameTags(const JsonValue& meta)
+{
+    return meta.has("frameTags") && meta["frameTags"].isArray() && meta["frameTags"].size() > 0;
+}
+
+// Build StateMachineAnim from frameTags (tagged states + untagged "default" ranges)
+std::unique_ptr<StateMachineAnim> buildStateMachineFromTags(
+    const JsonValue& meta,
+    const FrameTimingData& timing)
+{
+    auto anim = std::make_unique<StateMachineAnim>();
+    JsonValue frameTags = meta["frameTags"];
+    std::vector<bool> covered(timing.totalFrames, false);
+
+    // Process all tags
+    for (size_t tagIdx = 0; tagIdx < frameTags.size(); tagIdx++)
+    {
+        JsonValue tag = frameTags[tagIdx];
+
+        int from = tag["from"].asInt();
+        int to = tag["to"].asInt();
+        std::string direction = tag.has("direction") ? tag["direction"].asString() : "forward";
+        std::string tagName = tag.has("name") ? tag["name"].asString() : ("tag" + std::to_string(tagIdx));
+
+        // Parse "repeat" field: if not present or "0", infinite loop (0)
+        // If "1", play once (1), if "2"+, repeat N times
+        int loopCount = 0;  // Default: infinite loop
+        if (tag.has("repeat"))
+        {
+            std::string repeatStr = tag["repeat"].asString();
+            int repeatVal = std::atoi(repeatStr.c_str());
+            loopCount = repeatVal;  // 0 = infinite, 1 = play once, 2+ = repeat N times
+        }
+
+        for (int i = from; i <= to && i < timing.totalFrames; i++)
+        {
+            covered[i] = true;
+        }
+
+        std::vector<int> sequence;
+        std::vector<int> sequenceDurations;
+        buildDirectionSequence(direction, from, to, timing.frameDurations, sequence, sequenceDurations);
+        addAnimState(*anim, tagName, sequence, sequenceDurations, timing, loopCount);
+
+        const char* loopDesc = (loopCount == 0) ? "infinite" : (loopCount == 1) ? "once" : "repeat";
+        LOG_INFO("AsepriteLoader: Created state '%s' (%s, frames %d-%d, %s)",
+                tagName.c_str(), direction.c_str(), from, to, loopDesc);
+    }
+
+    // Create states for untagged frame ranges
+    int defaultCount = 0;
+    int rangeStart = -1;
+
+    for (int i = 0; i <= timing.totalFrames; i++)
+    {
+        bool isCovered = (i < timing.totalFrames) ? covered[i] : true;
+
+        if (!isCovered && rangeStart == -1)
+        {
+            rangeStart = i;
+        }
+        else if (isCovered && rangeStart != -1)
+        {
+            std::vector<int> sequence;
+            std::vector<int> sequenceDurations;
+
+            for (int j = rangeStart; j < i; j++)
+            {
+                sequence.push_back(j);
+                sequenceDurations.push_back(timing.frameDurations[j]);
+            }
+
+            std::string stateName = (defaultCount == 0) ? "default" : ("default" + std::to_string(defaultCount));
+            addAnimState(*anim, stateName, sequence, sequenceDurations, timing, 0);  // 0 = infinite loop
+
+            LOG_INFO("AsepriteLoader: Created state '%s' (frames %d-%d, infinite)",
+                    stateName.c_str(), rangeStart, i - 1);
+
+            defaultCount++;
+            rangeStart = -1;
+        }
+    }
+
+    // Set initial state
+    if (!covered[0])
+    {
+        anim->setState("default");
+    }
+    else
+    {
+        for (size_t tagIdx = 0; tagIdx < frameTags.size(); tagIdx++)
+        {
+            JsonValue tag = frameTags[tagIdx];
+            int from = tag["from"].asInt();
+            int to = tag["to"].asInt();
+
+            if (from <= 0 && to >= 0)
+            {
+                std::string tagName = tag.has("name") ? tag["name"].asString() : ("tag" + std::to_string(tagIdx));
+                anim->setState(tagName);
+                break;
+            }
+        }
+    }
+
+    return anim;
+}
+
+// Build StateMachineAnim with all frames in a single "default" state
+std::unique_ptr<StateMachineAnim> buildDefaultStateMachine(const FrameTimingData& timing)
+{
+    auto anim = std::make_unique<StateMachineAnim>();
+
+    std::vector<int> allFrames;
+    for (int i = 0; i < timing.totalFrames; i++)
+    {
+        allFrames.push_back(i);
+    }
+
+    addAnimState(*anim, "default", allFrames, timing.frameDurations, timing, 0);  // 0 = infinite loop
+    anim->setState("default");
+
+    LOG_INFO("AsepriteLoader: Created StateMachineAnim with 'default' state (frames 0-%d, infinite)", timing.totalFrames - 1);
+    return anim;
+}
+
+// Build FrameSequenceAnim with all frames (ignoring any tags)
+std::unique_ptr<FrameSequenceAnim> buildSequence(const FrameTimingData& timing)
+{
+    if (timing.hasVariableDurations)
+    {
+        std::vector<int> allFrames;
+        for (int i = 0; i < timing.totalFrames; i++)
+        {
+            allFrames.push_back(i);
+        }
+        LOG_INFO("AsepriteLoader: Created FrameSequenceAnim with per-frame durations (frames 0-%d, infinite)", timing.totalFrames - 1);
+        return std::make_unique<FrameSequenceAnim>(allFrames, timing.frameDurations, 0);  // 0 = infinite loop
+    }
+    else
+    {
+        LOG_INFO("AsepriteLoader: Created FrameSequenceAnim (frames 0-%d, %dms per frame, infinite)", timing.totalFrames - 1, timing.uniformDuration);
+        auto anim = FrameSequenceAnim::range(0, timing.totalFrames - 1, timing.uniformDuration, 0);  // 0 = infinite loop
         return std::make_unique<FrameSequenceAnim>(std::move(anim));
     }
 }
 
-std::unique_ptr<IAnimController> AsepriteLoader::loadAnimOnly(const std::string& jsonPath)
+// High-level builders that compose timing + animation creation from parsed JSON
+
+std::unique_ptr<IAnimController> buildAnimFromJson(const JsonValue& root)
 {
-    // Read JSON file
-    std::string jsonContent = readFile(jsonPath);
-    if (jsonContent.empty())
-    {
-        return nullptr;
-    }
-
-    // Parse JSON
-    JsonValue root = JsonParser::parse(jsonContent);
-    if (!root.isObject() || !root.has("meta"))
-    {
-        return nullptr;
-    }
-
     JsonValue meta = root["meta"];
     JsonValue frames = root["frames"];
+    FrameTimingData timing = extractTimingData(frames);
 
-    int totalFrames = frames.isArray() ? static_cast<int>(frames.size()) : 0;
-    if (totalFrames == 0)
-    {
+    if (timing.totalFrames == 0)
         return nullptr;
-    }
 
-    // Collect per-frame durations
-    std::vector<int> frameDurations(totalFrames, 100);  // Default 100ms
-    bool hasVariableDurations = false;
-    
-    for (int i = 0; i < totalFrames; i++)
-    {
-        if (frames[i].has("duration"))
-        {
-            int duration = frames[i]["duration"].asInt();
-            frameDurations[i] = duration;
-            if (i > 0 && duration != frameDurations[0])
-            {
-                hasVariableDurations = true;
-            }
-        }
-    }
-    
-    int uniformDuration = frameDurations[0];
+    if (hasFrameTags(meta))
+        return buildStateMachineFromTags(meta, timing);
 
-    // Parse frameTags
-    if (meta.has("frameTags") && meta["frameTags"].isArray())
-    {
-        JsonValue frameTags = meta["frameTags"];
-        
-        if (frameTags.size() > 0)
-        {
-            // Create state machine with states for tagged and untagged frame ranges
-            auto anim = std::make_unique<StateMachineAnim>();
-            
-            // Track which frames are covered by tags
-            std::vector<bool> covered(totalFrames, false);
-            
-            // Process all tags
-            for (size_t tagIdx = 0; tagIdx < frameTags.size(); tagIdx++)
-            {
-                JsonValue tag = frameTags[tagIdx];
-                
-                int from = tag["from"].asInt();
-                int to = tag["to"].asInt();
-                std::string direction = tag.has("direction") ? tag["direction"].asString() : "forward";
-                std::string tagName = tag.has("name") ? tag["name"].asString() : ("tag" + std::to_string(tagIdx));
-                
-                // Mark frames as covered
-                for (int i = from; i <= to && i < totalFrames; i++)
-                {
-                    covered[i] = true;
-                }
-                
-                // Create sequence based on direction
-                std::vector<int> sequence;
-                std::vector<int> sequenceDurations;
-                
-                if (direction == "pingpong")
-                {
-                    for (int i = from; i <= to; i++)
-                    {
-                        sequence.push_back(i);
-                        sequenceDurations.push_back(frameDurations[i]);
-                    }
-                    for (int i = to - 1; i > from; i--)
-                    {
-                        sequence.push_back(i);
-                        sequenceDurations.push_back(frameDurations[i]);
-                    }
-                }
-                else if (direction == "reverse")
-                {
-                    for (int i = to; i >= from; i--)
-                    {
-                        sequence.push_back(i);
-                        sequenceDurations.push_back(frameDurations[i]);
-                    }
-                }
-                else
-                {
-                    for (int i = from; i <= to; i++)
-                    {
-                        sequence.push_back(i);
-                        sequenceDurations.push_back(frameDurations[i]);
-                    }
-                }
-                
-                if (hasVariableDurations)
-                {
-                    anim->addState(tagName, sequence, sequenceDurations, true);
-                }
-                else
-                {
-                    anim->addState(tagName, sequence, uniformDuration, true);
-                }
-            }
-            
-            // Create states for untagged frame ranges
-            int defaultCount = 0;
-            int rangeStart = -1;
-            
-            for (int i = 0; i <= totalFrames; i++)
-            {
-                bool isCovered = (i < totalFrames) ? covered[i] : true;
-                
-                if (!isCovered && rangeStart == -1)
-                {
-                    rangeStart = i;
-                }
-                else if (isCovered && rangeStart != -1)
-                {
-                    std::vector<int> sequence;
-                    std::vector<int> sequenceDurations;
-                    
-                    for (int j = rangeStart; j < i; j++)
-                    {
-                        sequence.push_back(j);
-                        sequenceDurations.push_back(frameDurations[j]);
-                    }
-                    
-                    std::string stateName = (defaultCount == 0) ? "default" : ("default" + std::to_string(defaultCount));
-                    
-                    if (hasVariableDurations)
-                    {
-                        anim->addState(stateName, sequence, sequenceDurations, true);
-                    }
-                    else
-                    {
-                        anim->addState(stateName, sequence, uniformDuration, true);
-                    }
-                    
-                    defaultCount++;
-                    rangeStart = -1;
-                }
-            }
-            
-            // Set initial state
-            if (!covered[0])
-            {
-                anim->setState("default");
-            }
-            else
-            {
-                for (size_t tagIdx = 0; tagIdx < frameTags.size(); tagIdx++)
-                {
-                    JsonValue tag = frameTags[tagIdx];
-                    int from = tag["from"].asInt();
-                    int to = tag["to"].asInt();
-                    
-                    if (from <= 0 && to >= 0)
-                    {
-                        std::string tagName = tag.has("name") ? tag["name"].asString() : ("tag" + std::to_string(tagIdx));
-                        anim->setState(tagName);
-                        break;
-                    }
-                }
-            }
+    return buildSequence(timing);
+}
 
-            return anim;
-        }
-    }
+std::unique_ptr<StateMachineAnim> buildStateMachineFromJson(const JsonValue& root)
+{
+    JsonValue meta = root["meta"];
+    JsonValue frames = root["frames"];
+    FrameTimingData timing = extractTimingData(frames);
 
-    // No tags - create simple forward animation with all frames
-    if (hasVariableDurations)
-    {
-        std::vector<int> allFrames;
-        for (int i = 0; i < totalFrames; i++)
-        {
-            allFrames.push_back(i);
-        }
-        return std::make_unique<FrameSequenceAnim>(allFrames, frameDurations, true);
-    }
-    else
-    {
-        auto anim = FrameSequenceAnim::range(0, totalFrames - 1, uniformDuration, true);
-        return std::make_unique<FrameSequenceAnim>(std::move(anim));
-    }
+    if (timing.totalFrames == 0)
+        return nullptr;
+
+    if (hasFrameTags(meta))
+        return buildStateMachineFromTags(meta, timing);
+
+    return buildDefaultStateMachine(timing);
+}
+
+std::unique_ptr<FrameSequenceAnim> buildSequenceFromJson(const JsonValue& root)
+{
+    JsonValue frames = root["frames"];
+    FrameTimingData timing = extractTimingData(frames);
+
+    if (timing.totalFrames == 0)
+        return nullptr;
+
+    return buildSequence(timing);
+}
+
+} // anonymous namespace
+
+// ============================================================================
+// Public API
+// ============================================================================
+
+std::unique_ptr<IAnimController> AsepriteLoader::load(
+    Graph* graph,
+    const std::string& jsonPath,
+    SpriteSheet& sheet)
+{
+    JsonValue root;
+    if (!parseJson(jsonPath, root))
+        return nullptr;
+
+    if (!loadSpriteSheet(graph, root, jsonPath, sheet))
+        return nullptr;
+
+    return buildAnimFromJson(root);
+}
+
+std::unique_ptr<IAnimController> AsepriteLoader::loadAnimOnly(const std::string& jsonPath)
+{
+    JsonValue root;
+    if (!parseJson(jsonPath, root))
+        return nullptr;
+
+    return buildAnimFromJson(root);
+}
+
+std::unique_ptr<StateMachineAnim> AsepriteLoader::loadAsStateMachine(
+    Graph* graph,
+    const std::string& jsonPath,
+    SpriteSheet& sheet)
+{
+    JsonValue root;
+    if (!parseJson(jsonPath, root))
+        return nullptr;
+
+    if (!loadSpriteSheet(graph, root, jsonPath, sheet))
+        return nullptr;
+
+    return buildStateMachineFromJson(root);
+}
+
+std::unique_ptr<StateMachineAnim> AsepriteLoader::loadAsStateMachine(const std::string& jsonPath)
+{
+    JsonValue root;
+    if (!parseJson(jsonPath, root))
+        return nullptr;
+
+    return buildStateMachineFromJson(root);
+}
+
+std::unique_ptr<FrameSequenceAnim> AsepriteLoader::loadAsSequence(
+    Graph* graph,
+    const std::string& jsonPath,
+    SpriteSheet& sheet)
+{
+    JsonValue root;
+    if (!parseJson(jsonPath, root))
+        return nullptr;
+
+    if (!loadSpriteSheet(graph, root, jsonPath, sheet))
+        return nullptr;
+
+    return buildSequenceFromJson(root);
+}
+
+std::unique_ptr<FrameSequenceAnim> AsepriteLoader::loadAsSequence(const std::string& jsonPath)
+{
+    JsonValue root;
+    if (!parseJson(jsonPath, root))
+        return nullptr;
+
+    return buildSequenceFromJson(root);
 }

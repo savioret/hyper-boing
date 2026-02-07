@@ -31,7 +31,7 @@ public:
      * @param sheet Sprite sheet containing gun bullet frames
      * @param xOffset Horizontal offset for multi-projectile weapons
      */
-    GunShot(Scene* scn, Player* pl, SpriteSheet* sheet, int xOffset);
+    GunShot(Scene* scn, Player* pl, SpriteSheet* sheet);
     ~GunShot();
 
     // Implement abstract interface from Shot

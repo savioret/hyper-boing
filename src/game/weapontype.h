@@ -7,8 +7,7 @@
  */
 enum class WeaponType {
     HARPOON = 0,  // Current chain weapon,
-    HARPOON2 = 1,  // Current chain weapon
-    GUN = 2       // New bullet weapon
+    GUN = 1       // New bullet weapon
 };
 
 /**
@@ -22,8 +21,6 @@ struct WeaponConfig {
     int maxShots;          // Max simultaneous projectiles per player
     int cooldown;          // Frames between shots
     int speed;             // Pixels per frame upward
-    int projectileCount;   // Number of projectiles per shot
-    int projectileSpacing; // Horizontal spacing between projectiles
 
     /**
      * Get the configuration for a specific weapon type

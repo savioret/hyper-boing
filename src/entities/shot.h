@@ -44,9 +44,8 @@ public:
      * @param scn Scene this shot belongs to
      * @param pl Player who fired the shot
      * @param type Weapon type for this shot
-     * @param xOffset Horizontal offset for multi-projectile weapons
      */
-    Shot(Scene* scn, Player* pl, WeaponType type, int xOffset);
+    Shot(Scene* scn, Player* pl, WeaponType type);
     virtual ~Shot() {}
 
     // IGameObject lifecycle hook

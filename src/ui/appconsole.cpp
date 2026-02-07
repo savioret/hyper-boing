@@ -352,10 +352,6 @@ void AppConsole::cmdWeapon(const std::string& args)
     {
         type = WeaponType::HARPOON;
     }
-    else if (weaponName == "harpoon2")
-    {
-        type = WeaponType::HARPOON2;
-    }
     else if (weaponName == "gun")
     {
         type = WeaponType::GUN;

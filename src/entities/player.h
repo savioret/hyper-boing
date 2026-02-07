@@ -28,12 +28,13 @@ enum class FacingDirection
  */
 enum class PlayerState
 {
-    IDLE,      // Standing still (default pose)
-    WALKING,   // Walking animation (from Aseprite JSON)
-    CLIMBING,  // On ladder, moving up/down (uses walk animation)
-    SHOOTING,  // Shooting pose
-    VICTORY,   // Victory celebration (from Aseprite JSON)
-    DEAD       // Death animation (uses Action system)
+    IDLE,       // Standing still (default pose)
+    WALKING,    // Walking animation (from Aseprite JSON)
+    CLIMBING,   // On ladder, moving up/down (climbing animation)
+    WAKING_UP,  // Just reached ladder top, transitioning to platform
+    SHOOTING,   // Shooting pose
+    VICTORY,    // Victory celebration (from Aseprite JSON)
+    DEAD        // Death animation (uses Action system)
 };
 
 /**
@@ -79,6 +80,10 @@ private:
     // Victory animation (loaded from Aseprite JSON)
     std::unique_ptr<SpriteSheet> victorySheet;
     std::unique_ptr<IAnimController> victoryAnim;
+
+    // Climbing animation (loaded from Aseprite JSON, manually constructed StateMachineAnim)
+    std::unique_ptr<SpriteSheet> climbSheet;
+    std::unique_ptr<StateMachineAnim> climbAnim;
 
     // Death animation using Action system
     std::unique_ptr<Action> deathAction;

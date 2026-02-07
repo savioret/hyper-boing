@@ -1,13 +1,14 @@
+#include <memory>
 #include "animcontroller.h"
-
 // ============================================================================
 // FrameSequenceAnim Implementation
 // ============================================================================
 
-FrameSequenceAnim::FrameSequenceAnim(std::vector<int> frameSequence, int durationMs, bool shouldLoop)
+FrameSequenceAnim::FrameSequenceAnim(std::vector<int> frameSequence, int durationMs, int loopCount)
     : frames(std::move(frameSequence))
     , defaultDuration(durationMs)
-    , loop(shouldLoop)
+    , loops(loopCount)
+    , loopsRemaining(loopCount)
     , usePerFrameDurations(false)
 {
     if (frames.empty())
@@ -16,18 +17,19 @@ FrameSequenceAnim::FrameSequenceAnim(std::vector<int> frameSequence, int duratio
     }
 }
 
-FrameSequenceAnim::FrameSequenceAnim(std::vector<int> frameSequence, std::vector<int> durationsMs, bool shouldLoop)
+FrameSequenceAnim::FrameSequenceAnim(std::vector<int> frameSequence, std::vector<int> durationsMs, int loopCount)
     : frames(std::move(frameSequence))
     , frameDurations(std::move(durationsMs))
     , defaultDuration(100)  // Fallback if frameDurations is empty
-    , loop(shouldLoop)
+    , loops(loopCount)
+    , loopsRemaining(loopCount)
     , usePerFrameDurations(true)
 {
     if (frames.empty())
     {
         frames.push_back(0);  // Ensure at least one frame
     }
-    
+
     // Ensure frameDurations matches frames size
     if (frameDurations.size() < frames.size())
     {
@@ -35,7 +37,7 @@ FrameSequenceAnim::FrameSequenceAnim(std::vector<int> frameSequence, std::vector
     }
 }
 
-FrameSequenceAnim FrameSequenceAnim::range(int startFrame, int endFrame, int durationMs, bool loop)
+FrameSequenceAnim FrameSequenceAnim::range(int startFrame, int endFrame, int durationMs, int loopCount)
 {
     std::vector<int> seq;
     if (startFrame <= endFrame)
@@ -52,12 +54,12 @@ FrameSequenceAnim FrameSequenceAnim::range(int startFrame, int endFrame, int dur
             seq.push_back(i);
         }
     }
-    return FrameSequenceAnim(std::move(seq), durationMs, loop);
+    return FrameSequenceAnim(std::move(seq), durationMs, loopCount);
 }
 
 FrameSequenceAnim FrameSequenceAnim::oscillate(int frameA, int frameB, int durationMs)
 {
-    return FrameSequenceAnim({frameA, frameB}, durationMs, true);
+    return FrameSequenceAnim({frameA, frameB}, durationMs, 0);  // 0 = infinite loop
 }
 
 void FrameSequenceAnim::update(float dt)
@@ -65,12 +67,12 @@ void FrameSequenceAnim::update(float dt)
     if (complete) return;
 
     timeAccumulator += dt;
-    
+
     // Get current frame duration
     int currentDuration = usePerFrameDurations && currentIndex < static_cast<int>(frameDurations.size())
                           ? frameDurations[currentIndex]
                           : defaultDuration;
-    
+
     if (timeAccumulator >= currentDuration)
     {
         timeAccumulator -= currentDuration;
@@ -78,12 +80,21 @@ void FrameSequenceAnim::update(float dt)
 
         if (currentIndex >= static_cast<int>(frames.size()))
         {
-            if (loop)
+            // End of sequence reached
+            if (loops == 0)
             {
+                // Infinite loop
+                currentIndex = 0;
+            }
+            else if (loopsRemaining > 1)
+            {
+                // Still have loops remaining
+                loopsRemaining--;
                 currentIndex = 0;
             }
             else
             {
+                // Final loop complete
                 currentIndex = static_cast<int>(frames.size()) - 1;
                 complete = true;
                 if (onComplete)
@@ -109,6 +120,7 @@ void FrameSequenceAnim::reset()
     currentIndex = 0;
     timeAccumulator = 0.0f;
     complete = false;
+    loopsRemaining = loops;  // Reset loop counter
 }
 
 // ============================================================================
@@ -144,12 +156,13 @@ void ToggleAnim::reset()
 // ============================================================================
 
 void StateMachineAnim::addState(const std::string& name, std::vector<int> frames,
-                                 int durationMs, bool loop, const std::string& nextState)
+                                 int durationMs, int loopCount, const std::string& nextState)
 {
     State state;
     state.frames = std::move(frames);
     state.defaultDuration = durationMs;
-    state.loop = loop;
+    state.loops = loopCount;
+    state.loopsRemaining = loopCount;
     state.usePerFrameDurations = false;
     state.nextState = nextState;
 
@@ -162,13 +175,14 @@ void StateMachineAnim::addState(const std::string& name, std::vector<int> frames
 }
 
 void StateMachineAnim::addState(const std::string& name, std::vector<int> frames,
-                                 std::vector<int> durationsMs, bool loop, const std::string& nextState)
+                                 std::vector<int> durationsMs, int loopCount, const std::string& nextState)
 {
     State state;
     state.frames = std::move(frames);
     state.frameDurations = std::move(durationsMs);
     state.defaultDuration = 100;  // Fallback
-    state.loop = loop;
+    state.loops = loopCount;
+    state.loopsRemaining = loopCount;
     state.usePerFrameDurations = true;
     state.nextState = nextState;
 
@@ -176,7 +190,7 @@ void StateMachineAnim::addState(const std::string& name, std::vector<int> frames
     {
         state.frames.push_back(0);
     }
-    
+
     // Ensure frameDurations matches frames size
     if (state.frameDurations.size() < state.frames.size())
     {
@@ -195,6 +209,8 @@ void StateMachineAnim::setState(const std::string& name)
         currentIndex = 0;
         timeAccumulator = 0.0f;
         stateComplete = false;
+        // Reset loop counter for this state
+        it->second.loopsRemaining = it->second.loops;
     }
 }
 
@@ -205,15 +221,15 @@ void StateMachineAnim::update(float dt)
     auto it = states.find(currentStateName);
     if (it == states.end()) return;
 
-    const State& state = it->second;
+    State& state = it->second;  // Non-const to modify loopsRemaining
 
     timeAccumulator += dt;
-    
+
     // Get current frame duration
     int currentDuration = state.usePerFrameDurations && currentIndex < static_cast<int>(state.frameDurations.size())
                           ? state.frameDurations[currentIndex]
                           : state.defaultDuration;
-    
+
     if (timeAccumulator >= currentDuration)
     {
         timeAccumulator -= currentDuration;
@@ -221,12 +237,21 @@ void StateMachineAnim::update(float dt)
 
         if (currentIndex >= static_cast<int>(state.frames.size()))
         {
-            if (state.loop)
+            // End of sequence reached
+            if (state.loops == 0)
             {
+                // Infinite loop
+                currentIndex = 0;
+            }
+            else if (state.loopsRemaining > 1)
+            {
+                // Still have loops remaining
+                state.loopsRemaining--;
                 currentIndex = 0;
             }
             else
             {
+                // Final loop complete
                 currentIndex = static_cast<int>(state.frames.size()) - 1;
                 stateComplete = true;
 
@@ -267,4 +292,38 @@ void StateMachineAnim::reset()
     timeAccumulator = 0.0f;
     stateComplete = false;
     // Note: does not change current state, just resets its animation
+}
+
+// ============================================================================
+// Clone Implementations
+// ============================================================================
+
+std::unique_ptr<IAnimController> FrameSequenceAnim::clone() const
+{
+    if (usePerFrameDurations)
+    {
+        auto copy = std::make_unique<FrameSequenceAnim>(frames, frameDurations, loops);
+        copy->onComplete = onComplete;  // Copy callback
+        return copy;
+    }
+    else
+    {
+        auto copy = std::make_unique<FrameSequenceAnim>(frames, defaultDuration, loops);
+        copy->onComplete = onComplete;  // Copy callback
+        return copy;
+    }
+}
+
+std::unique_ptr<IAnimController> ToggleAnim::clone() const
+{
+    return std::make_unique<ToggleAnim>(frameA, frameB, toggleDuration);
+}
+
+std::unique_ptr<IAnimController> StateMachineAnim::clone() const
+{
+    auto copy = std::make_unique<StateMachineAnim>();
+    copy->states = states;  // Copy all states
+    copy->currentStateName = currentStateName;
+    copy->onStateComplete = onStateComplete;  // Copy callback
+    return copy;
 }
