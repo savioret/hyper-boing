@@ -20,7 +20,7 @@ Shot::Shot(Scene* scn, Player* pl, WeaponType type)
     const WeaponConfig& config = WeaponConfig::get(type);
     weaponSpeed = config.speed;
 
-    if (pl->isClimbing())
+    if (true || pl->isClimbing())
     {
         // While climbing, spawn centered on player's X (bottom-middle pivot)
         xPos = xInit = pl->getX();

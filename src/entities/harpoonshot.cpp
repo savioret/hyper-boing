@@ -43,8 +43,15 @@ HarpoonShot::HarpoonShot(Scene* scn, Player* pl, WeaponType type)
     }
     else
     {
-		int off = pl->getFacing() == FacingDirection::LEFT ? -4 : 12;
-        xPos = xInit = pl->getX() + off;
+        int off = 10;
+        if ( pl->getFacing() == FacingDirection::LEFT )
+        {
+            xPos = xInit = pl->getX() - tipSprite->getWidth()/2.0f - off;
+        }
+        else  // FacingDirection::RIGHT
+        {
+            xPos = xInit = pl->getX() - tipSprite->getWidth() / 2.0f + off;
+        }
     }
 }
 

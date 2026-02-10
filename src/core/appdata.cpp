@@ -201,14 +201,14 @@ void AppData::initStageResources()
     stageRes.ready.init(&appGraph, "assets/graph/ui/ready.png", 16, 16);
 
     // Players sprites
-    bitmaps.player[PLAYER1][5].init(&appGraph, "assets/graph/players/p1shoot1.png", 13, 0);
-    bitmaps.player[PLAYER1][6].init(&appGraph, "assets/graph/players/p1shoot2.png", 13, 3);
-    bitmaps.player[PLAYER1][7].init(&appGraph, "assets/graph/players/p1win.png", 13, 4);
+    bitmaps.player[PLAYER1][5].init(&appGraph, "assets/graph/players/p1shoot1.png", 0, 0);
+    bitmaps.player[PLAYER1][6].init(&appGraph, "assets/graph/players/p1shoot2.png", 0, 3);
+    bitmaps.player[PLAYER1][7].init(&appGraph, "assets/graph/players/p1win.png", 0, 4);
     bitmaps.player[PLAYER1][8].init(&appGraph, "assets/graph/players/p1dead.png");
 
-    bitmaps.player[PLAYER2][5].init(&appGraph, "assets/graph/players/p2shoot1.png", 13, 0);
-    bitmaps.player[PLAYER2][6].init(&appGraph, "assets/graph/players/p2shoot2.png", 13, 3);
-    bitmaps.player[PLAYER2][7].init(&appGraph, "assets/graph/players/p2win.png", 13, 4);
+    bitmaps.player[PLAYER2][5].init(&appGraph, "assets/graph/players/p2shoot1.png", 0, 0);
+    bitmaps.player[PLAYER2][6].init(&appGraph, "assets/graph/players/p2shoot2.png", 0, 3);
+    bitmaps.player[PLAYER2][7].init(&appGraph, "assets/graph/players/p2win.png", 0, 4);
     bitmaps.player[PLAYER2][8].init(&appGraph, "assets/graph/players/p2dead.png");
 
 

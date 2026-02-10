@@ -67,6 +67,7 @@ void Player::init()
     // Climbing initialization
     currentLadder = nullptr;
     climbSpeed = 2.0f;
+    climbingMoving = false;
 
     // Physics initialization
     yVelocity = 0.0f;
@@ -122,19 +123,15 @@ void Player::init()
     // to make it one-shot with 300ms duration instead of 100ms
 
     if (climbAnim) {
-        //if (auto* stateMachine = dynamic_cast<StateMachineAnim*>(climbAnim.get())) {
-
-            // Set callback for when standup completes → transition to IDLE
-            climbAnim->setOnStateComplete([this](const std::string& stateName) {
-                if (stateName == "standup" && currentState == PlayerState::WAKING_UP) {
-                    currentLadder = nullptr;  // Clear ladder reference
-                    setState(PlayerState::IDLE);
-                }
-            });
-
-            // Set initial state to "climb" (looping climb animation)
-            //stateMachine->setState("climb");
-        //}
+        // Set callback for when standup completes → transition to IDLE
+        climbAnim->setOnStateComplete([this](const std::string& stateName) {
+            if (stateName == "standup" && currentState == PlayerState::WAKING_UP) {
+                setState(PlayerState::IDLE);
+                //Sprite* climbSprite = sprites[animController->getCurrentFrame()];  // Use first frame as reference
+                //x = (float)currentLadder->getCenterX() + currentLadder->getTileWidth() / 2;
+                //currentLadder = nullptr;  // Clear ladder reference
+            }
+        });
     }
 
     // Set initial state
@@ -143,7 +140,7 @@ void Player::init()
 
     // Position uses bottom-middle coordinates:
     // X = horizontal center of sprite, Y = bottom of sprite (ground level)
-    float startX = 200.0f + 100.0f * id + getWidth() / 2.0f;
+    float startX = 200.0f + 100.0f * id;
     float startY = (float)MAX_Y;
 
     setPos(startX, startY);
@@ -175,12 +172,13 @@ void Player::revive()
     yVelocity = 0.0f;
     grounded = true;
     currentLadder = nullptr;
+    climbingMoving = false;
 
     // Reset animation state to idle
     setState(PlayerState::IDLE);
 
     // Position uses bottom-middle coordinates
-    float startX = 200.0f + 100.0f * id + getWidth() / 2.0f;
+    float startX = 200.0f + 100.0f * id;
     float startY = (float)MAX_Y;
     setPos(startX, startY);
 
@@ -199,12 +197,12 @@ void Player::moveLeft()
     facing = FacingDirection::LEFT;  // Update facing direction
     setFlipH(true);
     // X is center; check if left edge (x - width/2) stays within bounds
-    if (x - getWidth() / 2.0f > MIN_X - 10)
+    if (getX() - getWidth() / 2.0f > MIN_X)
     {
-        float oldX = x;
-        x -= moveIncrement;
+        float oldX = getX();
+        setX(getX() - moveIncrement);
         LOG_TRACE("Player %d moveLeft: x=%.1f -> %.1f, y=%.1f, grounded=%d",
-                  id + 1, oldX, x, y, grounded);
+                  id + 1, oldX, getX(), getY(), grounded);
     }
 
     // Transition to walk animation if not already walking
@@ -220,13 +218,14 @@ void Player::moveRight()
 {
     facing = FacingDirection::RIGHT;  // Update facing direction
     setFlipH(false);
+
     // X is center; check if right edge (x + width/2) stays within bounds
-    if (x + getWidth() / 2.0f < MAX_X - 5)
+    if (getX() + getWidth() / 2.0f < MAX_X)
     {
-        float oldX = x;
-        x += moveIncrement;
+        float oldX = getX();
+        setX(getX() + moveIncrement);
         LOG_TRACE("Player %d moveRight: x=%.1f -> %.1f, y=%.1f, grounded=%d",
-                  id + 1, oldX, x, y, grounded);
+                  id + 1, oldX, getX(), getY(), grounded);
     }
 
     // Transition to walk animation if not already walking
@@ -283,8 +282,8 @@ void Player::stop()
 
     // Emergency clamp: ensure right edge doesn't exceed boundary
     // X is center, so right edge = x + width/2
-    if (x + getWidth() / 2.0f > MAX_X - 10)
-        x = (float)(MAX_X - 16) - getWidth() / 2.0f;
+    //if (getX() + getWidth() / 2.0f > MAX_X - 16)
+    //    setX((float)(MAX_X - 22) - getWidth() / 2.0f);
 }
 
 // Climbing methods
@@ -301,18 +300,22 @@ void Player::startClimbing(Ladder* ladder)
     // so we need to adjust the player's X position accordingly
 
     Sprite* climbSprite = climbSheet->getFrame(0);  // Use first frame as reference
-    x = (float)ladder->getCenterX() + ladder->getTileWidth() / 2;
+    setX(( float )ladder->getCenterX());// +ladder->getTileWidth() / 2);
 }
 
 void Player::stopClimbing()
 {
-    currentLadder = nullptr;
     setState(PlayerState::IDLE);
+    //if(currentLadder)
+    //    x = (float)currentLadder->getCenterX() + currentLadder->getTileWidth() / 2;
+    currentLadder = nullptr;
 }
 
 void Player::climbUp()
 {
     if (!currentLadder || isDead()) return;
+
+    climbingMoving = true;  // Mark as moving on ladder
 
     float newY = y - climbSpeed;
     float ladderTop = (float)currentLadder->getTopY();
@@ -343,6 +346,8 @@ void Player::climbUp()
 void Player::climbDown()
 {
     if (!currentLadder || isDead()) return;
+
+    climbingMoving = true;  // Mark as moving on ladder
 
     float newY = y + climbSpeed;
     float ladderBottom = (float)currentLadder->getBottomY();
@@ -375,6 +380,7 @@ void Player::update(float dt, Scene* scene)
 
     // Convert dt from seconds to milliseconds for animation controllers
     float dtMs = dt * 1000.0f;
+    LOG_TRACE("Player X:%d", (int)x);
 
     // Update appropriate animation controller based on state
     switch (currentState)
@@ -393,6 +399,31 @@ void Player::update(float dt, Scene* scene)
             break;
 
         case PlayerState::CLIMBING:
+            if (climbAnim) {
+                // Determine which climbing animation state to use based on player actions
+                std::string desiredState;
+                if (shotCounter > 0) {
+                    // Currently shooting - show shoot animation
+                    desiredState = "shoot";
+                } else if (climbingMoving) {
+                    // Moving up or down - show climb animation
+                    desiredState = "climb";
+                } else {
+                    // Idle on ladder - show stop animation
+                    desiredState = "stop";
+                }
+
+                // Only change state if different from current state
+                if (climbAnim->getStateName() != desiredState) {
+                    climbAnim->setState(desiredState);
+                }
+
+                climbAnim->update(dtMs);
+            }
+            // Reset climbing movement flag for next frame
+            climbingMoving = false;
+            break;
+
         case PlayerState::WAKING_UP:
             if (climbAnim) {
                 climbAnim->update(dtMs);
@@ -682,6 +713,7 @@ void Player::setState(PlayerState newState)
         currentLadder != nullptr)
     {
         LOG_TRACE("Player %d: setState clearing currentLadder (was climbing, now %d)", id + 1, (int)newState);
+        //x = (float)currentLadder->getCenterX() + currentLadder->getTileWidth() / 2;
         currentLadder = nullptr;
     }
 

@@ -34,6 +34,7 @@ public:
     // Object access
     const JsonValue& operator[](const std::string& key) const;
     bool has(const std::string& key) const;
+    std::vector<std::string> getKeys() const;
 
     // Array access
     const JsonValue& operator[](size_t index) const;

@@ -1040,7 +1040,7 @@ GameState* Scene::handlePlayingState(float dt)
                 {
                     player->moveRight();
                 }
-                else
+                else if ( player->getState() != PlayerState::IDLE )
                 {
                     player->stop();
                 }

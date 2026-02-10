@@ -26,7 +26,7 @@ inline int toRenderY(float logicalY, int spriteHeight) {
 // Uses sourceSize for correct positioning of trimmed Aseprite sprites.
 // drawEx() will add the sprite's xOff/yOff to place the trimmed content correctly.
 inline int toRenderX(float logicalX, Sprite* spr) {
-    return (int)(logicalX - spr->getSourceWidth() / 2.0f);
+    return (int)(logicalX - spr->getWidth() / 2.0f);
 }
 
 inline int toRenderY(float logicalY, Sprite* spr) {

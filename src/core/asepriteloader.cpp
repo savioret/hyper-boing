@@ -42,6 +42,31 @@ std::string getDirectory(const std::string& path)
     return "";
 }
 
+// Helper to get frame count regardless of format (array or hash)
+size_t getFrameCount(const JsonValue& frames)
+{
+    return frames.size();
+}
+
+// Helper to get frame data by index, regardless of format
+JsonValue getFrameAt(const JsonValue& frames, size_t index)
+{
+    if (frames.isArray())
+    {
+        return frames[index];
+    }
+    else if (frames.isObject())
+    {
+        // For object/hash format, get keys and access by index
+        std::vector<std::string> keys = frames.getKeys();
+        if (index < keys.size())
+        {
+            return frames[keys[index]];
+        }
+    }
+    return JsonValue(); // Return null value if index out of range
+}
+
 bool parseJson(const std::string& jsonPath, JsonValue& root)
 {
     std::string content = readFile(jsonPath);
@@ -64,9 +89,16 @@ bool parseJson(const std::string& jsonPath, JsonValue& root)
         return false;
     }
 
-    if (!root.has("frames") || !root["frames"].isArray())
+    if (!root.has("frames"))
     {
-        LOG_ERROR("AsepriteLoader: No 'frames' array found");
+        LOG_ERROR("AsepriteLoader: No 'frames' found");
+        return false;
+    }
+
+    JsonValue frames = root["frames"];
+    if (!frames.isArray() && !frames.isObject())
+    {
+        LOG_ERROR("AsepriteLoader: 'frames' must be an array or object");
         return false;
     }
 
@@ -92,9 +124,11 @@ bool loadSpriteSheet(Graph* graph, const JsonValue& root, const std::string& jso
     }
 
     JsonValue frames = root["frames"];
-    for (size_t i = 0; i < frames.size(); i++)
+    size_t frameCount = getFrameCount(frames);
+
+    for (size_t i = 0; i < frameCount; i++)
     {
-        JsonValue frameData = frames[i];
+        JsonValue frameData = getFrameAt(frames, i);
 
         if (!frameData.has("frame") || !frameData.has("spriteSourceSize"))
         {
@@ -123,21 +157,22 @@ bool loadSpriteSheet(Graph* graph, const JsonValue& root, const std::string& jso
         sheet.addFrame(x, y, w, h, xOff, yOff, srcW, srcH);
     }
 
-    LOG_INFO("AsepriteLoader: Loaded %zu frames from %s", frames.size(), imagePath.c_str());
+    LOG_INFO("AsepriteLoader: Loaded %zu frames from %s", frameCount, imagePath.c_str());
     return true;
 }
 
 FrameTimingData extractTimingData(const JsonValue& frames)
 {
     FrameTimingData data;
-    data.totalFrames = static_cast<int>(frames.size());
+    data.totalFrames = static_cast<int>(getFrameCount(frames));
     data.frameDurations.resize(data.totalFrames, 100);
 
     for (int i = 0; i < data.totalFrames; i++)
     {
-        if (frames[i].has("duration"))
+        JsonValue frameData = getFrameAt(frames, i);
+        if (frameData.has("duration"))
         {
-            int duration = frames[i]["duration"].asInt();
+            int duration = frameData["duration"].asInt();
             data.frameDurations[i] = duration;
             if (i > 0 && duration != data.frameDurations[0])
             {

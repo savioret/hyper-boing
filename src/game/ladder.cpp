@@ -1,5 +1,6 @@
 #include "main.h"
 #include "ladder.h"
+#include "coordhelper.h"
 #include "logger.h"
 
 Ladder::Ladder(Scene* scene, int x, int y, int numTiles)
@@ -37,11 +38,11 @@ void Ladder::draw(Graph& graph)
 {
     // Convert from bottom-middle anchor to top-left for drawing
     // Top-left X = center X - half width
-    int drawX = (int)xPos - tileWidth / 2;
+    int drawX = toRenderX((int)xPos, tileWidth);
 
     // Draw tiles from top to bottom
     // Top of ladder = yPos - totalHeight
-    int topY = (int)yPos - totalHeight;
+    int topY = toRenderY((int)yPos, totalHeight);
 
     for (int i = 0; i < numTiles; i++)
     {
@@ -54,8 +55,8 @@ CollisionBox Ladder::getCollisionBox() const
 {
     // Full ladder collision box in top-left coordinates
     // Top-left X = center X - half width
-    int boxX = (int)xPos - tileWidth / 2;
-    int boxY = (int)yPos - totalHeight;
+    int boxX = toRenderX((int)xPos, tileWidth);
+    int boxY = toRenderY((int)yPos, totalHeight);
 
     return { boxX, boxY, tileWidth, totalHeight };
 }
@@ -64,8 +65,8 @@ CollisionBox Ladder::getTopStandingBox() const
 {
     // Thin box at the top of the ladder for standing detection
     // Height of 4 pixels should be enough for standing checks
-    int boxX = (int)xPos - tileWidth / 2;
-    int boxY = (int)yPos - totalHeight;
+    int boxX = toRenderX((int)xPos, tileWidth);
+    int boxY = toRenderY((int)yPos, totalHeight);
 
     return { boxX, boxY, tileWidth, 4 };
 }

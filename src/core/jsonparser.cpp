@@ -16,6 +16,19 @@ bool JsonValue::has(const std::string& key) const
     return isObject() && objectValue.find(key) != objectValue.end();
 }
 
+std::vector<std::string> JsonValue::getKeys() const
+{
+    std::vector<std::string> keys;
+    if (isObject())
+    {
+        for (const auto& pair : objectValue)
+        {
+            keys.push_back(pair.first);
+        }
+    }
+    return keys;
+}
+
 const JsonValue& JsonValue::operator[](size_t index) const
 {
     if (!isArray() || index >= arrayValue.size()) return nullValue;

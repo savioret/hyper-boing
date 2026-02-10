@@ -94,6 +94,7 @@ private:
     // Ladder/climbing state
     Ladder* currentLadder;   // Ladder player is currently climbing (nullptr if not climbing)
     float climbSpeed;        // Climb speed in pixels per frame
+    bool climbingMoving;     // True when player is actively moving up/down on ladder
 
     // Physics/gravity state
     float yVelocity;         // Current vertical velocity (positive = falling)
