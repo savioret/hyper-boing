@@ -1,8 +1,7 @@
 #pragma once
 
 #include "shot.h"
-#include "../core/animcontroller.h"
-#include <memory>
+#include "../core/animsprite.h"
 
 class SpriteSheet;
 
@@ -19,8 +18,7 @@ class SpriteSheet;
 class GunShot : public Shot
 {
 private:
-    SpriteSheet* spriteSheet;  // Non-owning pointer to scene's sprite sheet
-    std::unique_ptr<StateMachineAnim> animController;
+    AnimSprite sprite;
     bool inImpact = false;     // Track if we're in impact state (for movement logic)
 
 public:
@@ -53,7 +51,7 @@ public:
     bool collision(Floor* fl) override;
 
     // Accessors for debug visualization
-    Sprite* getCurrentSprite() const;
+    Sprite* getCurrentSprite() const { return sprite.getActiveSprite(); }
 
 private:
     /**

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "gameobject.h"
+#include "singlesprite.h"
 
 class Scene;
-class Sprite;
 class Graph;
 
 /**
@@ -21,7 +21,7 @@ class Ladder : public IGameObject
 {
 private:
     Scene* scene;
-    Sprite* sprite;           // Single tile sprite (e.g., 22x16)
+    SingleSprite sprite;  // Single tile sprite (e.g., 22x16)
     int tileWidth;
     int tileHeight;
     int numTiles;             // Number of vertical tiles

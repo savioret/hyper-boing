@@ -17,6 +17,8 @@ protected:
     bool dead = false;
     float xPos = 0.0f;
     float yPos = 0.0f;
+    float xInit = 0.0f;  // Initial spawn X position
+    float yInit = 0.0f;  // Initial spawn Y position
 
     /**
      * Reset the dead flag. Used by entities that can revive (e.g., Player).
@@ -33,6 +35,12 @@ public:
     virtual void setY(float y) { yPos = y; }
     virtual float getX() const { return xPos; }
     virtual float getY() const { return yPos; }
+
+    // Initial spawn position methods
+    float getInitX() const { return xInit; }
+    float getInitY() const { return yInit; }
+    void setInitPos(float x, float y) { xInit = x; yInit = y; }
+    void resetToInitPos() { xPos = xInit; yPos = yInit; }
     
     /**
      * Check if this object should be removed from the game world.

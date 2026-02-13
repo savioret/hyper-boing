@@ -18,15 +18,13 @@
  */
 HarpoonShot::HarpoonShot(Scene* scn, Player* pl, WeaponType type)
     : Shot(scn, pl, type)
-    //, tailAnim(std::make_unique<ToggleAnim>(0, 1, 33))  // Toggle between 0 and 1 every 33ms (2 frames at 60fps)
 {
     // Get harpoon sprites from shared resources in AppData
     StageResources& res = gameinf.getStageRes();
-    tipSprite = &res.harpoonTip;
-    chainSpriteSheet = &res.harpoonChain;
+    tipSpr.setSprite(&res.harpoonTip);
 
     // Clone the animation template from AppData (each shot gets its own independent animation)
-    tailAnim = res.harpoonAnim->clone();
+    chainSpr.init(&res.harpoonChain, res.harpoonAnim->clone());
 
     // Coordinate system:
     // - yInit = player's feet Y (chain bottom anchor, never changes)
@@ -34,23 +32,24 @@ HarpoonShot::HarpoonShot(Scene* scn, Player* pl, WeaponType type)
     //
     // Initially, position the head so its bottom aligns with player's feet.
     // This means yPos = yInit - headHeight
-    yPos -= tipSprite->getHeight();
+    yPos -= tipSpr.getHeight();
 
     // When climbing, center the harpoon head on the player
+    int tipWidth = tipSpr.getWidth();
     if (pl->isClimbing())
     {
-        xPos = xInit = xInit - tipSprite->getWidth() / 2.0f;
+        xPos = xInit = xInit - tipWidth / 2.0f;
     }
     else
     {
         int off = 10;
         if ( pl->getFacing() == FacingDirection::LEFT )
         {
-            xPos = xInit = pl->getX() - tipSprite->getWidth()/2.0f - off;
+            xPos = xInit = pl->getX() - tipWidth / 2.0f - off;
         }
         else  // FacingDirection::RIGHT
         {
-            xPos = xInit = pl->getX() - tipSprite->getWidth() / 2.0f + off;
+            xPos = xInit = pl->getX() - tipWidth / 2.0f + off;
         }
     }
 }
@@ -71,7 +70,7 @@ void HarpoonShot::update(float dt)
 {
     // Convert dt from seconds to milliseconds for animation controller
     float dtMs = dt * 1000.0f;
-    tailAnim->update(dtMs);
+    chainSpr.update(dtMs);
 
     if (!isDead())
     {
@@ -96,17 +95,21 @@ void HarpoonShot::update(float dt)
  */
 void HarpoonShot::draw(Graph* graph)
 {
+    Sprite* tipSprite = tipSpr.getActiveSprite();
+    Sprite* chainFrame = chainSpr.getActiveSprite();
+
     // Draw tip sprite (yPos already accounts for sprite height offset)
-    graph->draw(tipSprite, (int)xPos, (int)yPos);
+    if (tipSprite)
+    {
+        graph->draw(tipSprite, (int)xPos, (int)yPos);
+    }
 
     // Draw animated chain from tip bottom down to the anchor point (yInit)
-    int frameIndex = tailAnim->getCurrentFrame();
-    Sprite* chainFrame = chainSpriteSheet->getFrame(frameIndex);
-    LOG_DEBUG("Harpoon tailAnim frame: %d", frameIndex);
+    LOG_DEBUG("Harpoon tailAnim frame: %d", chainSpr.getCurrentFrame());
     if (!chainFrame) return;  // Safety check
 
     int tileHeight = chainFrame->getHeight();
-    int chainTop = (int)yPos + tipSprite->getHeight();
+    int chainTop = (int)yPos + tipSpr.getHeight();
     int chainBottom = (int)yInit;
 
     for (int tileY = chainTop; tileY < chainBottom; tileY += tileHeight)
@@ -138,7 +141,7 @@ void HarpoonShot::draw(Graph* graph)
  */
 CollisionBox HarpoonShot::getCollisionBox() const
 {
-    int width = tipSprite->getWidth();
+    int width = tipSpr.getWidth();
     int height = (int)yInit - (int)yPos;
     return { (int)xPos, (int)yPos, width, height };
 }

@@ -58,7 +58,7 @@ class Graph;
  */
 struct RenderProps
 {
-    int x, y;                    ///< Screen position
+    int x = 0, y = 0;            ///< Screen position
     bool flipH = false;          ///< Horizontal flip
     bool flipV = false;          ///< Vertical flip
     float rotation = 0.0f;       ///< Rotation angle in degrees
@@ -66,6 +66,11 @@ struct RenderProps
     float alpha = 1.0f;          ///< Alpha transparency (0.0-1.0)
     float pivotX = 0.5f;         ///< Pivot X for rotation (0.0-1.0)
     float pivotY = 0.5f;         ///< Pivot Y for rotation (0.0-1.0)
+
+    /**
+     * @brief Default constructor
+     */
+    RenderProps() = default;
 
     /**
      * @brief Construct from position

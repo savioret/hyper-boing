@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gameobject.h"
+#include "singlesprite.h"
 #include "collisionsystem.h"
 
 /**
@@ -11,13 +12,12 @@
  * disturb the trajectory of the Balls.
  */
 class Scene;
-class Sprite;
 
 class Floor : public IGameObject
 {
 private:
     Scene* scene;
-    Sprite* sprite;
+    SingleSprite sprite;
 
     int sx, sy;
     int id;

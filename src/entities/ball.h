@@ -3,13 +3,13 @@
 #include <SDL.h>
 #include <memory>
 #include "gameobject.h"
+#include "singlesprite.h"
 #include "../game/collisionsystem.h"
 
 class Scene;
 class Shot;
 class Player;
 class Floor;
-class Sprite;
 
 /**
  * Ball class
@@ -19,7 +19,7 @@ class Sprite;
 class Ball : public IGameObject
 {
 private:
-    Sprite* sprite;
+    SingleSprite sprite;
     int top; // maximum height from the floor
     int diameter;
     int size;
@@ -69,7 +69,7 @@ public:
     int getDirY() const { return dirY; }
     int getSize() const { return size; }
     int getDiameter() const { return diameter; }
-    Sprite* getSprite() const { return sprite; }
+    Sprite* getSprite() const { return sprite.getActiveSprite(); }
 
     /**
      * @brief Get collision box for AABB collision detection

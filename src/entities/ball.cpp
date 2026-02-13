@@ -92,7 +92,7 @@ void Ball::init()
     if (y0 != 0)
         y0 -= (float)(MAX_Y - top);
 
-    sprite = &gameinf.getStageRes().redball[size];
+    sprite.setSprite(&gameinf.getStageRes().redball[size]);
 }
 
 /**

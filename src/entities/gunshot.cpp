@@ -5,6 +5,7 @@
 #include "player.h"
 #include "../core/graph.h"
 #include "../core/spritesheet.h"
+#include "../core/animcontroller.h"
 
 /**
  * GunShot constructor
@@ -18,23 +19,24 @@
  */
 GunShot::GunShot(Scene* scn, Player* pl, SpriteSheet* sheet)
     : Shot(scn, pl, WeaponType::GUN)
-    , spriteSheet(sheet)
 {
     // Clone animation template from AppData (no need to redefine states for each bullet)
     auto clonedAnim = AppData::instance().stageRes.gunBulletAnim->clone();
-    animController = std::unique_ptr<StateMachineAnim>(
-        dynamic_cast<StateMachineAnim*>(clonedAnim.release())
-    );
+    sprite.init(sheet, std::move(clonedAnim));
 
     // Set callback to kill shot when impact animation completes
-    animController->setOnStateComplete([this](const std::string& state) {
-        if (state == "impact")
-        {
-            kill();
-        }
-    });
+    // Access the underlying StateMachineAnim to set the callback
+    if (auto* stateMachine = dynamic_cast<StateMachineAnim*>(sprite.getController()))
+    {
+        stateMachine->setOnStateComplete([this](const std::string& state) {
+            if (state == "impact")
+            {
+                kill();
+            }
+        });
+    }
 
-    animController->setState("flight_intro");
+    sprite.setState("flight_intro");
 
     // Player uses bottom-middle coordinates (X = center, Y = bottom)
     // Calculate shot spawn position based on player facing direction
@@ -73,7 +75,7 @@ void GunShot::update(float dt)
 {
     // Convert dt from seconds to milliseconds for animation controller
     float dtMs = dt * 1000.0f;
-    animController->update(dtMs);
+    sprite.update(dtMs);
 
     if (!isDead())
     {
@@ -104,7 +106,7 @@ void GunShot::triggerImpact()
     if (!inImpact)
     {
         inImpact = true;
-        animController->setState("impact");
+        sprite.setState("impact");
         player->looseShoot();  // Decrement player's shot count
     }
 }
@@ -116,7 +118,7 @@ void GunShot::triggerImpact()
  */
 void GunShot::draw(Graph* graph)
 {
-    Sprite* frame = spriteSheet->getFrame(animController->getCurrentFrame());
+    Sprite* frame = sprite.getActiveSprite();
 
     if (frame)
     {
@@ -162,15 +164,6 @@ bool GunShot::collision(Floor* fl)
 }
 
 /**
- * Get the current sprite frame
- * Used for debug bounding box visualization
- */
-Sprite* GunShot::getCurrentSprite() const
-{
-    return spriteSheet->getFrame(animController->getCurrentFrame());
-}
-
-/**
  * Get collision box for the gun bullet
  *
  * Unlike harpoon which has a chain, gun bullets are small animated sprites.
@@ -178,12 +171,12 @@ Sprite* GunShot::getCurrentSprite() const
  */
 CollisionBox GunShot::getCollisionBox() const
 {
-    Sprite* sprite = getCurrentSprite();
-    if (!sprite)
+    Sprite* spr = getCurrentSprite();
+    if (!spr)
     {
-        // Fallback if sprite not found (shouldn't happen)
+        // Fallback if spr not found (shouldn't happen)
         return { (int)xPos, (int)yPos, 16, 16 };
     }
 
-    return { (int)xPos, (int)yPos, sprite->getWidth(), sprite->getHeight() };
+    return { (int)xPos, (int)yPos, spr->getWidth(), spr->getHeight() };
 }

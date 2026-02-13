@@ -34,6 +34,8 @@ endif()
 set(SOURCES
     src/main.cpp
     src/core/animcontroller.cpp
+    src/core/animsprite.cpp
+    src/core/animspritesheet.cpp
     src/core/asepriteloader.cpp
     src/core/action.cpp
     src/core/app.cpp
@@ -55,11 +57,13 @@ set(SOURCES
     src/core/gamerunner.cpp
     src/core/gameevent.cpp
     src/core/graph.cpp
+    src/core/isprite.cpp
     src/game/item.cpp
     src/core/logger.cpp
     src/ui/menu.cpp
     src/ui/menutitle.cpp
     src/core/minput.cpp
+    src/core/multianimsprite.cpp
     src/entities/player.cpp
     src/entities/playerdeadaction.cpp
     src/game/scene.cpp
@@ -82,6 +86,8 @@ set(HEADERS
     src/main.h
     src/core/action.h
     src/core/animcontroller.h
+    src/core/animsprite.h
+    src/core/animspritesheet.h
     src/core/app.h
     src/core/asepriteloader.h
     src/ui/appconsole.h
@@ -103,11 +109,13 @@ set(HEADERS
     src/core/gameobject.h
     src/core/gamerunner.h
     src/core/graph.h
+    src/core/isprite.h
     src/game/item.h
     src/core/logger.h
     src/ui/menu.h
     src/ui/menutitle.h
     src/core/minput.h
+    src/core/multianimsprite.h
     src/entities/player.h
     src/entities/playerdeadaction.h
     src/game/scene.h
@@ -116,6 +124,7 @@ set(HEADERS
     src/entities/harpoonshot.h
     src/entities/gunshot.h
     src/core/sprite.h
+    src/core/singlesprite.h
     src/core/sprite2D.h
     src/core/spritesheet.h
     src/game/stage.h

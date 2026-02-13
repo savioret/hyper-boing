@@ -1,10 +1,8 @@
 #pragma once
 
 #include "shot.h"
-#include "../core/animcontroller.h"
-#include <memory>
-
-class Sprite;
+#include "../core/singlesprite.h"
+#include "../core/animsprite.h"
 
 /**
  * HarpoonShot - Chain weapon projectile
@@ -15,14 +13,11 @@ class Sprite;
  *
  * This preserves the original HARPOON weapon behavior from the Shoot class.
  */
-class SpriteSheet;
-
 class HarpoonShot : public Shot
 {
 private:
-    Sprite* tipSprite;              // Harpoon tip
-    SpriteSheet* chainSpriteSheet;  // Animated chain sprite sheet
-    std::unique_ptr<IAnimController> tailAnim;  // Animation controller for chain (owns the animation)
+    SingleSprite tipSpr;         // Harpoon tip
+    AnimSprite chainSpr;         // Animated chain
 
 public:
     /**

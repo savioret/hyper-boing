@@ -8,8 +8,15 @@ class Sprite;
 /**
  * Sprite2D class
  *
- * Represents an instance of a sprite in the game world.
- * Manages position, animation frames, and rendering properties.
+ * Represents a positioned sprite instance with render properties.
+ * Ideal for UI elements and tweening animations that need:
+ * - Position (x, y) with pointer accessors for tweening
+ * - Render properties (alpha, scale, rotation, flip)
+ * - Frame selection from multiple sprites
+ *
+ * Note: For game entities that inherit from IGameObject, prefer
+ * composition with ISprite classes to avoid position duplication.
+ * Sprite2D is best suited for UI elements like MenuTitle.
  */
 class Sprite2D
 {

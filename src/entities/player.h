@@ -4,15 +4,16 @@
 #include "../game/collisionsystem.h"
 #include "eventmanager.h"
 #include <memory>
+#include <vector>
 #include "../core/gameobject.h"
-#include "../core/sprite2d.h"
-#include "../core/animcontroller.h"
-#include "../core/spritesheet.h"
+#include "../core/multianimsprite.h"
+#include "../core/animspritesheet.h"
+#include "../core/graph.h"
 
 class Scene;
 class Action;
-class Graph;
 class Ladder;
+class Sprite;
 
 /**
  * Player facing direction
@@ -44,10 +45,10 @@ enum class PlayerState
  * identifying the player, movement and action keys, score, lives,
  * weapons, and internal management data.
  *
- * Inherits from both IGameObject (for lifecycle management) and Sprite2D
- * (for rendering). Position is delegated to Sprite2D as the single source of truth.
+ * Inherits from IGameObject for lifecycle management and position.
+ * Uses composition for sprite management via MultiAnimSprite.
  */
-class Player : public IGameObject, public Sprite2D
+class Player : public IGameObject
 {
 private:
     int xDir, yDir; // used for death animation (legacy, may be removed)
@@ -67,23 +68,24 @@ private:
     bool playing;
     int immuneCounter; // for when just revived
 
+    // Render properties (from Sprite2D, now composed)
+    RenderProps renderProps;
+    bool visible = true; // Can be set to false for temporary invisibility (e.g., flashing when hit)
+
     // Current animation state
     PlayerState currentState;
 
-    // Animation controller for state-based animations
-    std::unique_ptr<StateMachineAnim> animController;
+    // Multi-animation sprite holder (manages walk, victory, climb animations + fallback)
+    MultiAnimSprite sprite;
 
     // Walk animation (loaded from Aseprite JSON)
-    std::unique_ptr<SpriteSheet> walkSheet;
-    std::unique_ptr<IAnimController> walkAnim;
+    std::unique_ptr<AnimSpriteSheet> walkAnim;
 
     // Victory animation (loaded from Aseprite JSON)
-    std::unique_ptr<SpriteSheet> victorySheet;
-    std::unique_ptr<IAnimController> victoryAnim;
+    std::unique_ptr<AnimSpriteSheet> victoryAnim;
 
-    // Climbing animation (loaded from Aseprite JSON, manually constructed StateMachineAnim)
-    std::unique_ptr<SpriteSheet> climbSheet;
-    std::unique_ptr<StateMachineAnim> climbAnim;
+    // Climbing animation (loaded from Aseprite JSON with StateMachineAnim)
+    std::unique_ptr<AnimSpriteSheet> climbAnim;
 
     // Death animation using Action system
     std::unique_ptr<Action> deathAction;
@@ -107,16 +109,37 @@ public:
     Player(int id);
     ~Player();
 
-    // IGameObject position delegation to Sprite2D (single source of truth)
-    void setPos(float x, float y) override { Sprite2D::setPos(x, y); }
-    void setX(float x) override { Sprite2D::setX(x); }
-    void setY(float y) override { Sprite2D::setY(y); }
-    float getX() const override { return Sprite2D::getX(); }
-    float getY() const override { return Sprite2D::getY(); }
-
     // IGameObject lifecycle (isDead() is inherited, kill() has Player-specific logic)
     void kill() override;
     void onDeath() override;
+
+    // Render property accessors
+    void setFlipH(bool flip)
+    {
+        renderProps.flipH = flip;
+    }
+
+    bool getFlipH() const
+    {
+        return renderProps.flipH;
+    }
+
+    void setRotation(double rot)
+    {
+        renderProps.rotation = rot;
+    }
+
+    double getRotation() const
+    {
+        return renderProps.rotation;
+    }
+
+    // void setScale(float s) { renderProps.scale = s; }
+    // float getScale() const { return renderProps.scale; }
+    // void setAlpha(int a) { renderProps.alpha = a / 255.0f; }
+    // int getAlpha() const { return (int)(renderProps.alpha * 255); }
+    //void setVisible(bool v) { visible = v; }
+    bool isVisible() const { return visible; }
 
     // Rendering
     void draw(Graph* graph);
@@ -159,9 +182,6 @@ public:
     void setWeapon(WeaponType type);
 
     // Getters
-    // getX, getY are overridden (delegate to Sprite2D)
-    // getWidth, getHeight, getFrame are inherited from Sprite2D
-    // isDead is inherited from IGameObject
     int getId() const { return id; }
     int getScore() const { return score; }
     int getLives() const { return lives; }
@@ -171,6 +191,9 @@ public:
     int getIdWeapon() const { return idWeapon; }
     Sprite* getSprite() const { return getActiveSprite(); } // Returns actual rendered sprite
     FacingDirection getFacing() const { return facing; }
+    int getWidth() const { return sprite.getWidth(); }
+    int getHeight() const { return sprite.getHeight(); }
+    int getFrame() const { return sprite.getFallbackFrame(); } // For debug display
 
     /**
      * Get the actual sprite being rendered (accounts for walk/victory modes).
@@ -196,7 +219,6 @@ public:
     PlayerState getState() const { return currentState; }
 
     // Setters
-    // setX, setY are inherited
     void setPlaying(bool p) { playing = p; }
     void setLives(int l) { lives = l; }
     void setImmuneCounter(int counter) { immuneCounter = counter; }

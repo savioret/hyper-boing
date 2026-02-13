@@ -1,13 +1,17 @@
 #include "main.h"
 #include "eventmanager.h"
 #include "playerdeadaction.h"
-#include "asepriteloader.h"
+#include "animspritesheet.h"
 #include "logger.h"
 #include "ladder.h"
 #include "../game/scene.h"
 #include "../core/coordhelper.h"
+#include "../core/sprite.h"
 #include <cstring>
 #include <SDL.h>
+
+// Animation frame index for shooting pose (ANIM_SHOOT + 1 from main.h)
+static constexpr int ANIM_SHOOT_POSE = ANIM_SHOOT + 1;
 
 Player::Player(int id)
     : id(id), deathAction(nullptr), currentState(PlayerState::IDLE)
@@ -49,7 +53,6 @@ void Player::init()
 {
     resetDead();  // Reset IGameObject's dead flag
     score = 0;
-    frame = 0;
     currentWeapon = WeaponType::HARPOON;  // Default weapon
     maxShoots = 2;
     numShoots = 0;
@@ -64,6 +67,9 @@ void Player::init()
     moveIncrement = 3;
     facing = FacingDirection::RIGHT;  // Default facing right
 
+    // Reset render properties
+    renderProps = RenderProps();
+
     // Climbing initialization
     currentLadder = nullptr;
     climbSpeed = 2.0f;
@@ -73,70 +79,63 @@ void Player::init()
     yVelocity = 0.0f;
     grounded = true;  // Start grounded at MAX_Y
 
-    // Initialize sprites from global resources
-    clearSprites();
+    // Initialize fallback sprites from global resources
     // Load 9 player sprite frames (0-8: walk, shoot, win, dead)
+    std::vector<Sprite*> fallbackSprites;
     for(int i = 0; i <= ANIM_DEAD; i++) {
-        addSprite(&gameinf.getBmp().player[id][i]);
+        fallbackSprites.push_back(&gameinf.getBmp().player[id][i]);
     }
-
-    // Initialize animation controller with state machine
-    animController = std::make_unique<StateMachineAnim>();
-    animController->addState("idle", {ANIM_SHOOT}, 1, 0);  // 0 = infinite loop
-    animController->addState("shoot", {ANIM_SHOOT + 1}, 1, 0);  // 0 = infinite loop
-    animController->addState("win", {ANIM_WIN}, 1, 0);  // 0 = infinite loop
-    animController->addState("dead", {ANIM_DEAD}, 1, 0);  // 0 = infinite loop
-    animController->setState("idle");
+    sprite.setFallbackSprites(fallbackSprites);
+    sprite.setFallbackFrame(ANIM_SHOOT);  // Start with idle frame (uses ANIM_SHOOT)
 
     // Load walk animation from Aseprite JSON
     const char* playerPrefix = (id == 0) ? "p1" : "p2";
-    walkSheet = std::make_unique<SpriteSheet>();
     char walkPath[256];
     std::snprintf(walkPath, sizeof(walkPath), "assets/graph/players/%swalk.json", playerPrefix);
-    
-    walkAnim = AsepriteLoader::load(&appGraph, walkPath, *walkSheet);
-    if (!walkAnim)
+
+    walkAnim = AnimSpriteSheet::load(&appGraph, walkPath);
+    if (walkAnim)
+    {
+        sprite.registerAnimation("walk", walkAnim.get());
+    }
+    else
     {
         LOG_WARNING("Failed to load walk animation for player %d", id + 1);
     }
 
     // Load victory animation from Aseprite JSON
-    victorySheet = std::make_unique<SpriteSheet>();
     char victoryPath[256];
     std::snprintf(victoryPath, sizeof(victoryPath), "assets/graph/players/%svictory.json", playerPrefix);
 
-    victoryAnim = AsepriteLoader::load(&appGraph, victoryPath, *victorySheet);
-    if (!victoryAnim)
+    victoryAnim = AnimSpriteSheet::load(&appGraph, victoryPath);
+    if (victoryAnim)
+    {
+        sprite.registerAnimation("victory", victoryAnim.get());
+    }
+    else
     {
         LOG_WARNING("Failed to load victory animation for player %d", id + 1);
     }
 
     // Load climbing animation from Aseprite JSON with frameTags
-    climbSheet = std::make_unique<SpriteSheet>();
-    climbAnim = AsepriteLoader::loadAsStateMachine(&appGraph, "assets/graph/players/climbing.json", *climbSheet);
+    char climbPath[256];
+    std::snprintf(climbPath, sizeof(climbPath), "assets/graph/players/%sclimbing.json", playerPrefix);
+    climbAnim = AnimSpriteSheet::loadAsStateMachine(&appGraph, climbPath);
+    if (climbAnim)
+    {
+        sprite.registerAnimation("climb", climbAnim.get());
 
-    // The JSON frameTags create states:
-    // - "climb" (frames 0-3, 200ms each, looping)
-    // - "standup" (frame 4, 100ms, looping ← WRONG)
-    //
-    // AsepriteLoader hardcodes loop=true for all states, so we need to override "standup"
-    // to make it one-shot with 300ms duration instead of 100ms
-
-    if (climbAnim) {
         // Set callback for when standup completes → transition to IDLE
         climbAnim->setOnStateComplete([this](const std::string& stateName) {
             if (stateName == "standup" && currentState == PlayerState::WAKING_UP) {
                 setState(PlayerState::IDLE);
-                //Sprite* climbSprite = sprites[animController->getCurrentFrame()];  // Use first frame as reference
-                //x = (float)currentLadder->getCenterX() + currentLadder->getTileWidth() / 2;
-                //currentLadder = nullptr;  // Clear ladder reference
             }
         });
     }
 
-    // Set initial state
+    // Set initial state - use fallback sprite (idle)
     currentState = PlayerState::IDLE;
-    setFrame(ANIM_SHOOT); // Initial frame
+    sprite.useAsFallback();
 
     // Position uses bottom-middle coordinates:
     // X = horizontal center of sprite, Y = bottom of sprite (ground level)
@@ -158,7 +157,6 @@ void Player::revive()
     resetDead();  // Reset IGameObject's dead flag
     immuneCounter = 350;
 
-    frame = 0;
     currentWeapon = WeaponType::HARPOON;  // Reset to default on death
     maxShoots = 2;
     numShoots = 0;
@@ -167,6 +165,9 @@ void Player::revive()
     shotInterval = 15;
     animSpeed = shotCounter = 10;
     facing = FacingDirection::RIGHT;  // Reset facing on revive
+
+    // Reset render properties
+    renderProps = RenderProps();
 
     // Reset physics state
     yVelocity = 0.0f;
@@ -298,9 +299,7 @@ void Player::startClimbing(Ladder* ladder)
     // Align player's grip point (hands) with ladder center
     // The climbing sprite's grip point is offset from the canvas center,
     // so we need to adjust the player's X position accordingly
-
-    Sprite* climbSprite = climbSheet->getFrame(0);  // Use first frame as reference
-    setX(( float )ladder->getCenterX());// +ladder->getTileWidth() / 2);
+    setX((float)ladder->getCenterX());
 }
 
 void Player::stopClimbing()
@@ -317,27 +316,25 @@ void Player::climbUp()
 
     climbingMoving = true;  // Mark as moving on ladder
 
-    float newY = y - climbSpeed;
+    float newY = yPos - climbSpeed;
     float ladderTop = (float)currentLadder->getTopY();
 
     if (newY <= ladderTop)
     {
         // Reached top - transition to WAKING_UP state
         LOG_TRACE("Player %d REACHED LADDER TOP: y=%.1f -> ladderTop=%.1f, ladderCenterX=%d",
-                  id + 1, y, ladderTop, currentLadder->getCenterX());
-        y = ladderTop;
+                  id + 1, yPos, ladderTop, currentLadder->getCenterX());
+        yPos = ladderTop;
         setState(PlayerState::WAKING_UP);
 
         // Set animation to "standup" state (frame 4, 300ms, one-shot)
         if (climbAnim) {
-            if (auto* stateMachine = dynamic_cast<StateMachineAnim*>(climbAnim.get())) {
-                stateMachine->setState("standup");
-            }
+            climbAnim->setState("standup");
         }
     }
     else
     {
-        y = newY;
+        yPos = newY;
     }
 
     // Animation is updated in Player::update() using proper dt
@@ -349,18 +346,18 @@ void Player::climbDown()
 
     climbingMoving = true;  // Mark as moving on ladder
 
-    float newY = y + climbSpeed;
+    float newY = yPos + climbSpeed;
     float ladderBottom = (float)currentLadder->getBottomY();
 
     if (newY >= ladderBottom)
     {
         // Reached bottom - exit ladder at ground
-        y = ladderBottom;
+        yPos = ladderBottom;
         stopClimbing();
     }
     else
     {
-        y = newY;
+        yPos = newY;
     }
 
     // Animation is updated in Player::update() using proper dt
@@ -380,22 +377,15 @@ void Player::update(float dt, Scene* scene)
 
     // Convert dt from seconds to milliseconds for animation controllers
     float dtMs = dt * 1000.0f;
-    LOG_TRACE("Player X:%d", (int)x);
+    LOG_TRACE("Player X:%d", (int)xPos);
 
     // Update appropriate animation controller based on state
     switch (currentState)
     {
         case PlayerState::VICTORY:
-            if (victoryAnim) {
-                victoryAnim->update(dtMs);
-                //LOG_TRACE("Player %d victory anim update - frame: %d", id + 1, victoryAnim->getCurrentFrame());
-            }
-            break;
-
         case PlayerState::WALKING:
-            if (walkAnim) {
-                walkAnim->update(dtMs);
-            }
+            // These use sprite's active animation
+            sprite.update(dtMs);
             break;
 
         case PlayerState::CLIMBING:
@@ -433,8 +423,8 @@ void Player::update(float dt, Scene* scene)
         case PlayerState::IDLE:
         case PlayerState::SHOOTING:
         case PlayerState::DEAD:
-            animController->update(dtMs);
-            setFrame(animController->getCurrentFrame());
+            // These use fallback sprites with specific frames
+            // No animation update needed - just static frames
             break;
     }
 
@@ -501,7 +491,7 @@ void Player::updatePhysics(float dt, Scene* scene)
             grounded = true;
             yVelocity = 0.0f;
         }
-        y = groundY;  // Snap to ground
+        yPos = groundY;  // Snap to ground
     }
     else
     {
@@ -515,14 +505,14 @@ void Player::updatePhysics(float dt, Scene* scene)
         yVelocity += GRAVITY;
         if (yVelocity > MAX_FALL_SPEED) yVelocity = MAX_FALL_SPEED;
 
-        y += yVelocity;
+        yPos += yVelocity;
 
         // Check if we've passed through ground
-        if (y >= groundY)
+        if (yPos >= groundY)
         {
             LOG_TRACE("Player %d LANDED (passed through): y=%.1f -> groundY=%.1f",
-                      id + 1, y, groundY);
-            y = groundY;
+                      id + 1, yPos, groundY);
+            yPos = groundY;
             grounded = true;
             yVelocity = 0.0f;
         }
@@ -638,11 +628,9 @@ void Player::draw(Graph* graph)
     Sprite* spr = getActiveSprite();
     if (!spr) return;
 
-    RenderProps props(toRenderX(getX(), spr), toRenderY(getY(), spr));
-    props.flipH = getFlipH();
-    props.rotation = getRotation();
-    props.scale = getScale();
-    props.alpha = getAlpha() / 255.0f;
+    RenderProps props = renderProps;
+    props.x = toRenderX(getX(), spr);
+    props.y = toRenderY(getY(), spr);
 
     graph->drawEx(spr, props);
 }
@@ -652,30 +640,27 @@ Sprite* Player::getActiveSprite() const
     switch (currentState)
     {
         case PlayerState::WALKING:
-            if (walkAnim && walkSheet)
-                return walkSheet->getFrame(walkAnim->getCurrentFrame());
-            break;
-
         case PlayerState::VICTORY:
-            if (victoryAnim && victorySheet)
-                return victorySheet->getFrame(victoryAnim->getCurrentFrame());
-            break;
+            // These use sprite's active animation
+            return sprite.getActiveSprite();
 
         case PlayerState::CLIMBING:
         case PlayerState::WAKING_UP:
-            if (climbAnim && climbSheet)
-                return climbSheet->getFrame(climbAnim->getCurrentFrame());
+            // Climbing uses its own animation with internal states
+            if (climbAnim)
+                return climbAnim->getCurrentSprite();
             break;
 
         case PlayerState::IDLE:
         case PlayerState::SHOOTING:
         case PlayerState::DEAD:
         default:
-            return getCurrentSprite();  // Standard sprite from sprites array
+            // Use fallback sprites from sprite
+            return sprite.getActiveSprite();
     }
 
-    // Fallback if animation not loaded
-    return getCurrentSprite();
+    // Fallback
+    return sprite.getActiveSprite();
 }
 
 CollisionBox Player::getCollisionBox() const
@@ -713,7 +698,6 @@ void Player::setState(PlayerState newState)
         currentLadder != nullptr)
     {
         LOG_TRACE("Player %d: setState clearing currentLadder (was climbing, now %d)", id + 1, (int)newState);
-        //x = (float)currentLadder->getCenterX() + currentLadder->getTileWidth() / 2;
         currentLadder = nullptr;
     }
 
@@ -722,47 +706,48 @@ void Player::setState(PlayerState newState)
     switch (newState)
     {
         case PlayerState::IDLE:
-            animController->setState("idle");
-            setFrame(ANIM_SHOOT);
+            sprite.useAsFallback();
+            sprite.setFallbackFrame(ANIM_SHOOT);  // Idle uses ANIM_SHOOT frame
             break;
 
         case PlayerState::WALKING:
             if (walkAnim) {
                 walkAnim->reset();
+                sprite.setActiveAnimation("walk");
             }
             break;
 
         case PlayerState::CLIMBING:
             if (climbAnim) {
                 climbAnim->reset();
-                // Ensure we're in "climb" state (not "standup")
-                if (auto* stateMachine = dynamic_cast<StateMachineAnim*>(climbAnim.get())) {
-                    stateMachine->setState("climb");
-                }
+                climbAnim->setState("climb");
+                sprite.setActiveAnimation("climb");
             }
             break;
 
         case PlayerState::WAKING_UP:
             if (climbAnim) {
-                if (auto* stateMachine = dynamic_cast<StateMachineAnim*>(climbAnim.get())) {
-                    stateMachine->setState("standup");
-                }
+                climbAnim->setState("standup");
+                // Keep using climb animation for standup
             }
             break;
 
         case PlayerState::SHOOTING:
-            animController->setState("shoot");
+            sprite.useAsFallback();
+            sprite.setFallbackFrame(ANIM_SHOOT_POSE);  // Shooting uses ANIM_SHOOT + 1 frame
             break;
 
         case PlayerState::VICTORY:
             if (victoryAnim) {
                 victoryAnim->reset();
+                sprite.setActiveAnimation("victory");
                 LOG_INFO("Player %d entering victory mode", id + 1);
             }
             break;
 
         case PlayerState::DEAD:
-            animController->setState("dead");
+            sprite.useAsFallback();
+            sprite.setFallbackFrame(ANIM_DEAD);
             break;
     }
 }

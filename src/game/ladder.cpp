@@ -7,17 +7,18 @@ Ladder::Ladder(Scene* scene, int x, int y, int numTiles)
     : scene(scene), numTiles(numTiles)
 {
     // Get ladder sprite from StageResources
-    sprite = &gameinf.getStageRes().ladder;
+    sprite.setSprite(&gameinf.getStageRes().ladder);
 
     // Store tile dimensions from sprite
-    tileWidth = sprite->getWidth();
-    tileHeight = sprite->getHeight();
+    tileWidth = sprite.getWidth();
+    tileHeight = sprite.getHeight();
     totalHeight = tileHeight * numTiles;
 
     // Debug: log sprite dimensions to diagnose tile gap issue
+    Sprite* spr = sprite.getActiveSprite();
     LOG_DEBUG("Ladder sprite: width=%d height=%d xoff=%d yoff=%d",
-              sprite->getWidth(), sprite->getHeight(),
-              sprite->getXOff(), sprite->getYOff());
+              spr->getWidth(), spr->getHeight(),
+              spr->getXOff(), spr->getYOff());
 
     // Store position (bottom-middle anchor)
     // x = horizontal center, y = bottom of ladder
@@ -44,10 +45,11 @@ void Ladder::draw(Graph& graph)
     // Top of ladder = yPos - totalHeight
     int topY = toRenderY((int)yPos, totalHeight);
 
+    Sprite* spr = sprite.getActiveSprite();
     for (int i = 0; i < numTiles; i++)
     {
         int tileY = topY + (i * tileHeight);
-        graph.draw(sprite, drawX, tileY);
+        graph.draw(spr, drawX, tileY);
     }
 }
 

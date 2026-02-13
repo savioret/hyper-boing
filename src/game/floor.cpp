@@ -3,11 +3,11 @@
 Floor::Floor(Scene* scene, int x, int y, int id)
     : scene(scene), id(id)
 {
-    sprite = &gameinf.getStageRes().floor[id];
+    sprite.setSprite(&gameinf.getStageRes().floor[id]);
     this->xPos = (float)x;
     this->yPos = (float)y;
-    sx = sprite->sx;
-    sy = sprite->sy;
+    sx = sprite.getWidth();
+    sy = sprite.getHeight();
 }
 
 Floor::~Floor()
