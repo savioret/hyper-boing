@@ -8,9 +8,31 @@
 void Stage::reset()
 {
     sequence.clear();  // unique_ptr automatically deletes
+    //itemsleft = 0;
+    restart();
+}
+
+void Stage::restart()
+{
     sequenceIndex = 0;
-    itemsleft = 0;
     id = 0;
+    countItemsLeft();
+}
+
+void Stage::countItemsLeft()
+{
+    itemsleft = 0;
+    
+    // Count all Ball objects in the sequence
+    for (const auto& obj : sequence)
+    {
+        if (obj && obj->id == StageObjectType::Ball)
+        {
+            itemsleft++;
+        }
+    }
+    
+    LOG_DEBUG("Stage %d: Counted %d balls in sequence", id, itemsleft);
 }
 
 void Stage::setBack(const char* backFile)
@@ -42,25 +64,25 @@ void Stage::spawn(StageObject&& obj)
         newObj->y = newObj->params->y;
     }
     
-    if (newObj->id == OBJ_BALL)
+    if (newObj->id == StageObjectType::Ball)
         itemsleft++;
 }
 
 void Stage::spawnBall(const BallParams& params)
 {
     auto paramsCopy = std::make_unique<BallParams>(params);
-    spawn(StageObject(OBJ_BALL, std::move(paramsCopy)));
+    spawn(StageObject(StageObjectType::Ball, std::move(paramsCopy)));
 }
 
 void Stage::spawnFloor(const FloorParams& params)
 {
     auto paramsCopy = std::make_unique<FloorParams>(params);
-    spawn(StageObject(OBJ_FLOOR, std::move(paramsCopy)));
+    spawn(StageObject(StageObjectType::Floor, std::move(paramsCopy)));
 }
 
 StageObject Stage::pop(int time)
 {
-    StageObject res(OBJ_NULL);
+    StageObject res(StageObjectType::Null);
 
     // Check if we have more objects to pop
     if (sequenceIndex < sequence.size())
@@ -73,7 +95,7 @@ StageObject Stage::pop(int time)
             res = std::move(*obj);
             
             // Update itemsleft before advancing
-            if (res.id == OBJ_BALL) itemsleft--;
+            if (res.id == StageObjectType::Ball) itemsleft--;
             
             // Advance to next object
             sequenceIndex++;
@@ -92,24 +114,24 @@ StageObject Stage::pop(int time)
                 if (auto* ball = res.getParams<BallParams>())
                 {
                     LOG_DEBUG("Pop BALL id:%d start:%d x:%d y:%d size:%d top:%d dirX:%d dirY:%d type:%d",
-                        res.id, res.start, res.x, res.y,
+                        static_cast<int>(res.id), res.start, res.x, res.y,
                         ball->size, ball->top, ball->dirX, ball->dirY, ball->ballType);
                 }
                 else if (auto* floor = res.getParams<FloorParams>())
                 {
                     LOG_DEBUG("Pop FLOOR id:%d start:%d x:%d y:%d floorType:%d",
-                        res.id, res.start, res.x, res.y, floor->floorType);
+                        static_cast<int>(res.id), res.start, res.x, res.y, floor->floorType);
                 }
                 else
                 {
                     LOG_DEBUG("Pop object id:%d start:%d x:%d y:%d (unknown params type)",
-                        res.id, res.start, res.x, res.y);
+                        static_cast<int>(res.id), res.start, res.x, res.y);
                 }
             }
             else
             {
                 LOG_DEBUG("Pop object id:%d start:%d x:%d y:%d (no params)",
-                    res.id, res.start, res.x, res.y);
+                    static_cast<int>(res.id), res.start, res.x, res.y);
             }
         }
     }

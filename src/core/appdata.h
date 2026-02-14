@@ -135,6 +135,10 @@ private:
     OnceHelper gameOnceHelper;
 
 public:
+    // Player indices
+    static constexpr int PLAYER1 = 0;
+    static constexpr int PLAYER2 = 1;
+
     // Singleton accessor
     static AppData& instance();
     static void destroy();

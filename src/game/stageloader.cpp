@@ -69,9 +69,9 @@ bool StageLoader::parseStageProperty(Stage& stage, const std::string& key, const
     else if (key == "time_limit")
         stage.timelimit = std::stoi(value);
     else if (key == "player1_x")
-        stage.xpos[PLAYER1] = std::stoi(value);
+        stage.xpos[AppData::PLAYER1] = std::stoi(value);
     else if (key == "player2_x")
-        stage.xpos[PLAYER2] = std::stoi(value);
+        stage.xpos[AppData::PLAYER2] = std::stoi(value);
     else
         return false;
 
@@ -300,6 +300,11 @@ bool StageLoader::load(Stage& stage, const std::string& filename)
     }
 
     file.close();
+    
+    // Count balls after loading all objects from file
+    stage.countItemsLeft();
+    
+    LOG_INFO("Loaded stage from file: %s", filename.c_str());
     return true;
 }
 
@@ -315,8 +320,8 @@ bool StageLoader::save(const Stage& stage, const std::string& filename)
     file << "background: " << stage.back << "\n";
     file << "music: " << stage.music << "\n";
     file << "time_limit: " << stage.timelimit << "\n";
-    file << "player1_x: " << stage.xpos[PLAYER1] << "\n";
-    file << "player2_x: " << stage.xpos[PLAYER2] << "\n";
+    file << "player1_x: " << stage.xpos[AppData::PLAYER1] << "\n";
+    file << "player2_x: " << stage.xpos[AppData::PLAYER2] << "\n";
     file << "\n";
 
     // Note: Saving the sequence would require exposing it or iterating through

@@ -11,10 +11,10 @@ int SelectPlayer::initBitmaps()
     bmp.mode.init(&appGraph, "assets/graph/ui/selecmodo.png", 0, 0);
     appGraph.setColorKey(bmp.mode.getBmp(), 0xFF0000);
     
-    bmp.select[PLAYER1].init(&appGraph, "assets/graph/ui/select1p.png", 0, 0);
-    appGraph.setColorKey(bmp.select[PLAYER1].getBmp(), 0x00FF00);
-    bmp.select[PLAYER2].init(&appGraph, "assets/graph/ui/select2p.png", 0, 0);
-    appGraph.setColorKey(bmp.select[PLAYER2].getBmp(), 0x969696);
+    bmp.select[AppData::PLAYER1].init(&appGraph, "assets/graph/ui/select1p.png", 0, 0);
+    appGraph.setColorKey(bmp.select[AppData::PLAYER1].getBmp(), 0x00FF00);
+    bmp.select[AppData::PLAYER2].init(&appGraph, "assets/graph/ui/select2p.png", 0, 0);
+    appGraph.setColorKey(bmp.select[AppData::PLAYER2].getBmp(), 0x969696);
 
     return 1;
 }
@@ -50,8 +50,8 @@ int SelectPlayer::init()
 
 int SelectPlayer::release()
 {
-    bmp.select[PLAYER1].release();
-    bmp.select[PLAYER2].release();
+    bmp.select[AppData::PLAYER1].release();
+    bmp.select[AppData::PLAYER2].release();
     bmp.mode.release();
     bmp.back.release();
 
@@ -64,13 +64,13 @@ void SelectPlayer::drawSelect()
 {
     SDL_SetRenderDrawColor(appGraph.getRenderer(), 255, 255, 255, 255);
     if ( option == 0 )
-        appGraph.filledRectangle(65, 205, 70 + bmp.select[PLAYER1].getWidth() + 5, 210 + bmp.select[PLAYER1].getHeight() + 5);
+        appGraph.filledRectangle(65, 205, 70 + bmp.select[AppData::PLAYER1].getWidth() + 5, 210 + bmp.select[AppData::PLAYER1].getHeight() + 5);
     else
-        appGraph.filledRectangle(330, 205, 335 + bmp.select[PLAYER2].getWidth() + 5, 210 + bmp.select[PLAYER2].getHeight() + 5);
+        appGraph.filledRectangle(330, 205, 335 + bmp.select[AppData::PLAYER2].getWidth() + 5, 210 + bmp.select[AppData::PLAYER2].getHeight() + 5);
 
     appGraph.draw(&bmp.mode, 38, 10);
-    appGraph.draw(&bmp.select[PLAYER1], 70, 210);
-    appGraph.draw(&bmp.select[PLAYER2], 335, 210);
+    appGraph.draw(&bmp.select[AppData::PLAYER1], 70, 210);
+    appGraph.draw(&bmp.select[AppData::PLAYER2], 335, 210);
 }
 
 int SelectPlayer::drawAll()
@@ -99,7 +99,7 @@ GameState* SelectPlayer::moveAll(float dt)
     if (appInput.key(SDL_SCANCODE_ESCAPE))
         return new Menu();
 
-    if (appInput.key(gameinf.getKeys(PLAYER1).getLeft()) || appInput.key(gameinf.getKeys(PLAYER1).getRight()))
+    if (appInput.key(gameinf.getKeys(AppData::PLAYER1).getLeft()) || appInput.key(gameinf.getKeys(AppData::PLAYER1).getRight()))
     {
         if (!delayCounter)
         {
@@ -109,11 +109,11 @@ GameState* SelectPlayer::moveAll(float dt)
     }
     else if (!initDelay)
     {
-        if (appInput.key(SDL_SCANCODE_RETURN) || appInput.key(gameinf.getKeys(PLAYER1).getShoot()))
+        if (appInput.key(SDL_SCANCODE_RETURN) || appInput.key(gameinf.getKeys(AppData::PLAYER1).getShoot()))
         {
-            gameinf.player[PLAYER1] = std::make_unique<Player>(PLAYER1);
-            if (option == PLAYER2)
-                gameinf.player[PLAYER2] = std::make_unique<Player>(PLAYER2);
+            gameinf.player[AppData::PLAYER1] = std::make_unique<Player>(AppData::PLAYER1);
+            if (option == AppData::PLAYER2)
+                gameinf.player[AppData::PLAYER2] = std::make_unique<Player>(AppData::PLAYER2);
             gameinf.initStages();
             return new Scene(&gameinf.getStages()[0]);
         }

@@ -42,6 +42,8 @@ int Scene::init()
     dSecond = 0;
     timeRemaining = stage->timelimit;
 
+    stage->restart();
+
     // Only initialize Ready state if there's no stage clear animation in progress
     // (Stage clear animation will transition to Ready when curtain opens)
     if (!pStageClear)
@@ -49,9 +51,9 @@ int Scene::init()
         setState(SceneState::Ready);
     }
 
-    gameinf.getPlayer(PLAYER1)->setX((float)stage->xpos[PLAYER1]);
-    if (gameinf.getPlayer(PLAYER2))
-        gameinf.getPlayer(PLAYER2)->setX((float)stage->xpos[PLAYER2]);
+    gameinf.getPlayer(AppData::PLAYER1)->setX((float)stage->xpos[AppData::PLAYER1]);
+    if (gameinf.getPlayer(AppData::PLAYER2))
+        gameinf.getPlayer(AppData::PLAYER2)->setX((float)stage->xpos[AppData::PLAYER2]);
 
     CloseMusic();
     initBitmaps();
@@ -396,7 +398,7 @@ Floor* Scene::findFloorUnderPlayer(Player* player) const
     int playerRight = (int)(playerCenterX + SURFACE_CHECK_WIDTH / 2);
 
     Floor* bestFloor = nullptr;
-    int closestY = MAX_Y + 1;
+    int closestY = Stage::MAX_Y + 1;
 
     for (const auto& floor : lsFloor)
     {
@@ -438,7 +440,7 @@ Ladder* Scene::findLadderTopUnderPlayer(Player* player) const
     int playerRight = (int)(playerCenterX + SURFACE_CHECK_WIDTH / 2);
 
     Ladder* bestLadder = nullptr;
-    int closestY = MAX_Y + 1;
+    int closestY = Stage::MAX_Y + 1;
 
     for (const auto& ladder : lsLadders)
     {
@@ -470,9 +472,9 @@ Ladder* Scene::findLadderTopUnderPlayer(Player* player) const
 
 float Scene::findGroundLevel(Player* player) const
 {
-    if (!player) return (float)MAX_Y;
+    if (!player) return (float)Stage::MAX_Y;
 
-    float groundY = (float)MAX_Y;  // Default to screen bottom
+    float groundY = (float)Stage::MAX_Y;  // Default to screen bottom
     const char* groundSource = "MAX_Y";
 
     // Check floors
@@ -574,6 +576,23 @@ Player* Scene::getPlayer(int index)
 
 void Scene::win()
 {
+    skipToStage( AppData::instance ().currentStage + 1 );
+}
+
+void Scene::skipToStage(int stageNumber)
+{
+    AppData& appData = AppData::instance();
+    
+    // // Validate stage number (1-indexed)
+    // if (stageNumber < 1 || stageNumber > appData.numStages)
+    // {
+    //     return;
+    // }
+    
+    // DON'T update currentStage yet - StageClear needs to show the CURRENT level as "completed"
+    // It will be updated when transitioning to the next scene
+    
+    // Trigger win sequence with target stage specified
     CloseMusic();
     OpenMusic("assets/music/win.ogg");
     PlayMusic();
@@ -584,29 +603,7 @@ void Scene::win()
     event.levelClear.stageId = stage->id;
     EVENT_MGR.trigger(event);
 
-    pStageClear = std::make_unique<StageClear>(this);
-}
-
-void Scene::skipToStage(int stageNumber)
-{
-    AppData& appData = AppData::instance();
-    
-    // Validate stage number (1-indexed)
-    if (stageNumber < 1 || stageNumber > appData.numStages)
-    {
-        return;
-    }
-    
-    // Update current stage for display in StageClear
-    appData.currentStage = stageNumber;
-    
-    // Trigger win sequence with target stage specified
-    CloseMusic();
-    OpenMusic("assets/music/win.ogg");
-    PlayMusic();
-    setState(SceneState::LevelClear);
-
-    // Create StageClear with target stage number
+    // Create StageClear with target stage number (for later transition)
     pStageClear = std::make_unique<StageClear>(this, stageNumber);
 }
 
@@ -620,7 +617,7 @@ void Scene::checkSequence()
 
         switch (obj.id)
         {
-        case OBJ_BALL:
+        case StageObjectType::Ball:
             if (obj.params)
             {
                 if (auto* ball = obj.getParams<BallParams>())
@@ -629,7 +626,7 @@ void Scene::checkSequence()
 
                     // Fire STAGE_OBJECT_SPAWNED event
                     GameEventData event(GameEventType::STAGE_OBJECT_SPAWNED);
-                    event.objectSpawned.id = obj.id; 
+                    event.objectSpawned.id = static_cast<int>(obj.id);
                     event.objectSpawned.x = obj.x;
                     event.objectSpawned.y = obj.y;
                     EVENT_MGR.trigger(event);
@@ -641,8 +638,8 @@ void Scene::checkSequence()
                 addBall(obj.x, obj.y);
             }
             break;
-            
-        case OBJ_FLOOR:
+
+        case StageObjectType::Floor:
             if (obj.params)
             {
                 if (auto* floor = obj.getParams<FloorParams>())
@@ -651,7 +648,7 @@ void Scene::checkSequence()
 
                     // Fire STAGE_OBJECT_SPAWNED event
                     GameEventData event(GameEventType::STAGE_OBJECT_SPAWNED);
-                    event.objectSpawned.id = obj.id; 
+                    event.objectSpawned.id = static_cast<int>(obj.id);
                     event.objectSpawned.x = obj.x;
                     event.objectSpawned.y = obj.y;
                     EVENT_MGR.trigger(event);
@@ -664,7 +661,7 @@ void Scene::checkSequence()
             }
             break;
 
-        case OBJ_LADDER:
+        case StageObjectType::Ladder:
             if (obj.params)
             {
                 if (auto* ladder = obj.getParams<LadderParams>())
@@ -673,7 +670,7 @@ void Scene::checkSequence()
 
                     // Fire STAGE_OBJECT_SPAWNED event
                     GameEventData event(GameEventType::STAGE_OBJECT_SPAWNED);
-                    event.objectSpawned.id = obj.id;
+                    event.objectSpawned.id = static_cast<int>(obj.id);
                     event.objectSpawned.x = obj.x;
                     event.objectSpawned.y = obj.y;
                     EVENT_MGR.trigger(event);
@@ -686,7 +683,7 @@ void Scene::checkSequence()
             }
             break;
 
-        case OBJ_ACTION:
+        case StageObjectType::Action:
             if (obj.params)
             {
                 if (auto* action = obj.getParams<ActionParams>())
@@ -697,7 +694,7 @@ void Scene::checkSequence()
             }
             break;
         }
-    } while (obj.id != OBJ_NULL);
+    } while (obj.id != StageObjectType::Null);
 }
 
 void Scene::cleanupBalls()
@@ -724,7 +721,7 @@ void Scene::cleanupBalls()
     }
 
     // Check win condition after all removals
-    if (lsBalls.empty() && pendingBalls.empty() && !stage->itemsleft)
+    if (lsBalls.empty() && pendingBalls.empty() && !stage->getItemsLeft())
     {
         // Only trigger win once - prevent calling every frame
         if (currentState != SceneState::LevelClear)
@@ -849,9 +846,9 @@ void Scene::updateTimer(float dt)
             event.gameOver.reason = 2;
             EVENT_MGR.trigger(event);
 
-            gameinf.player[PLAYER1]->setPlaying(false);
-            if (gameinf.player[PLAYER2])
-                gameinf.player[PLAYER2]->setPlaying(false);
+            gameinf.player[AppData::PLAYER1]->setPlaying(false);
+            if (gameinf.player[AppData::PLAYER2])
+                gameinf.player[AppData::PLAYER2]->setPlaying(false);
 
             CloseMusic();
             OpenMusic("assets/music/gameover.ogg");
@@ -924,9 +921,9 @@ GameState* Scene::handleGameOverState(float dt)
                 {
                     // Player chose to continue - restart from beginning
                     LOG_INFO("Game Over: Player pressed continue, restarting game");
-                    gameinf.getPlayer(PLAYER1)->init();
-                    if (gameinf.getPlayer(PLAYER2))
-                        gameinf.getPlayer(PLAYER2)->init();
+                    gameinf.getPlayer(AppData::PLAYER1)->init();
+                    if (gameinf.getPlayer(AppData::PLAYER2))
+                        gameinf.getPlayer(AppData::PLAYER2)->init();
                     gameinf.initStages();
                     return new Scene(stage);
                 }
@@ -934,8 +931,8 @@ GameState* Scene::handleGameOverState(float dt)
                 {
                     // No continue - return to menu
                     LOG_INFO("Game Over: Player returning to menu");
-                    gameinf.player[PLAYER1].reset();
-                    gameinf.player[PLAYER2].reset();
+                    gameinf.player[AppData::PLAYER1].reset();
+                    gameinf.player[AppData::PLAYER2].reset();
                     return new Menu;
                 }
             }
@@ -1058,9 +1055,9 @@ GameState* Scene::handlePlayingState(float dt)
     }
 
     // Check game over condition
-    if (gameinf.getPlayer(PLAYER1) && !gameinf.getPlayer(PLAYER2))
+    if (gameinf.getPlayer(AppData::PLAYER1) && !gameinf.getPlayer(AppData::PLAYER2))
     {
-        if (!gameinf.getPlayer(PLAYER1)->isPlaying())
+        if (!gameinf.getPlayer(AppData::PLAYER1)->isPlaying())
         {
             setState(SceneState::GameOver);
 
@@ -1074,9 +1071,9 @@ GameState* Scene::handlePlayingState(float dt)
             PlayMusic();
         }
     }
-    else if (gameinf.getPlayer(PLAYER1) && gameinf.getPlayer(PLAYER2))
+    else if (gameinf.getPlayer(AppData::PLAYER1) && gameinf.getPlayer(AppData::PLAYER2))
     {
-        if (!gameinf.getPlayer(PLAYER1)->isPlaying() && !gameinf.getPlayer(PLAYER2)->isPlaying())
+        if (!gameinf.getPlayer(AppData::PLAYER1)->isPlaying() && !gameinf.getPlayer(AppData::PLAYER2)->isPlaying())
         {
             setState(SceneState::GameOver);
 
@@ -1097,7 +1094,7 @@ GameState* Scene::handlePlayingState(float dt)
         lsBalls,
         lsShoots,
         lsFloor,
-        { gameinf.player[PLAYER1].get(), gameinf.player[PLAYER2].get() },
+        { gameinf.player[AppData::PLAYER1].get(), gameinf.player[AppData::PLAYER2].get() },
         true  // checkPlayerCollisions = true during Playing state
     };
     ContactList contacts = collisionSystem.detectAndResolve(ctx);
@@ -1147,8 +1144,8 @@ GameState* Scene::updateStageProgression(float dt)
             if (nextStageId <= gameinf.getNumStages())
             {
                 gameinf.getCurrentStage() = nextStageId;
-                // Create new scene with ready screen disabled initially
-                Scene* newScene = new Scene(&gameinf.getStages()[nextStageId - 1], std::move(pStageClear));
+                // Create new scene WITHOUT passing StageClear - let new scene start fresh with Ready countdown
+                Scene* newScene = new Scene(&gameinf.getStages()[nextStageId - 1]);  // No pStageClear argument!
                 return newScene;
             }
             else
@@ -1261,24 +1258,24 @@ void Scene::drawScore()
 {
     StageResources& res = gameinf.getStageRes();
     
-    if (gameinf.getPlayer(PLAYER1)->isPlaying())
+    if (gameinf.getPlayer(AppData::PLAYER1)->isPlaying())
     {
-        appGraph.draw(&fontNum[1], gameinf.getPlayer(PLAYER1)->getScore(), 80, RES_Y - 55);
-        appGraph.draw(&res.miniplayer[PLAYER1], 20, MAX_Y + 7);
-        for (int i = 0; i < gameinf.getPlayer(PLAYER1)->getLives(); i++)
+        appGraph.draw(&fontNum[1], gameinf.getPlayer(AppData::PLAYER1)->getScore(), 80, RES_Y - 55);
+        appGraph.draw(&res.miniplayer[AppData::PLAYER1], 20, Stage::MAX_Y + 7);
+        for (int i = 0; i < gameinf.getPlayer(AppData::PLAYER1)->getLives(); i++)
         {
-            appGraph.draw(&res.lives[PLAYER1], 80 + 26 * i, MAX_Y + 30);
+            appGraph.draw(&res.lives[AppData::PLAYER1], 80 + 26 * i, Stage::MAX_Y + 30);
         }
     }
 
-    if (gameinf.getPlayer(PLAYER2))
-        if (gameinf.getPlayer(PLAYER2)->isPlaying())
+    if (gameinf.getPlayer(AppData::PLAYER2))
+        if (gameinf.getPlayer(AppData::PLAYER2)->isPlaying())
         {
-            appGraph.draw(&res.miniplayer[PLAYER2], 400, MAX_Y + 7);
-            appGraph.draw(&fontNum[1], gameinf.getPlayer(PLAYER2)->getScore(), 460, RES_Y - 55);
-            for (int i = 0; i < gameinf.getPlayer(PLAYER2)->getLives(); i++)
+            appGraph.draw(&res.miniplayer[AppData::PLAYER2], 400, Stage::MAX_Y + 7);
+            appGraph.draw(&fontNum[1], gameinf.getPlayer(AppData::PLAYER2)->getScore(), 460, RES_Y - 55);
+            for (int i = 0; i < gameinf.getPlayer(AppData::PLAYER2)->getLives(); i++)
             {
-                appGraph.draw(&res.lives[PLAYER2], 460 + 26 * i, MAX_Y + 30);
+                appGraph.draw(&res.lives[AppData::PLAYER2], 460 + 26 * i, Stage::MAX_Y + 30);
             }
         }
 }
@@ -1290,22 +1287,22 @@ void Scene::drawMark()
     for (int j = 0; j < 640; j += 16)
     {
         appGraph.draw(&res.mark[2], j, 0);
-        appGraph.draw(&res.mark[1], j, MAX_Y + 1);
-        appGraph.draw(&res.mark[0], j, MAX_Y + 17);
-        appGraph.draw(&res.mark[0], j, MAX_Y + 33);
-        appGraph.draw(&res.mark[2], j, MAX_Y + 49);
+        appGraph.draw(&res.mark[1], j, Stage::MAX_Y + 1);
+        appGraph.draw(&res.mark[0], j, Stage::MAX_Y + 17);
+        appGraph.draw(&res.mark[0], j, Stage::MAX_Y + 33);
+        appGraph.draw(&res.mark[2], j, Stage::MAX_Y + 49);
     }
 
     for (int j = 0; j < 416; j += 16)
     {
         appGraph.draw(&res.mark[4], 0, j);
-        appGraph.draw(&res.mark[3], MAX_X + 1, j);
+        appGraph.draw(&res.mark[3], Stage::MAX_X + 1, j);
     }
 
     appGraph.draw(&res.mark[0], 0, 0);
-    appGraph.draw(&res.mark[0], MAX_X + 1, 0);
-    appGraph.draw(&res.mark[0], 0, MAX_Y + 1);
-    appGraph.draw(&res.mark[0], MAX_X + 1, MAX_Y + 1);
+    appGraph.draw(&res.mark[0], Stage::MAX_X + 1, 0);
+    appGraph.draw(&res.mark[0], 0, Stage::MAX_Y + 1);
+    appGraph.draw(&res.mark[0], Stage::MAX_X + 1, Stage::MAX_Y + 1);
 }
 
 /**
@@ -1322,6 +1319,8 @@ void Scene::drawBoundingBoxes()
     // Set draw color to black for bounding boxes
     appGraph.setDrawColor(0, 0, 0, 255);
 
+    char buf[32];
+
     // Draw player bounding boxes using the same collision box as Ball::collision()
     for (int i = 0; i < 2; i++)
     {
@@ -1331,6 +1330,10 @@ void Scene::drawBoundingBoxes()
             // Use Player's getCollisionBox() to ensure debug matches actual collision
             CollisionBox box = pl->getCollisionBox();
             appGraph.rectangle(box.x, box.y, box.x + box.w, box.y + box.h);
+            snprintf(buf, sizeof(buf), "%d,%d", box.x, box.y);
+            appGraph.text(buf, box.x, box.y);
+            // snprintf(buf, sizeof(buf), "%d,%d", box.w, box.h);
+            // appGraph.text(buf, box.x, box.y + 8);
         }
     }
 
@@ -1341,6 +1344,10 @@ void Scene::drawBoundingBoxes()
         int y = (int)b->getY();
         int d = b->getDiameter();
         appGraph.rectangle(x, y, x + d, y + d);
+        snprintf(buf, sizeof(buf), "%d,%d", x, y);
+        appGraph.text(buf, x, y);
+        //snprintf(buf, sizeof(buf), "%d,%d", d, d);
+        //appGraph.text(buf, x, y + 8);
     }
 
     // Draw shot collision areas
@@ -1367,6 +1374,10 @@ void Scene::drawBoundingBoxes()
                     int w = sprite->getWidth();
                     int h = sprite->getHeight();
                     appGraph.rectangle(spriteX, spriteY, spriteX + w, spriteY + h);
+                    snprintf(buf, sizeof(buf), "%d,%d", spriteX, spriteY);
+                    appGraph.text(buf, spriteX, spriteY);
+                    // snprintf(buf, sizeof(buf), "%d,%d", w, h);
+                    // appGraph.text(buf, spriteX, spriteY + 8);
                 }
             }
             else
@@ -1378,6 +1389,8 @@ void Scene::drawBoundingBoxes()
 
                 // Mark the collision point
                 appGraph.rectangle(chainX - 2, yPos - 2, chainX + 2, yPos + 2);
+                snprintf(buf, sizeof(buf), "%d,%d", chainX, yPos);
+                appGraph.text(buf, chainX + 3, yPos);
             }
         }
     }
@@ -1390,6 +1403,10 @@ void Scene::drawBoundingBoxes()
         int w = f->getWidth();
         int h = f->getHeight();
         appGraph.rectangle(x, y, x + w, y + h);
+        snprintf(buf, sizeof(buf), "%d,%d", x, y);
+        appGraph.text(buf, x, y);
+        // snprintf(buf, sizeof(buf), "%d,%d", w, h);
+        // appGraph.text(buf, x, y + 8);
     }
 
     // Draw ladder bounding boxes (green color to distinguish)
@@ -1398,6 +1415,10 @@ void Scene::drawBoundingBoxes()
     {
         CollisionBox box = ladder->getCollisionBox();
         appGraph.rectangle(box.x, box.y, box.x + box.w, box.y + box.h);
+        snprintf(buf, sizeof(buf), "%d,%d", box.x, box.y);
+        appGraph.text(buf, box.x, box.y);
+        // snprintf(buf, sizeof(buf), "%d,%d", box.w, box.h);
+        appGraph.text(buf, box.x, box.y + 8);
 
         // Also draw the "standing" top area (thin line at top)
         CollisionBox topBox = ladder->getTopStandingBox();
@@ -1420,9 +1441,9 @@ void Scene::drawDebugOverlay()
     GameState::drawDebugOverlay();
 
     // Add player info to default section
-    if (appData.getPlayer(PLAYER1))
+    if (appData.getPlayer(AppData::PLAYER1))
     {
-		Player* p = appData.getPlayer(PLAYER1);
+		Player* p = appData.getPlayer(AppData::PLAYER1);
         textOverlay.addTextF("P1: Score=%d Lives=%d Shoots=%d Facing=%d Frame=%d x=%.1f y=%.1f",
             p->getScore(),
             p->getLives(),
@@ -1500,12 +1521,12 @@ void Scene::drawEntities()
 
 void Scene::drawPlayers()
 {
-    if (gameinf.getPlayer(PLAYER1)->isVisible() && gameinf.getPlayer(PLAYER1)->isPlaying())
-        draw(gameinf.getPlayer(PLAYER1));
+    if (gameinf.getPlayer(AppData::PLAYER1)->isVisible() && gameinf.getPlayer(AppData::PLAYER1)->isPlaying())
+        draw(gameinf.getPlayer(AppData::PLAYER1));
 
-    if (gameinf.getPlayer(PLAYER2))
-        if (gameinf.getPlayer(PLAYER2)->isVisible() && gameinf.getPlayer(PLAYER2)->isPlaying())
-            draw(gameinf.getPlayer(PLAYER2));
+    if (gameinf.getPlayer(AppData::PLAYER2))
+        if (gameinf.getPlayer(AppData::PLAYER2)->isVisible() && gameinf.getPlayer(AppData::PLAYER2)->isPlaying())
+            draw(gameinf.getPlayer(AppData::PLAYER2));
 }
 
 void Scene::drawHUD()
@@ -1514,8 +1535,8 @@ void Scene::drawHUD()
 
     drawMark();
     drawScore();
-    appGraph.draw(&res.time, 320 - res.time.getWidth() / 2, MAX_Y + 3);
-    appGraph.draw(&fontNum[FONT_BIG], timeRemaining, 300, MAX_Y + 25);
+    appGraph.draw(&res.time, 320 - res.time.getWidth() / 2, Stage::MAX_Y + 3);
+    appGraph.draw(&fontNum[FONT_BIG], timeRemaining, 300, Stage::MAX_Y + 25);
 }
 
 void Scene::drawStateOverlay()

@@ -53,6 +53,8 @@ protected:
     TextOverlay textOverlay;
 
 public:
+    static constexpr int GLOBAL_UPDATE_FRAMERATE = 60;
+
     GameState();
     virtual ~GameState() {}
 

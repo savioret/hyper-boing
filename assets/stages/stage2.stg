@@ -6,7 +6,7 @@ time_limit: 100
 player1_x: 270
 player2_x: 270
 
-at 1:
+at 0:
   # Left formation - small balls moving left
   ball: x=128, y=100, size=3, top=200, dirX=-1, dirY=1
   ball: x=144, y=100, size=3, top=200, dirX=-1, dirY=1

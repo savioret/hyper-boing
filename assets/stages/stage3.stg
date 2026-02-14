@@ -10,11 +10,11 @@ at 0:
   # Single floor platform
   floor: x=250, y=70, type=0
 
-at 1:
   # Random top balls (fully random X, Y at top)
   ball: y_max
   ball: y_max
 
+at 5:
   # Balls with random X at specific Y (size 2)
-  ball: y=400, size=2
-  ball: y=400, size=2, dirX=-1, dirY=1
+  ball: y=30, size=2
+  ball: y=30, size=2, dirX=-1, dirY=1

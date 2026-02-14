@@ -272,11 +272,14 @@ void AppData::initStages()
         stages[i].spawn(StageObjectBuilder::floor().at(550, 150).type(1).time(0));
 
         // Test ladder - 10 tiles high at ground level
-        stages[i].spawn(StageObjectBuilder::ladder().at(100, MAX_Y).height(10).time(0));
+        stages[i].spawn(StageObjectBuilder::ladder().at(100, Stage::MAX_Y).height(10).time(0));
 
         // Balls at top with random X
         stages[i].spawn(StageObjectBuilder::ball().time(1).atMaxY());
         stages[i].spawn(StageObjectBuilder::ball().time(20).atMaxY());
+        
+        // Count balls after all spawns
+        stages[i].countItemsLeft();
     }
 
     /* Stage 2 - Complex formation */
@@ -306,6 +309,9 @@ void AppData::initStages()
                 );
             }
         }
+        
+        // Count balls after all spawns
+        stages[i].countItemsLeft();
     }
 
     /* Stage 3 - Mixed approaches */
@@ -330,6 +336,9 @@ void AppData::initStages()
         // Balls with random X at specific Y
         stages[i].spawn(StageObjectBuilder::ball().time(1).size(2).atY(400));
         stages[i].spawn(StageObjectBuilder::ball().time(1).size(2).atY(400).dir(-1, 1));
+        
+        // Count balls after all spawns
+        stages[i].countItemsLeft();
     }
 
     /* Stage 4 - Now using new API */
@@ -350,6 +359,9 @@ void AppData::initStages()
         // Regular balls at random top positions
         stages[i].spawn(StageObjectBuilder::ball().time(1).atMaxY());
         stages[i].spawn(StageObjectBuilder::ball().time(20).atMaxY());
+        
+        // Count balls after all spawns
+        stages[i].countItemsLeft();
     }
 
     /* Stage 5 - Staircases and side spawns */
@@ -398,13 +410,16 @@ void AppData::initStages()
             // Right side
             stages[i].spawn(
                 StageObjectBuilder::ball()
-                    .at(MAX_X - 30, 50)
+                    .at(Stage::MAX_X - 30, 50)
                     .time(5 * x)
                     .size(3)
                     .top(randomTop)
                     .dir(-1, 1)
             );
         }
+        
+        // Count balls after all spawns
+        stages[i].countItemsLeft();
     }
 
     /* Stage 6 - Grid pattern */
@@ -432,7 +447,7 @@ void AppData::initStages()
         {
             stages[i].spawn(
                 StageObjectBuilder::ball()
-                    .at(x, 395)
+                    .at(x, 30)
                     .time(1)
                     .size(1)
                     .top(395)
@@ -449,8 +464,10 @@ void AppData::initStages()
             );
         }
     }
+    
+    // Count balls after all spawns
+    stages[i].countItemsLeft();
 }
-
 void AppData::setCurrent(GameState* state)
 {
     activeScene = state;

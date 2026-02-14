@@ -75,7 +75,7 @@ void HarpoonShot::update(float dt)
     if (!isDead())
     {
         // Check if reached top of screen
-        if (yPos <= MIN_Y)
+        if (yPos <= Stage::MIN_Y)
         {
             onCeilingHit();  // Default: player->looseShoot() + kill()
         }

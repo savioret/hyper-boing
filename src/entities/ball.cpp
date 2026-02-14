@@ -22,9 +22,9 @@
  */
 Ball::Ball(Scene* scn, int x, int y, int size, int dx, int dy, int topVal, int idVal)
 {
-    scene = scn;	
+    scene = scn;
     this->xPos = (float)x;
-    this->yPos = (float)y;
+    this->yPos = (float)y;  // Absolute screen coordinate
     this->size = size;
     id = idVal;
 
@@ -35,10 +35,14 @@ Ball::Ball(Scene* scn, int x, int y, int size, int dx, int dy, int topVal, int i
     diameter = gameinf.getStageRes().redball[size].getWidth();
 
     time = 0;
-    y0 = yPos;
 
-    if (!top) initTop();
-    yPos = (float)(MAX_Y - top);
+    if (!top)
+        initTop();
+
+    // Calculate y0 as offset from baseline for physics
+    // (baseline = Stage::MAX_Y - top = peak bounce height)
+    y0 = yPos - (float)(Stage::MAX_Y - top);
+
     init();
 }
 
@@ -76,7 +80,8 @@ Ball::Ball(Scene* scn, Ball* oldball)
 
     initTop();
     init();
-
+    
+    y0 = yPos - ( float )(Stage::MAX_Y - top);
     time = 0;
 }
 
@@ -85,12 +90,9 @@ Ball::~Ball()
 }
 
 void Ball::init()
-{		
-    gravity = 8 / ((float)(top - diameter) * (400.0f / top));	
+{
+    gravity = 8 / ((float)(top - diameter) * (400.0f / top));
     maxTime = std::sqrt((float)(2 * (top - diameter)) / (gravity));
-
-    if (y0 != 0)
-        y0 -= (float)(MAX_Y - top);
 
     sprite.setSprite(&gameinf.getStageRes().redball[size]);
 }
@@ -103,7 +105,7 @@ void Ball::init()
  */
 void Ball::initTop()
 {
-    float d = (float)(MAX_Y - MIN_Y);
+    float d = (float)(Stage::MAX_Y - Stage::MIN_Y);
 
     if (size == 0)
         top = (int)d;
@@ -178,9 +180,9 @@ void Ball::update(float dt)
     if (dirY == -1) yPrev = yPos;
     
     yPos = y0 + 0.5f * gravity * (time * time);
-    yPos = (float)(MAX_Y - top) + yPos;
+    yPos = (float)(Stage::MAX_Y - top) + yPos;
 
-    if (dirY == -1 && yPos < MAX_Y - diameter - 2) 
+    if (dirY == -1 && yPos < Stage::MAX_Y - diameter - 2) 
         dif = yPos - yPrev; 
     else 
         dif = 1000.0f;
@@ -192,7 +194,7 @@ void Ball::update(float dt)
 
     if (dirY == 1)	
     {
-        if (yPos + diameter >= MAX_Y)
+        if (yPos + diameter >= Stage::MAX_Y)
         {			
             y0 = 0;
             dirY = -1;
@@ -211,17 +213,17 @@ void Ball::update(float dt)
 
     if (dirX == 1)	
     {
-        if (xPos + diameter >= MAX_X)
+        if (xPos + diameter >= Stage::MAX_X)
         {
-            xPos = (float)(MAX_X - diameter);
+            xPos = (float)(Stage::MAX_X - diameter);
             dirX = -1;
         }
     }
     else if (dirX == -1)
     {
-        if (xPos <= MIN_X)
+        if (xPos <= Stage::MIN_X)
         {
-            xPos = (float)MIN_X;
+            xPos = (float)Stage::MIN_X;
             dirX = 1;
         }
     }

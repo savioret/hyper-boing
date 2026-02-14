@@ -10,8 +10,6 @@
 #include <cstring>
 #include <SDL.h>
 
-// Animation frame index for shooting pose (ANIM_SHOOT + 1 from main.h)
-static constexpr int ANIM_SHOOT_POSE = ANIM_SHOOT + 1;
 
 Player::Player(int id)
     : id(id), deathAction(nullptr), currentState(PlayerState::IDLE)
@@ -77,7 +75,7 @@ void Player::init()
 
     // Physics initialization
     yVelocity = 0.0f;
-    grounded = true;  // Start grounded at MAX_Y
+    grounded = true;  // Start grounded at Stage::MAX_Y
 
     // Initialize fallback sprites from global resources
     // Load 9 player sprite frames (0-8: walk, shoot, win, dead)
@@ -140,7 +138,7 @@ void Player::init()
     // Position uses bottom-middle coordinates:
     // X = horizontal center of sprite, Y = bottom of sprite (ground level)
     float startX = 200.0f + 100.0f * id;
-    float startY = (float)MAX_Y;
+    float startY = (float)Stage::MAX_Y;
 
     setPos(startX, startY);
 
@@ -180,7 +178,7 @@ void Player::revive()
 
     // Position uses bottom-middle coordinates
     float startX = 200.0f + 100.0f * id;
-    float startY = (float)MAX_Y;
+    float startY = (float)Stage::MAX_Y;
     setPos(startX, startY);
 
     xDir = 5;
@@ -198,7 +196,7 @@ void Player::moveLeft()
     facing = FacingDirection::LEFT;  // Update facing direction
     setFlipH(true);
     // X is center; check if left edge (x - width/2) stays within bounds
-    if (getX() - getWidth() / 2.0f > MIN_X)
+    if (getX() - getWidth() / 2.0f > Stage::MIN_X)
     {
         float oldX = getX();
         setX(getX() - moveIncrement);
@@ -221,7 +219,7 @@ void Player::moveRight()
     setFlipH(false);
 
     // X is center; check if right edge (x + width/2) stays within bounds
-    if (getX() + getWidth() / 2.0f < MAX_X)
+    if (getX() + getWidth() / 2.0f < Stage::MAX_X)
     {
         float oldX = getX();
         setX(getX() + moveIncrement);
@@ -283,8 +281,8 @@ void Player::stop()
 
     // Emergency clamp: ensure right edge doesn't exceed boundary
     // X is center, so right edge = x + width/2
-    //if (getX() + getWidth() / 2.0f > MAX_X - 16)
-    //    setX((float)(MAX_X - 22) - getWidth() / 2.0f);
+    //if (getX() + getWidth() / 2.0f > Stage::MAX_X - 16)
+    //    setX((float)(Stage::MAX_X - 22) - getWidth() / 2.0f);
 }
 
 // Climbing methods
@@ -377,7 +375,6 @@ void Player::update(float dt, Scene* scene)
 
     // Convert dt from seconds to milliseconds for animation controllers
     float dtMs = dt * 1000.0f;
-    LOG_TRACE("Player X:%d", (int)xPos);
 
     // Update appropriate animation controller based on state
     switch (currentState)
@@ -595,14 +592,26 @@ void Player::setWeapon(WeaponType type)
  */
 void Player::onLevelClear()
 {
-    if (victoryAnim && !isDead())
+    if (isDead())
+    {
+        LOG_WARNING("Player %d cannot enter victory mode - player is dead", id + 1);
+        return;
+    }
+    
+    // Clear immunity state to prevent blinking during victory animation
+    immuneCounter = 0;
+    visible = true;
+    
+    if (victoryAnim)
     {
         setState(PlayerState::VICTORY);
+        LOG_INFO("Player %d entering victory mode", id + 1);
     }
     else
     {
-        LOG_WARNING("Player %d cannot enter victory mode (anim: %s, dead: %s)",
-                   id + 1, victoryAnim ? "yes" : "no", isDead() ? "yes" : "no");
+        LOG_ERROR("Player %d cannot enter victory mode - victoryAnim not loaded!", id + 1);
+        // Fallback: at least show idle pose instead of walking
+        setState(PlayerState::IDLE);
     }
 }
 

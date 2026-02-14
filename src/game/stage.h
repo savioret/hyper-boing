@@ -155,30 +155,46 @@ struct ActionParams : public StageObjectParams
 };
 
 /**
+ * Identifies the type of a stage spawn object.
+ * Used in StageObject::id and the Scene spawn switch.
+ */
+enum class StageObjectType : int
+{
+    Null   = 0,
+    Ball   = 1,
+    Shoot  = 2,
+    Floor  = 3,
+    Item   = 4,
+    Player = 5,
+    Action = 6,
+    Ladder = 7
+};
+
+/**
  * StageObject struct
  * Stores information about an object: position, ID, and when it appears.
  */
 struct StageObject
 {
-    int id;
+    StageObjectType id;
     int start; // start time
     int x, y;
-    
+
     // Type-safe parameters
     std::unique_ptr<StageObjectParams> params;
 
-    StageObject(int id = 0, int start = 0)
+    StageObject(StageObjectType id = StageObjectType::Null, int start = 0)
         : id(id), start(start), x(INT_MAX), y(INT_MAX), params(nullptr)
     {
     }
-    
+
     // Constructor with typed params
-    StageObject(int id, std::unique_ptr<StageObjectParams> p)
+    StageObject(StageObjectType id, std::unique_ptr<StageObjectParams> p)
         : id(id), start(p ? p->startTime : 0), x(p ? p->x : INT_MAX), y(p ? p->y : INT_MAX),
           params(std::move(p))
     {
     }
-    
+
     // Copy constructor (needed for Stage::pop return by value)
     StageObject(const StageObject& other)
         : id(other.id), start(other.start), x(other.x), y(other.y)
@@ -186,13 +202,13 @@ struct StageObject
         if (other.params)
             params = other.params->clone();
     }
-    
+
     // Move constructor
     StageObject(StageObject&& other) noexcept
         : id(other.id), start(other.start), x(other.x), y(other.y), params(std::move(other.params))
     {
     }
-    
+
     // Assignment operators
     StageObject& operator=(const StageObject& other)
     {
@@ -209,7 +225,7 @@ struct StageObject
         }
         return *this;
     }
-    
+
     StageObject& operator=(StageObject&& other) noexcept
     {
         if (this != &other)
@@ -222,14 +238,14 @@ struct StageObject
         }
         return *this;
     }
-    
+
     // Helper to get typed params (returns nullptr if wrong type)
     template<typename T>
     T* getParams()
     {
         return dynamic_cast<T*>(params.get());
     }
-    
+
     template<typename T>
     const T* getParams() const
     {
@@ -247,16 +263,22 @@ struct StageObject
 class Stage
 {
 public:
+    // Playfield boundaries
+    static constexpr int MAX_Y = 415;
+    static constexpr int MIN_Y = 16;
+    static constexpr int MAX_X = 623;
+    static constexpr int MIN_X = 16;
+
     int id;
     char back[64];
     char music[64];
     int timelimit;
-    int itemsleft;
     int xpos[2]; // initial positions for players 1 and 2 TODO: Review this
                    
 private:
     std::vector<std::unique_ptr<StageObject>> sequence;
     size_t sequenceIndex;  // Track current position for pop()
+    int itemsleft;  // Number of balls remaining in the stage
 
 public:
     Stage() : id(0), timelimit(0), itemsleft(0), sequenceIndex(0) {
@@ -266,11 +288,29 @@ public:
     }
 
     /**
-     * Reset stage data
+     * Reset stage data and state
      * Clears all objects from the sequence and resets counters.
      */
     void reset();
+
+    /**
+     * Reset sequence playback to beginning
+     * Called when restarting a stage (e.g., via /goto command or replaying)
+     */
+    void restart();
     
+    /**
+     * Count and update the number of ball items in the sequence
+     * Should be called after populating the stage with spawn() calls
+     */
+    void countItemsLeft();
+    
+    /**
+     * Get the number of balls remaining in the stage
+     * @return Number of balls left to clear
+     */
+    int getItemsLeft() const { return itemsleft; }
+
     /**
      * Set background image file
      * @param backFile Path to background image (relative to graph/ folder)
@@ -306,7 +346,7 @@ public:
      * Calculates random positions for INT_MAX coordinates
      * Validates ball positions against floor collisions
      * @param time Current game time
-     * @return StageObject (id=OBJ_NULL if nothing to pop)
+     * @return StageObject (id=StageObjectType::Null if nothing to pop)
      */
     StageObject pop(int time);
 };
@@ -335,35 +375,35 @@ class StageObjectBuilder;
  *   // Fixed X, random Y
  *   stage.spawn(StageObjectBuilder::ball().atX(300).time(1).size(2));
  *   
- *   // Fully random (default top for balls)
+ *   // Fully random (default top for bal
  *   stage.spawn(StageObjectBuilder::ball().time(1).size(2));
  */
 class StageObjectBuilder
 {
 private:
-    int objectId;
+    StageObjectType objectId;
     std::unique_ptr<StageObjectParams> objectParams;
-    
-    StageObjectBuilder(int id, std::unique_ptr<StageObjectParams> params)
+
+    StageObjectBuilder(StageObjectType id, std::unique_ptr<StageObjectParams> params)
         : objectId(id), objectParams(std::move(params))
     {
     }
-    
+
 public:
     /**
      * Create a ball object builder
      */
     static StageObjectBuilder ball()
     {
-        return StageObjectBuilder(1, std::make_unique<BallParams>()); // 1 = OBJ_BALL
+        return StageObjectBuilder(StageObjectType::Ball, std::make_unique<BallParams>());
     }
-    
+
     /**
      * Create a floor object builder
      */
     static StageObjectBuilder floor()
     {
-        return StageObjectBuilder(3, std::make_unique<FloorParams>()); // 3 = OBJ_FLOOR
+        return StageObjectBuilder(StageObjectType::Floor, std::make_unique<FloorParams>());
     }
 
     /**
@@ -374,7 +414,7 @@ public:
     {
         auto params = std::make_unique<ActionParams>();
         params->command = command;
-        return StageObjectBuilder(6, std::move(params)); // 6 = OBJ_ACTION
+        return StageObjectBuilder(StageObjectType::Action, std::move(params));
     }
 
     /**
@@ -382,7 +422,7 @@ public:
      */
     static StageObjectBuilder ladder()
     {
-        return StageObjectBuilder(7, std::make_unique<LadderParams>()); // 7 = OBJ_LADDER
+        return StageObjectBuilder(StageObjectType::Ladder, std::make_unique<LadderParams>());
     }
 
     /**
@@ -423,7 +463,7 @@ public:
      */
     StageObjectBuilder& atMaxY()
     {
-        objectParams->y = 22;
+        objectParams->y = Stage::MIN_Y + 6;
         return *this;
     }
     

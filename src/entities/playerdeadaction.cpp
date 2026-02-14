@@ -2,7 +2,7 @@
 #include "../core/sprite.h"
 #include "logger.h"
 #include "player.h"
-#include "../main.h"    // For RES_Y, MAX_X
+#include "../main.h"    // For RES_Y, Stage::MAX_X
 
 PlayerDeadAction::PlayerDeadAction(Player* player, float velX, float velY)
     : player(player),
@@ -52,14 +52,14 @@ bool PlayerDeadAction::update(float dt)
     // Bounce off right edge
     if ( player->getFacing() == FacingDirection::RIGHT )
     {
-        if ( x + player->getWidth() >= MAX_X )
+        if ( x + player->getWidth() >= Stage::MAX_X )
         {
             velocityX = -2.0f;
         }
     }
     else
     {
-        if ( x <= MIN_X )
+        if ( x <= Stage::MIN_X )
         {
             velocityX = 2.0f;
         }

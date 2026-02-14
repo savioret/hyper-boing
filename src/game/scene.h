@@ -87,6 +87,12 @@ struct SceneBitmaps
 class Scene : public GameState
 {
 
+public:
+    // Font indices for fontNum[] array
+    static constexpr int FONT_BIG = 0;
+    static constexpr int FONT_SMALL = 1;
+    static constexpr int FONT_HUGE = 2;
+
 private:
     // Collision detection tolerances (extracted magic numbers)
     static constexpr float GROUND_SNAP_TOLERANCE = 1.0f;    ///< Distance tolerance for snapping to ground

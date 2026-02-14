@@ -29,7 +29,7 @@ int StageClear::init()
     xt1 = -bmp.title1.getWidth();
     xt2 = 640;
     yt1 = 50;
-    yt2 = 50 + bmp.title1.getHeight() + gameinf.getStageRes().fontnum[FONT_HUGE].getHeight() + 25;
+    yt2 = 50 + bmp.title1.getHeight() + gameinf.getStageRes().fontnum[Scene::FONT_HUGE].getHeight() + 25;
     yr1 = -16;
     yr2 = 480;
 
@@ -37,8 +37,8 @@ int StageClear::init()
     ynum = -90;
 
     // Initialize score displays
-    cscore[PLAYER1] = 0;
-    cscore[PLAYER2] = 0;
+    cscore[AppData::PLAYER1] = 0;
+    cscore[AppData::PLAYER2] = 0;
 
     // Start in TextSlideIn state
     setSubState(LevelClearSubState::TextSlideIn);
@@ -91,7 +91,7 @@ void StageClear::drawAll()
     // Always draw title text and stage number
     appGraph.draw(&bmp.title1, xt1, yt1);
     appGraph.draw(&bmp.title2, xt2, yt2);
-    appGraph.draw(&scene->fontNum[FONT_HUGE], cad, xnum, ynum);
+    appGraph.draw(&scene->fontNum[Scene::FONT_HUGE], cad, xnum, ynum);
 
     // Don't draw player icons/scores during text slide out or curtain opening
     if (currentSubState == LevelClearSubState::TextSlideOut ||
@@ -102,14 +102,14 @@ void StageClear::drawAll()
     if (currentSubState != LevelClearSubState::CurtainClosing &&
         currentSubState != LevelClearSubState::TextSlideOut)
     {
-        if (gameinf.getPlayer(PLAYER1)->isPlaying())
+        if (gameinf.getPlayer(AppData::PLAYER1)->isPlaying())
         {
-            appGraph.draw(&res.miniplayer[PLAYER1], 40, 300);
+            appGraph.draw(&res.miniplayer[AppData::PLAYER1], 40, 300);
         }
-        if (gameinf.getPlayer(PLAYER2))
-            if (gameinf.getPlayer(PLAYER2)->isPlaying())
+        if (gameinf.getPlayer(AppData::PLAYER2))
+            if (gameinf.getPlayer(AppData::PLAYER2)->isPlaying())
             {
-                appGraph.draw(&res.miniplayer[PLAYER2], 350, 300);
+                appGraph.draw(&res.miniplayer[AppData::PLAYER2], 350, 300);
             }
     }
 
@@ -118,11 +118,11 @@ void StageClear::drawAll()
         currentSubState != LevelClearSubState::CurtainClosing &&
         currentSubState != LevelClearSubState::TextSlideOut)
     {
-        if (gameinf.getPlayer(PLAYER1)->isPlaying())
-            appGraph.draw(&scene->fontNum[FONT_SMALL], cscore[PLAYER1], 105, 320);
-        if (gameinf.getPlayer(PLAYER2))
-            if (gameinf.getPlayer(PLAYER2)->isPlaying())
-                appGraph.draw(&scene->fontNum[FONT_SMALL], cscore[PLAYER2], 450, 320);
+        if (gameinf.getPlayer(AppData::PLAYER1)->isPlaying())
+            appGraph.draw(&scene->fontNum[Scene::FONT_SMALL], cscore[AppData::PLAYER1], 105, 320);
+        if (gameinf.getPlayer(AppData::PLAYER2))
+            if (gameinf.getPlayer(AppData::PLAYER2)->isPlaying())
+                appGraph.draw(&scene->fontNum[Scene::FONT_SMALL], cscore[AppData::PLAYER2], 450, 320);
     }
 }
 
@@ -167,18 +167,18 @@ int StageClear::moveAll()
         {
             // Check if player wants to skip counting
             bool skipRequested = false;
-            if (appInput.key(gameinf.getKeys(PLAYER1).getShoot()))
+            if (appInput.key(gameinf.getKeys(AppData::PLAYER1).getShoot()))
                 skipRequested = true;
-            else if (gameinf.getPlayer(PLAYER2))
-                if (appInput.key(gameinf.getKeys(PLAYER2).getShoot()))
+            else if (gameinf.getPlayer(AppData::PLAYER2))
+                if (appInput.key(gameinf.getKeys(AppData::PLAYER2).getShoot()))
                     skipRequested = true;
 
             if (skipRequested)
             {
                 // Instantly finish score counting
-                cscore[PLAYER1] = gameinf.getPlayer(PLAYER1)->getScore();
-                if (gameinf.getPlayer(PLAYER2))
-                    cscore[PLAYER2] = gameinf.getPlayer(PLAYER2)->getScore();
+                cscore[AppData::PLAYER1] = gameinf.getPlayer(AppData::PLAYER1)->getScore();
+                if (gameinf.getPlayer(AppData::PLAYER2))
+                    cscore[AppData::PLAYER2] = gameinf.getPlayer(AppData::PLAYER2)->getScore();
                 LOG_INFO("StageClear: Player skipped score counting");
                 setSubState(LevelClearSubState::WaitingForInput);
                 break;
@@ -188,16 +188,16 @@ int StageClear::moveAll()
             bool player1Done = false;
             bool player2Done = true;  // Assume done if no player 2
 
-            if (cscore[PLAYER1] < gameinf.getPlayer(PLAYER1)->getScore())
-                cscore[PLAYER1]++;
+            if (cscore[AppData::PLAYER1] < gameinf.getPlayer(AppData::PLAYER1)->getScore())
+                cscore[AppData::PLAYER1]++;
             else
                 player1Done = true;
 
-            if (gameinf.getPlayer(PLAYER2))
+            if (gameinf.getPlayer(AppData::PLAYER2))
             {
-                if (cscore[PLAYER2] < gameinf.getPlayer(PLAYER2)->getScore())
+                if (cscore[AppData::PLAYER2] < gameinf.getPlayer(AppData::PLAYER2)->getScore())
                 {
-                    cscore[PLAYER2]++;
+                    cscore[AppData::PLAYER2]++;
                     player2Done = false;
                 }
                 else
@@ -215,14 +215,14 @@ int StageClear::moveAll()
         case LevelClearSubState::WaitingForInput:
         {
             // Wait for player to press fire button to continue
-            if (appInput.key(gameinf.getKeys(PLAYER1).getShoot()))
+            if (appInput.key(gameinf.getKeys(AppData::PLAYER1).getShoot()))
             {
                 LOG_INFO("StageClear: Player 1 pressed fire, starting curtain close");
                 setSubState(LevelClearSubState::CurtainClosing);
             }
-            else if (gameinf.getPlayer(PLAYER2))
+            else if (gameinf.getPlayer(AppData::PLAYER2))
             {
-                if (appInput.key(gameinf.getKeys(PLAYER2).getShoot()))
+                if (appInput.key(gameinf.getKeys(AppData::PLAYER2).getShoot()))
                 {
                     LOG_INFO("StageClear: Player 2 pressed fire, starting curtain close");
                     setSubState(LevelClearSubState::CurtainClosing);

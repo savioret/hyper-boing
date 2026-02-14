@@ -82,7 +82,7 @@ void GunShot::update(float dt)
         if (!inImpact)
         {
             // Normal upward movement
-            if (yPos <= MIN_Y)
+            if (yPos <= Stage::MIN_Y)
             {
                 onCeilingHit();  // Trigger impact animation
             }

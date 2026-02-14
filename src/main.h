@@ -21,44 +21,6 @@
 #include "appdata.h"
 #include "audiomanager.h"
 
-// Object identifiers
-constexpr int OBJ_NULL = 0;
-constexpr int OBJ_BALL = 1;
-constexpr int OBJ_SHOOT = 2;
-constexpr int OBJ_FLOOR = 3;
-constexpr int OBJ_ITEM = 4;
-constexpr int OBJ_PLAYER = 5;
-constexpr int OBJ_ACTION = 6;
-constexpr int OBJ_LADDER = 7;
-
-// Animation frames
-constexpr int ANIM_WALK = 0;
-//constexpr int ANIM_RIGHT = 5;
-constexpr int ANIM_SHOOT = 5;
-constexpr int ANIM_WIN = 7;
-constexpr int ANIM_DEAD = 8;
-
-// Screen boundaries
-constexpr int MAX_Y = 415;
-constexpr int MIN_Y = 16;
-constexpr int MAX_X = 623;
-constexpr int MIN_X = 16;
-
-// Player indices
-constexpr int PLAYER1 = 0;
-constexpr int PLAYER2 = 1;
-
-// Change modes
-constexpr int CHANGE_MAIN = 1;
-constexpr int CHANGE_SCENE = 2;
-
-// Font types
-constexpr int FONT_BIG = 0;
-constexpr int FONT_SMALL = 1;
-constexpr int FONT_HUGE = 2;
-
-constexpr int GLOBAL_UPDATE_FRAMERATE = 60;
-
 // Legacy compatibility macros - for gradual migration
 #define gameinf AppData::instance()
 #define quit AppData::instance().quit

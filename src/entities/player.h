@@ -105,6 +105,13 @@ private:
     static constexpr float MAX_FALL_SPEED = 7.0f;     // Terminal velocity
     static constexpr float GROUND_SNAP_TOLERANCE = 1.0f;  // Distance tolerance for snapping to ground
 
+    // Fallback animation frame indices (used when Aseprite JSON is not available)
+    static constexpr int ANIM_WALK = 0;
+    static constexpr int ANIM_SHOOT = 5;
+    static constexpr int ANIM_SHOOT_POSE = ANIM_SHOOT + 1;
+    static constexpr int ANIM_WIN = 7;
+    static constexpr int ANIM_DEAD = 8;
+
 public:
     Player(int id);
     ~Player();
