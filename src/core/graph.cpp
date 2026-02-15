@@ -151,42 +151,45 @@ void Graph::release() {
 }
 
 void Graph::draw(Sprite* spr, int x, int y) {
-    SDL_Rect srcRect = { spr->srcX, spr->srcY, spr->sx, spr->sy };
-    SDL_Rect dstRect = { x + spr->xoff, y + spr->yoff, spr->sx, spr->sy };
-    SDL_RenderCopy(renderer, spr->bmp, &srcRect, &dstRect);
+    if (!spr || !spr->getBmp()) return;
+    SDL_Rect srcRect = { spr->getSrcX(), spr->getSrcY(), spr->getWidth(), spr->getHeight() };
+    SDL_Rect dstRect = { x + spr->getXOff(), y + spr->getYOff(), spr->getWidth(), spr->getHeight() };
+    SDL_RenderCopy(renderer, spr->getBmp(), &srcRect, &dstRect);
 }
 
 void Graph::draw(Sprite* spr, int x, int y, bool flipHorizontal) {
-    SDL_Rect srcRect = { spr->srcX, spr->srcY, spr->sx, spr->sy };
-    SDL_Rect dstRect = { x + spr->xoff, y + spr->yoff, spr->sx, spr->sy };
+    if (!spr || !spr->getBmp()) return;
+    SDL_Rect srcRect = { spr->getSrcX(), spr->getSrcY(), spr->getWidth(), spr->getHeight() };
+    SDL_Rect dstRect = { x + spr->getXOff(), y + spr->getYOff(), spr->getWidth(), spr->getHeight() };
 
     if (flipHorizontal) {
-        SDL_RenderCopyEx(renderer, spr->bmp, &srcRect, &dstRect,
-                        0.0,  // angle (no rotation)
-                        nullptr,  // center point (use default)
+        SDL_RenderCopyEx(renderer, spr->getBmp(), &srcRect, &dstRect,
+                        0.0,
+                        nullptr,
                         SDL_FLIP_HORIZONTAL);
     } else {
-        SDL_RenderCopy(renderer, spr->bmp, &srcRect, &dstRect);
+        SDL_RenderCopy(renderer, spr->getBmp(), &srcRect, &dstRect);
     }
 }
 
 void Graph::drawScaled(Sprite* spr, int x, int y, int w, int h) {
-    SDL_Rect srcRect = { spr->srcX, spr->srcY, spr->sx, spr->sy };
-    SDL_Rect dstRect = { x + spr->xoff, y + spr->yoff, w, h };
-    SDL_RenderCopy(renderer, spr->bmp, &srcRect, &dstRect);
+    if (!spr || !spr->getBmp()) return;
+    SDL_Rect srcRect = { spr->getSrcX(), spr->getSrcY(), spr->getWidth(), spr->getHeight() };
+    SDL_Rect dstRect = { x + spr->getXOff(), y + spr->getYOff(), w, h };
+    SDL_RenderCopy(renderer, spr->getBmp(), &srcRect, &dstRect);
 }
 
 void Graph::drawClipped(Sprite* spr, int x, int y, int visibleHeight) {
-    if (visibleHeight <= 0 || !spr || !spr->bmp) return;
+    if (visibleHeight <= 0 || !spr || !spr->getBmp()) return;
 
     // Clamp visibleHeight to sprite's actual height
-    int clampedHeight = (visibleHeight < spr->sy) ? visibleHeight : spr->sy;
+    int clampedHeight = (visibleHeight < spr->getHeight()) ? visibleHeight : spr->getHeight();
 
     // Source rect: top portion of sprite only
-    SDL_Rect srcRect = { spr->srcX, spr->srcY, spr->sx, clampedHeight };
+    SDL_Rect srcRect = { spr->getSrcX(), spr->getSrcY(), spr->getWidth(), clampedHeight };
     // Dest rect: same size as clipped source
-    SDL_Rect dstRect = { x + spr->xoff, y + spr->yoff, spr->sx, clampedHeight };
-    SDL_RenderCopy(renderer, spr->bmp, &srcRect, &dstRect);
+    SDL_Rect dstRect = { x + spr->getXOff(), y + spr->getYOff(), spr->getWidth(), clampedHeight };
+    SDL_RenderCopy(renderer, spr->getBmp(), &srcRect, &dstRect);
 }
 
 void Graph::draw(SDL_Texture* texture, const SDL_Rect* srcRect, int x, int y) {

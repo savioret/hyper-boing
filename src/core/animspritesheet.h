@@ -40,6 +40,10 @@ class Graph;
  */
 class AnimSpriteSheet
 {
+protected:
+    int width = 0;   // Maximum frame width for bounding box calculations
+    int height = 0;  // Maximum frame height for bounding box calculations
+
 public:
     // ========================================================================
     // Construction / Factory Methods
@@ -148,6 +152,9 @@ public:
      */
     void setOnStateComplete(std::function<void(const std::string&)> callback);
 
+    int getWidth() const { return width; }
+    int getHeight() const { return height; }
+
     // ========================================================================
     // Cloning (for shared texture, independent animation)
     // ========================================================================
@@ -194,6 +201,18 @@ public:
     bool isValid() const;
 
 private:
+    /**
+     * Calculate the maximum bounding box dimensions for all animation frames
+     * 
+     * This is useful for positioning effects with stable bottom-middle anchoring
+     * across frames with varying sizes and offsets.
+     * 
+     * @param outWidth Output parameter for bounding box width
+     * @param outHeight Output parameter for bounding box height
+     * @return true if successful, false if no frames available
+     */
+    bool getBoundingBoxSize(int& outWidth, int& outHeight) const;
+
     // Texture/frame data
     std::unique_ptr<SpriteSheet> ownedSheet;  // Used when owning
     SpriteSheet* sharedSheet;                  // Used when sharing (non-owning)

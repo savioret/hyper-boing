@@ -1,42 +1,38 @@
 #include "main.h"
 #include "gunshot.h"
+#include "../core/animspritesheet.h"
 #include "../game/scene.h"
 #include "../game/floor.h"
 #include "player.h"
 #include "../core/graph.h"
 #include "../core/spritesheet.h"
 #include "../core/animcontroller.h"
+#include "../core/coordhelper.h"
 
 /**
  * GunShot constructor
  *
- * Initializes an animated bullet projectile using a sprite sheet.
+ * Initializes an animated bullet projectile using AnimSpriteSheet.
  *
  * @param scn The scene this shot belongs to
  * @param pl The player who fired the shot
- * @param sheet Sprite sheet containing all gun bullet frames
- * @param xOffset Horizontal offset for multi-projectile weapons
+ * @param animSheet AnimSpriteSheet containing gun bullet frames and animation
  */
-GunShot::GunShot(Scene* scn, Player* pl, SpriteSheet* sheet)
+GunShot::GunShot(Scene* scn, Player* pl, AnimSpriteSheet* animSheet)
     : Shot(scn, pl, WeaponType::GUN)
 {
-    // Clone animation template from AppData (no need to redefine states for each bullet)
-    auto clonedAnim = AppData::instance().stageRes.gunBulletAnim->clone();
-    sprite.init(sheet, std::move(clonedAnim));
+    // Clone the AnimSpriteSheet template for this bullet instance
+    anim = animSheet->clone();
 
-    // Set callback to kill shot when impact animation completes
-    // Access the underlying StateMachineAnim to set the callback
-    if (auto* stateMachine = dynamic_cast<StateMachineAnim*>(sprite.getController()))
-    {
-        stateMachine->setOnStateComplete([this](const std::string& state) {
-            if (state == "impact")
-            {
-                kill();
-            }
-        });
-    }
+    // Set callback to kill shot when die animation completes
+    anim->setOnStateComplete([this](const std::string& state) {
+        if (state == "die")
+        {
+            kill();
+        }
+    });
 
-    sprite.setState("flight_intro");
+    //sprite->setState("flight_intro");
 
     // Player uses bottom-middle coordinates (X = center, Y = bottom)
     // Calculate shot spawn position based on player facing direction
@@ -46,17 +42,23 @@ GunShot::GunShot(Scene* scn, Player* pl, SpriteSheet* sheet)
     // When facing left, spawn on left side; when facing right, spawn on right side
     if (pl->getFacing() == FacingDirection::LEFT)
     {
-        // Convert center to left edge, then apply offsets
-        xPos = xInit = pl->getX() - halfWidth + spriteOffset + 5;
+        xPos = xInit = pl->getX() + - 10;
     }
     else  // FacingDirection::RIGHT
     {
         // Player X is already center; add offset for right-side spawn
-        xPos = xInit = pl->getX() + spriteOffset + 14;
+        xPos = xInit = pl->getX() + 10;
     }
 
     // Player Y is bottom; convert to top and add offset for weapon position
-    yPos = yInit = pl->getY() - pl->getHeight() + 2.0f;
+    yPos = yInit = pl->getY() - pl->getHeight() + 5.0f;
+
+    // Spawn muzzle flash at the weapon X, player head Y
+    AnimSpriteSheet* sparkTmpl = gameinf.getStageRes().gunSparkAnim.get();
+    //int sparkW, sparkH;
+    //sparkTmpl->getBoundingBoxSize(sparkW, sparkH);
+    if ( sparkTmpl )
+        scene->spawnEffect(sparkTmpl, (int)xPos, yPos);// (int)( pl->getY() - pl->getHeight() + 2 ));
 }
 
 GunShot::~GunShot()
@@ -67,7 +69,7 @@ GunShot::~GunShot()
  * Update gun bullet movement and animation
  *
  * Advances animation frames and moves the bullet upward during flight states.
- * During impact state, bullet stays in place while playing impact animation.
+ * During die state, bullet stays in place while playing die animation.
  *
  * @param dt Delta time in seconds
  */
@@ -75,7 +77,7 @@ void GunShot::update(float dt)
 {
     // Convert dt from seconds to milliseconds for animation controller
     float dtMs = dt * 1000.0f;
-    sprite.update(dtMs);
+    anim->update(dtMs);
 
     if (!isDead())
     {
@@ -84,30 +86,31 @@ void GunShot::update(float dt)
             // Normal upward movement
             if (yPos <= Stage::MIN_Y)
             {
-                onCeilingHit();  // Trigger impact animation
+                onCeilingHit();  // Trigger die animation
             }
             else
             {
                 yPos -= weaponSpeed;
             }
         }
-        // During impact state, bullet stays in place while animation plays
+        // During die state, bullet stays in place while animation plays
         // The onStateComplete callback will call kill() when done
     }
 }
 
 /**
- * Trigger impact animation sequence
+ * Trigger die animation sequence
  *
- * Switches to impact state and starts playing frames 5→6
+ * Switches to die state and starts playing frames 5→6
  */
-void GunShot::triggerImpact()
+void GunShot::triggerImpact(float impactY)
 {
     if (!inImpact)
     {
         inImpact = true;
-        sprite.setState("impact");
+        anim->setState("die");
         player->looseShoot();  // Decrement player's shot count
+        yPos = impactY + anim->getHeight();  // Align Y position to impacted element (sprite pixels are top aligned)
     }
 }
 
@@ -118,32 +121,35 @@ void GunShot::triggerImpact()
  */
 void GunShot::draw(Graph* graph)
 {
-    Sprite* frame = sprite.getActiveSprite();
+    Sprite* frame = anim->getCurrentSprite();
 
     if (frame)
     {
-        graph->draw(frame, (int)xPos, (int)yPos);
+        int renderX = toRenderX(xPos, anim->getWidth());
+        int renderY = toRenderY(yPos, anim->getHeight());
+
+        graph->draw(frame, renderX, renderY);
     }
 }
 
 /**
- * Handle floor collision - trigger impact animation
+ * Handle floor collision - trigger die animation
  */
 void GunShot::onFloorHit(Floor* f)
 {
-    triggerImpact();
+    triggerImpact(f->getY() + f->getHeight());
 }
 
 /**
- * Handle ceiling collision - trigger impact animation
+ * Handle ceiling collision - trigger die animation
  */
 void GunShot::onCeilingHit()
 {
-    triggerImpact();
+    triggerImpact(Stage::MIN_Y);
 }
 
 /**
- * Handle ball collision - instant kill (no impact animation)
+ * Handle ball collision - instant kill (no die animation)
  */
 void GunShot::onBallHit(Ball* b)
 {
@@ -172,11 +178,16 @@ bool GunShot::collision(Floor* fl)
 CollisionBox GunShot::getCollisionBox() const
 {
     Sprite* spr = getCurrentSprite();
-    if (!spr)
-    {
-        // Fallback if spr not found (shouldn't happen)
-        return { (int)xPos, (int)yPos, 16, 16 };
-    }
 
-    return { (int)xPos, (int)yPos, spr->getWidth(), spr->getHeight() };
+    // Visual position matches draw() logic:
+    int visualX = toRenderX(getX(), anim->getWidth());
+    int visualY = toRenderY(getY(), anim->getHeight());
+
+    // Apply collision margins (same as original Ball::collision logic)
+    return {
+        visualX,            // Left margin
+        visualY,            // Top offset
+        spr->getWidth(),    // Width minus both side margins
+        spr->getHeight()    // Height minus top offset
+    };
 }

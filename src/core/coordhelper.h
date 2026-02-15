@@ -25,13 +25,13 @@ inline int toRenderY(float logicalY, int spriteHeight) {
 // Convert bottom-middle position to top-left render position (sprite-aware)
 // Uses sourceSize for correct positioning of trimmed Aseprite sprites.
 // drawEx() will add the sprite's xOff/yOff to place the trimmed content correctly.
-inline int toRenderX(float logicalX, Sprite* spr) {
-    return (int)(logicalX - spr->getWidth() / 2.0f);
-}
-
-inline int toRenderY(float logicalY, Sprite* spr) {
-    return (int)(logicalY - spr->getSourceHeight());
-}
+//inline int toRenderX(float logicalX, Sprite* spr) {
+//    return (int)(logicalX - spr->getWidth() / 2.0f - spr->getXOff());
+//}
+//
+//inline int toRenderY(float logicalY, Sprite* spr) {
+//    return (int)(logicalY - spr->getSourceHeight() - spr->getYOff());
+//}
 
 // Convert top-left to bottom-middle (for reading legacy positions)
 inline float toLogicalX(int renderX, int spriteWidth) {

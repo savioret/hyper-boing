@@ -7,6 +7,7 @@
 #include "main.h"
 #include "logger.h"
 #include "asepriteloader.h"
+#include "animspritesheet.h"
 #include <cstdlib>
 
 // Temporarily undefine macros that conflict with member names during construction
@@ -159,23 +160,18 @@ void AppData::initStageResources()
     stageRes.harpoonAnim = AsepriteLoader::load(&appGraph, "assets/graph/entities/harpoon_chain.json", stageRes.harpoonChain);
 
     // Load gun bullet sprite sheet with animation data
-    stageRes.gunBullet.init(&appGraph, "assets/graph/entities/gun_bullet.png");
-    // Frame data from gun_bullet.png specification
-    stageRes.gunBullet.addFrame(4, 1, 4, 8, -2, 0);      // Frame 0
-    stageRes.gunBullet.addFrame(16, 1, 8, 8, -4, 0);     // Frame 1
-    stageRes.gunBullet.addFrame(32, 1, 12, 8, -6, 0);    // Frame 2
-    stageRes.gunBullet.addFrame(52, 2, 16, 7, -8, 0);    // Frame 3
-    stageRes.gunBullet.addFrame(76, 0, 14, 9, -7, 0);    // Frame 4
-    stageRes.gunBullet.addFrame(98, 4, 10, 5, -5, -1);   // Frame 5 (impact)
-    stageRes.gunBullet.addFrame(116, 4, 14, 5, -7, -1);  // Frame 6 (impact)
-    appGraph.setColorKey(stageRes.gunBullet.getTexture(), 0x00FF00);
+    stageRes.gunBulletAnim = AnimSpriteSheet::loadAsStateMachine(&appGraph, "assets/graph/entities/gun_bullet.json");
 
-    // Define gun bullet animation states (template to be cloned per shot)
-    auto gunAnim = std::make_unique<StateMachineAnim>();
-    gunAnim->addState("flight_intro", {0, 1, 2, 3, 4}, 150, 1, "flight_loop");  // Play once then transition
-    gunAnim->addState("flight_loop", {3, 4}, 150, 0);  // Infinite loop
-    gunAnim->addState("impact", {5, 6}, 150, 1);  // Play once
-    stageRes.gunBulletAnim = std::move(gunAnim);
+    // Load ball pop effect animations (size 0, 1, 2+)
+    stageRes.ballPopAnim[0] = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/ball_pop1.json");
+    stageRes.ballPopAnim[1] = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/ball_pop2.json");
+    stageRes.ballPopAnim[2] = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/ball_pop3.json");
+
+    // Load gun muzzle flash effect
+    stageRes.gunSparkAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/gun_spark.json");
+
+    // Load harpoon muzzle flash effect
+    stageRes.harpoonSparkAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/harpoon_spark.json");
 
     // Load border markers
     stageRes.mark[0].init(&appGraph, "assets/graph/entities/ladrill1.png");
@@ -498,7 +494,6 @@ void AppData::release()
         // Release weapon sprites
         stageRes.harpoonTip.release();
         stageRes.harpoonChain.release();
-        stageRes.gunBullet.release();
 
         for (int i = 0; i < 3; i++)
         {

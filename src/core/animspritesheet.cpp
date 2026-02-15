@@ -25,6 +25,7 @@ AnimSpriteSheet::AnimSpriteSheet(std::unique_ptr<SpriteSheet> sheet,
     , stateMachinePtr(nullptr)
 {
     updateStateMachineCache();
+    getBoundingBoxSize(width, height);
 }
 
 AnimSpriteSheet::AnimSpriteSheet(SpriteSheet* shared,
@@ -35,6 +36,7 @@ AnimSpriteSheet::AnimSpriteSheet(SpriteSheet* shared,
     , stateMachinePtr(nullptr)
 {
     updateStateMachineCache();
+    getBoundingBoxSize(width, height);
 }
 
 AnimSpriteSheet::~AnimSpriteSheet() = default;
@@ -49,6 +51,7 @@ AnimSpriteSheet::AnimSpriteSheet(AnimSpriteSheet&& other) noexcept
 {
     other.sharedSheet = nullptr;
     other.stateMachinePtr = nullptr;
+    getBoundingBoxSize(width, height);
 }
 
 // Move assignment
@@ -61,6 +64,8 @@ AnimSpriteSheet& AnimSpriteSheet::operator=(AnimSpriteSheet&& other) noexcept
         ownsSheet = other.ownsSheet;
         animController = std::move(other.animController);
         stateMachinePtr = other.stateMachinePtr;
+        width = other.width;
+        height = other.height;
 
         other.sharedSheet = nullptr;
         other.stateMachinePtr = nullptr;
@@ -224,6 +229,55 @@ Sprite* AnimSpriteSheet::getFrame(int index) const
 bool AnimSpriteSheet::isValid() const
 {
     return getSpriteSheet() != nullptr && animController != nullptr;
+}
+
+bool AnimSpriteSheet::getBoundingBoxSize(int& outWidth, int& outHeight) const
+{
+    int frameCount = getFrameCount();
+    if (frameCount == 0)
+    {
+        outWidth = 0;
+        outHeight = 0;
+        return false;
+    }
+
+    // Initialize with impossible values
+    int minX = INT_MAX;
+    int minY = INT_MAX;
+    int maxX = INT_MIN;
+    int maxY = INT_MIN;
+
+    // Iterate through all frames to find the bounding box
+    for (int i = 0; i < frameCount; i++)
+    {
+        Sprite* frame = getFrame(i);
+        if (!frame) continue;
+
+        // Calculate the visual bounds of this frame
+        // Top-left corner is at (xOff, yOff)
+        int frameLeft = frame->getXOff();
+        int frameTop = frame->getYOff();
+        int frameRight = frameLeft + frame->getWidth();
+        int frameBottom = frameTop + frame->getHeight();
+
+        // Update bounding box
+        if (frameLeft < minX) minX = frameLeft;
+        if (frameTop < minY) minY = frameTop;
+        if (frameRight > maxX) maxX = frameRight;
+        if (frameBottom > maxY) maxY = frameBottom;
+    }
+
+    // Calculate final dimensions
+    if (minX == INT_MAX || minY == INT_MAX)
+    {
+        outWidth = 0;
+        outHeight = 0;
+        return false;
+    }
+
+    outWidth = maxX - minX;
+    outHeight = maxY - minY;
+    return true;
 }
 
 // ============================================================================

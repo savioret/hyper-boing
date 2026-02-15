@@ -1,5 +1,6 @@
 #include "main.h"
 #include "harpoonshot.h"
+#include "../core/animspritesheet.h"
 #include "../game/scene.h"
 #include "player.h"
 #include "logger.h"
@@ -52,6 +53,11 @@ HarpoonShot::HarpoonShot(Scene* scn, Player* pl, WeaponType type)
             xPos = xInit = pl->getX() - tipWidth / 2.0f + off;
         }
     }
+
+    // Spawn muzzle flash centered on the harpoon head at player head Y
+    AnimSpriteSheet* sparkTmpl = gameinf.getStageRes().harpoonSparkAnim.get();
+    if (sparkTmpl)
+        scene->spawnEffect(sparkTmpl, (int)xPos + tipWidth / 2, (int)(pl->getY() - pl->getHeight()) + 7);
 }
 
 HarpoonShot::~HarpoonShot()

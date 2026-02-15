@@ -7,6 +7,7 @@
 #include "bmfont.h"
 #include "player.h"
 #include "ball.h"
+#include "animeffect.h"
 #include "shot.h"
 #include "spritesheet.h"
 #include "floor.h"
@@ -311,11 +312,12 @@ public:
     BmNumFont fontNum[3]; ///< Bitmap fonts (small, medium, large)
 
     // Entity lists
-    std::list<std::unique_ptr<Ball>> lsBalls;     ///< Active balls in scene
-    std::list<std::unique_ptr<Item>> lsItems;     ///< Active items (unused currently)
-    std::list<std::unique_ptr<Floor>> lsFloor;    ///< Active floors/platforms
-    std::list<std::unique_ptr<Ladder>> lsLadders; ///< Active ladders (climbable)
-    std::list<std::unique_ptr<Shot>> lsShoots;    ///< Active weapon shots
+    std::list<std::unique_ptr<Ball>> lsBalls;       ///< Active balls in scene
+    std::list<std::unique_ptr<Item>> lsItems;       ///< Active items (unused currently)
+    std::list<std::unique_ptr<Floor>> lsFloor;      ///< Active floors/platforms
+    std::list<std::unique_ptr<Ladder>> lsLadders;   ///< Active ladders (climbable)
+    std::list<std::unique_ptr<Shot>> lsShoots;      ///< Active weapon shots
+    std::list<std::unique_ptr<AnimEffect>> lsEffects; ///< Active one-shot animations (pops, sparks)
 
     /**
      * @brief Constructs a new Scene for the given stage
@@ -407,6 +409,14 @@ public:
      * @return Y coordinate of the nearest surface below the player
      */
     float findGroundLevel(Player* player) const;
+
+    /**
+     * @brief Spawns a one-shot animation effect centered at (x, y)
+     * @param tmpl Template AnimSpriteSheet to clone (must not be null)
+     * @param x Center X in screen coordinates
+     * @param y Center Y in screen coordinates
+     */
+    void spawnEffect(AnimSpriteSheet* tmpl, int x, int y);
 
     /**
      * @brief Fires a shot from the player

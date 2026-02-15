@@ -47,8 +47,6 @@ void Stage::setMusic(const char* musicFile)
         std::snprintf(music, sizeof(music), "%s", musicFile);
 }
 
-// NEW: Type-safe spawn methods
-
 void Stage::spawn(StageObject&& obj)
 {
     // Create unique_ptr and add to vector

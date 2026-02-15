@@ -1,9 +1,9 @@
 #pragma once
 
-#include "shot.h"
-#include "../core/animsprite.h"
+#include "shot.h"  
+#include "../core/animspritesheet.h"
 
-class SpriteSheet;
+class AnimSpriteSheet;
 
 /**
  * GunShot - Animated bullet projectile
@@ -18,7 +18,7 @@ class SpriteSheet;
 class GunShot : public Shot
 {
 private:
-    AnimSprite sprite;
+    std::unique_ptr<AnimSpriteSheet> anim;
     bool inImpact = false;     // Track if we're in impact state (for movement logic)
 
 public:
@@ -26,10 +26,9 @@ public:
      * Constructor
      * @param scn Scene this shot belongs to
      * @param pl Player who fired the shot
-     * @param sheet Sprite sheet containing gun bullet frames
-     * @param xOffset Horizontal offset for multi-projectile weapons
+     * @param animSheet AnimSpriteSheet containing gun bullet frames and animation
      */
-    GunShot(Scene* scn, Player* pl, SpriteSheet* sheet);
+    GunShot(Scene* scn, Player* pl, AnimSpriteSheet* animSheet);
     ~GunShot();
 
     // Implement abstract interface from Shot
@@ -51,11 +50,11 @@ public:
     bool collision(Floor* fl) override;
 
     // Accessors for debug visualization
-    Sprite* getCurrentSprite() const { return sprite.getActiveSprite(); }
+    Sprite* getCurrentSprite() const { return anim->getCurrentSprite(); }
 
 private:
     /**
      * Trigger impact animation sequence
      */
-    void triggerImpact();
+    void triggerImpact(float impactY);
 };

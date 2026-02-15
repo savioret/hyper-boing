@@ -6,6 +6,7 @@
 #include "sprite.h"
 #include "spritesheet.h"
 #include "animcontroller.h"
+#include "animspritesheet.h"
 #include "graph.h"
 #include "minput.h"
 #include "configdata.h"
@@ -80,8 +81,12 @@ struct StageResources
     Sprite harpoonTip;                        ///< Harpoon tip sprite
     SpriteSheet harpoonChain;                 ///< Harpoon chain animated sprite sheet (shared texture)
     std::unique_ptr<IAnimController> harpoonAnim;  ///< Template animation for harpoon chain (cloned per shot)
-    SpriteSheet gunBullet;                    ///< Gun bullet animated sprite sheet
-    std::unique_ptr<IAnimController> gunBulletAnim;  ///< Template animation for gun bullet (cloned per shot)
+    std::unique_ptr<AnimSpriteSheet> gunBulletAnim;  ///< Gun bullet sprite sheet with animation (cloned per shot)
+
+    // Effect animation templates (cloned per instance)
+    std::unique_ptr<AnimSpriteSheet> ballPopAnim[3];   ///< Ball pop effects: [0]=size0, [1]=size1, [2]=size2+
+    std::unique_ptr<AnimSpriteSheet> gunSparkAnim;     ///< Gun muzzle flash effect
+    std::unique_ptr<AnimSpriteSheet> harpoonSparkAnim; ///< Harpoon muzzle flash effect
     
     // Border/marker sprites
     Sprite mark[5];     ///< Border marker sprites

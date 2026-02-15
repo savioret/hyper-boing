@@ -638,8 +638,8 @@ void Player::draw(Graph* graph)
     if (!spr) return;
 
     RenderProps props = renderProps;
-    props.x = toRenderX(getX(), spr);
-    props.y = toRenderY(getY(), spr);
+    props.x = toRenderX(getX(), spr->getWidth());
+    props.y = toRenderY(getY(), spr->getHeight());
 
     graph->drawEx(spr, props);
 }
@@ -675,17 +675,11 @@ Sprite* Player::getActiveSprite() const
 CollisionBox Player::getCollisionBox() const
 {
     Sprite* spr = getActiveSprite();
-    if (!spr) {
-        // Fallback for no sprite
-        int renderX = toRenderX(getX(), getWidth());
-        int renderY = toRenderY(getY(), getHeight());
-        return { renderX + 5, renderY + 3, getWidth() - 10, getHeight() - 3 };
-    }
 
     // Visual position matches draw() logic:
     // toRenderX/Y gives top-left of source canvas, drawEx adds xOff/yOff
-    int visualX = toRenderX(getX(), spr) + spr->getXOff();
-    int visualY = toRenderY(getY(), spr) + spr->getYOff();
+    int visualX = toRenderX(getX(), spr->getWidth());// +spr->getXOff();
+    int visualY = toRenderY(getY(), spr->getHeight());// +spr->getYOff();
 
     // Apply collision margins (same as original Ball::collision logic)
     return {

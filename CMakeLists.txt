@@ -46,6 +46,7 @@ set(SOURCES
     src/core/jsonparser.cpp
     src/core/motion.cpp
     src/core/oncehelper.cpp
+    src/entities/animeffect.cpp
     src/entities/ball.cpp
     src/ui/bmfont.cpp
     src/core/configdata.cpp
@@ -98,6 +99,7 @@ set(HEADERS
     src/core/jsonparser.h
     src/core/motion.h
     src/core/oncehelper.h
+    src/entities/animeffect.h
     src/entities/ball.h
     src/ui/bmfont.h
     src/ui/configscreen.h

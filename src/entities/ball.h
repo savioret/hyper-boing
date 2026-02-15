@@ -32,7 +32,7 @@ private:
     Scene* scene;
 
 public:
-    Ball(Scene* scene, Ball* oldBall);
+    Ball(Scene* scene, Ball* oldBall, int dir);
     Ball(Scene* scene, int x, int y, int size, int dirX = 1, int dirY = 1, int top = 0, int id = 0);
     ~Ball();
 

@@ -525,7 +525,7 @@ std::unique_ptr<Shot> Scene::createShot(Player* pl, WeaponType type)
         return std::make_unique<HarpoonShot>(this, pl, type);
 
     case WeaponType::GUN:
-        return std::make_unique<GunShot>(this, pl, &res.gunBullet);
+        return std::make_unique<GunShot>(this, pl, res.gunBulletAnim.get());
 
     default:
         // Fallback to harpoon for unknown types
@@ -802,6 +802,17 @@ void Scene::updateEntities(float dt)
     {
         ladder->update(dt);
     }
+
+    for (const auto& effect : lsEffects)
+    {
+        effect->update(dt);
+    }
+}
+
+void Scene::spawnEffect(AnimSpriteSheet* tmpl, int x, int y)
+{
+    if (tmpl)
+        lsEffects.push_back(std::make_unique<AnimEffect>(x, y, tmpl));
 }
 
 void Scene::cleanupPhase()
@@ -810,10 +821,11 @@ void Scene::cleanupPhase()
     // Ball cleanup is special - creates children during cleanup
     cleanupBalls();
 
-    // Standard cleanup for shots, floors, and ladders (unique_ptr)
+    // Standard cleanup for shots, floors, ladders, and effects (unique_ptr)
     cleanupDeadObjects(lsShoots);
     cleanupDeadObjects(lsFloor);
     cleanupDeadObjects(lsLadders);
+    cleanupDeadObjects(lsEffects);
 }
 
 void Scene::updateTimer(float dt)
@@ -1340,12 +1352,10 @@ void Scene::drawBoundingBoxes()
     // Draw ball bounding boxes (circles represented as bounding squares)
     for (const auto& b : lsBalls)
     {
-        int x = (int)b->getX();
-        int y = (int)b->getY();
-        int d = b->getDiameter();
-        appGraph.rectangle(x, y, x + d, y + d);
-        snprintf(buf, sizeof(buf), "%d,%d", x, y);
-        appGraph.text(buf, x, y);
+        CollisionBox box = b->getCollisionBox();
+        appGraph.rectangle(box.x, box.y, box.x + box.w, box.y + box.h);
+        snprintf(buf, sizeof(buf), "%d,%d", box.x, box.y);
+        appGraph.text(buf, box.x, box.y);
         //snprintf(buf, sizeof(buf), "%d,%d", d, d);
         //appGraph.text(buf, x, y + 8);
     }
@@ -1369,13 +1379,10 @@ void Scene::drawBoundingBoxes()
                 Sprite* sprite = gunShot->getCurrentSprite();
                 if (sprite)
                 {
-                    int spriteX = xPos + sprite->getXOff();
-                    int spriteY = yPos + sprite->getYOff();
-                    int w = sprite->getWidth();
-                    int h = sprite->getHeight();
-                    appGraph.rectangle(spriteX, spriteY, spriteX + w, spriteY + h);
-                    snprintf(buf, sizeof(buf), "%d,%d", spriteX, spriteY);
-                    appGraph.text(buf, spriteX, spriteY);
+                    CollisionBox box = s->getCollisionBox();
+                    appGraph.rectangle(box.x, box.y, box.x + box.w, box.y + box.h);
+                    snprintf(buf, sizeof(buf), "%d,%d", box.x, box.y);
+                    appGraph.text(buf, box.x, box.y);
                     // snprintf(buf, sizeof(buf), "%d,%d", w, h);
                     // appGraph.text(buf, spriteX, spriteY + 8);
                 }
@@ -1516,6 +1523,12 @@ void Scene::drawEntities()
     for (const auto& ball : lsBalls)
     {
         draw(ball.get());
+    }
+
+    // Draw one-shot animation effects (pop sparks, muzzle flashes) above balls
+    for (const auto& effect : lsEffects)
+    {
+        effect->draw(&appGraph);
     }
 }
 

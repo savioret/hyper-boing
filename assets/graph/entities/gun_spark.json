@@ -1,0 +1,47 @@
+{ "frames": [
+   {
+    "filename": "gun_spark 0.aseprite",
+    "frame": { "x": 0, "y": 0, "w": 6, "h": 6 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 6, "y": 8, "w": 6, "h": 6 },
+    "sourceSize": { "w": 18, "h": 14 },
+    "duration": 100
+   },
+   {
+    "filename": "gun_spark 1.aseprite",
+    "frame": { "x": 6, "y": 0, "w": 6, "h": 11 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 6, "y": 3, "w": 6, "h": 11 },
+    "sourceSize": { "w": 18, "h": 14 },
+    "duration": 100
+   },
+   {
+    "filename": "gun_spark 2.aseprite",
+    "frame": { "x": 12, "y": 0, "w": 16, "h": 10 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 1, "y": 4, "w": 16, "h": 10 },
+    "sourceSize": { "w": 18, "h": 14 },
+    "duration": 100
+   },
+   {
+    "filename": "gun_spark 3.aseprite",
+    "frame": { "x": 28, "y": 0, "w": 16, "h": 14 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 1, "y": 0, "w": 16, "h": 14 },
+    "sourceSize": { "w": 18, "h": 14 },
+    "duration": 100
+   }
+ ],
+ "meta": {
+  "app": "https://www.aseprite.org/",
+  "version": "1.3.16-beta3",
+  "image": "gun_spark.png",
+  "format": "RGBA8888",
+  "size": { "w": 44, "h": 14 },
+  "scale": "1"
+ }
+}

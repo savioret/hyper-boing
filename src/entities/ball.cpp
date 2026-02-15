@@ -1,4 +1,5 @@
 #include "main.h"
+#include "animspritesheet.h"
 #include "eventmanager.h"
 #include <cmath>
 #include <SDL.h>
@@ -59,24 +60,35 @@ Ball::Ball(Scene* scn, int x, int y, int size, int dx, int dy, int topVal, int i
  * BALL constructor
  *
  * Creates a new ball from an existing one. This occurs when a ball is hit by a shot.
- * The new ball is created at the same position as the destroyed one, but with its
- * size reduced by one unit.
+ * The new ball is created at the same center as the parent ball, but with its
+ * size reduced by one unit. A directional offset is applied based on the dir parameter
+ * to separate the two child balls.
  */
-Ball::Ball(Scene* scn, Ball* oldball)
+Ball::Ball(Scene* scn, Ball* oldball, int dir)
 {
     scene = scn;
-    this->xPos = oldball->xPos;
-    this->yPos = oldball->yPos;
-
-    y0 = oldball->yPos;
     id = oldball->id;
     dirY = 1;
-    dirX = 1;
+    dirX = dir;
     time = oldball->time;
 
     size = oldball->size + 1;
 
     diameter = gameinf.getStageRes().redball[size].getWidth();
+
+    // Calculate center of parent ball
+    float parentCenterX = oldball->xPos + (oldball->diameter / 2.0f);
+    float parentCenterY = oldball->yPos + (oldball->diameter / 2.0f);
+
+    // Position new ball at parent's center (top-left positioning)
+    this->xPos = parentCenterX - (diameter / 2.0f);
+    this->yPos = parentCenterY - (diameter / 2.0f);
+
+    // Apply directional offset proportional to diameter
+    float offset = diameter * 0.5f;
+    this->xPos += offset * dirX;
+
+    y0 = oldball->yPos;
 
     initTop();
     init();
@@ -231,6 +243,13 @@ void Ball::update(float dt)
 
 void Ball::onDeath()
 {
+    // Spawn pop animation centered on this ball
+    StageResources& res = gameinf.getStageRes();
+    int popIndex = (size == 0) ? 0 : (size == 1) ? 1 : 2;
+    AnimSpriteSheet* tmpl = res.ballPopAnim[popIndex].get();
+    if (tmpl)
+        scene->spawnEffect(tmpl, (int)xPos + diameter / 2, (int)yPos + diameter / 2 + tmpl->getHeight());
+
     // Fire BALL_SPLIT event if ball will split into smaller balls
     if (size < 3)
     {
@@ -249,10 +268,8 @@ std::pair<std::unique_ptr<Ball>, std::unique_ptr<Ball>> Ball::createChildren()
         return { nullptr, nullptr };
     }
 
-    auto child1 = std::make_unique<Ball>(scene, this);
-    auto child2 = std::make_unique<Ball>(scene, this);
-    child1->setDirX(-1);  // Left
-    child2->setDirX(1);   // Right
+    auto child1 = std::make_unique<Ball>(scene, this, -1);  // Left
+    auto child2 = std::make_unique<Ball>(scene, this, 1);   // Right
     
     return { std::move(child1), std::move(child2) };
 }
