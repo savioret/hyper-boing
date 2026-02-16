@@ -68,6 +68,7 @@ public:
     int getDirX() const { return dirX; }
     int getDirY() const { return dirY; }
     int getSize() const { return size; }
+    float getTime() const { return time; }
     int getDiameter() const { return diameter; }
     Sprite* getSprite() const { return sprite.getActiveSprite(); }
 

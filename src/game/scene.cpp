@@ -1470,14 +1470,15 @@ void Scene::drawDebugOverlay()
         {
             if (ballCount >= 15) break; // Limit to 15 balls
 
-            textOverlay.addTextFS("ball-info", "Ball%d: x=%.0f y=%.0f sz=%d dia=%d dx=%d dy=%d",
+            textOverlay.addTextFS("ball-info", "Ball%d: x=%.0f y=%.0f sz=%d dia=%d dx=%d dy=%d t=%.2f",
                     ballCount,
                     ball->getX(),
                     ball->getY(),
                     ball->getSize(),
                     ball->getDiameter(),
                     ball->getDirX(),
-                    ball->getDirY());
+                    ball->getDirY(),
+                    ball->getTime());
             ballCount++;
         }
     }

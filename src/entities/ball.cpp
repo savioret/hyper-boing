@@ -88,13 +88,19 @@ Ball::Ball(Scene* scn, Ball* oldball, int dir)
     float offset = diameter * 0.5f;
     this->xPos += offset * dirX;
 
-    y0 = oldball->yPos;
+    //y0 = oldball->yPos;
 
     initTop();
     init();
-    
-    y0 = yPos - ( float )(Stage::MAX_Y - top);
-    time = 0;
+
+    // Initialize for upward push from current position
+    dirY = -1;
+    time = maxTime / 2;  // Start at mid-flight to move upwards
+
+    // Calculate y0 so physics equation gives us yPos at this time:
+    // yPos = (MAX_Y - top) + y0 + 0.5 * gravity * time²
+    // Solving: y0 = yPos - (MAX_Y - top) - 0.5 * gravity * time²
+    y0 = yPos - (float)(Stage::MAX_Y - top) - 0.5f * gravity * time * time;
 }
 
 Ball::~Ball()
@@ -186,28 +192,19 @@ bool Ball::collision(Player* pl)
 void Ball::update(float dt)
 {
     float incx = dirX * 0.80f;
-    static float yPrev;
-    static float dif = 0;		
 
-    if (dirY == -1) yPrev = yPos;
-    
+    // Calculate new Y position using physics equation
     yPos = y0 + 0.5f * gravity * (time * time);
     yPos = (float)(Stage::MAX_Y - top) + yPos;
-
-    if (dirY == -1 && yPos < Stage::MAX_Y - diameter - 2) 
-        dif = yPos - yPrev; 
-    else 
-        dif = 1000.0f;
-
-    float absDif = std::abs(dif);
 
     xPos += incx;
     time += (float)dirY;
 
-    if (dirY == 1)	
+    if (dirY == 1)
     {
+        // Falling: check if hit floor
         if (yPos + diameter >= Stage::MAX_Y)
-        {			
+        {
             y0 = 0;
             dirY = -1;
             time = maxTime;
@@ -215,12 +212,21 @@ void Ball::update(float dt)
     }
     else if (dirY == -1)
     {
-        if (absDif < 0.006f)
+        // Rising: check if hit ceiling
+        if (yPos <= Stage::MIN_Y)
         {
-            dirY = 1;			
+            yPos = (float)Stage::MIN_Y;
+            dirY = 1;
+            time = 0;
+            // Calculate y0 so ball falls from ceiling position
+            y0 = (float)Stage::MIN_Y - (float)(Stage::MAX_Y - top);
         }
-
-        if (time < 0) time = 0;
+        // Rising: check if reached peak (time-based detection)
+        else if (time <= 0)
+        {
+            time = 0;
+            dirY = 1;
+        }
     }
 
     if (dirX == 1)	
