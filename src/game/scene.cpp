@@ -23,6 +23,7 @@ Scene::Scene(Stage* stg, std::unique_ptr<StageClear> pstgclr)
       gameOverSubState(GameOverSubState::ContinueCountdown),
       pStageClear(std::move(pstgclr)), gameOverCountdown(10),
       stage(stg), dSecond(0), timeRemaining(0), timeLine(0),
+      timeFrozen(false), freezeTimer(0.0f),
       moveTick(0), moveLastTick(0), moveCount(0),
       drawTick(0), drawLastTick(0), drawCount(0),
       boundingBoxes(false),
@@ -311,9 +312,9 @@ void Scene::checkValidPosition(int& x, int& y, int ballDiameter)
     }
 }
 
-void Scene::addItem(int x, int y, int id)
+void Scene::addPickup(int x, int y, PickupType type)
 {
-    lsItems.push_back(std::make_unique<Item>(x, y, id));
+    lsPickups.push_back(std::make_unique<Pickup>(this, x, y, type));
 }
 
 void Scene::addFloor(int x, int y, int id)
@@ -693,6 +694,23 @@ void Scene::checkSequence()
                 }
             }
             break;
+
+        case StageObjectType::Item:
+            if (obj.params)
+            {
+                if (auto* pickup = obj.getParams<PickupParams>())
+                {
+                    addPickup(obj.x, obj.y, pickup->pickupType);
+
+                    // Fire STAGE_OBJECT_SPAWNED event
+                    GameEventData event(GameEventType::STAGE_OBJECT_SPAWNED);
+                    event.objectSpawned.id = static_cast<int>(obj.id);
+                    event.objectSpawned.x = obj.x;
+                    event.objectSpawned.y = obj.y;
+                    EVENT_MGR.trigger(event);
+                }
+            }
+            break;
         }
     } while (obj.id != StageObjectType::Null);
 }
@@ -764,6 +782,21 @@ void Scene::setState(SceneState newState)
     }
 }
 
+void Scene::setTimeFrozen(bool frozen, float duration)
+{
+    timeFrozen = frozen;
+    if (frozen)
+    {
+        freezeTimer = duration;
+        LOG_DEBUG("Time frozen for %.1f seconds", duration);
+    }
+    else
+    {
+        freezeTimer = 0.0f;
+        LOG_DEBUG("Time unfrozen");
+    }
+}
+
 void Scene::updateFPSCounters()
 {
     moveTick = SDL_GetTicks();
@@ -783,9 +816,24 @@ void Scene::updateEntities(float dt)
 {
     // === PHASE 1: Movement ===
     // Update all objects without modifying lists
-    for (const auto& ball : lsBalls)
+
+    // Update freeze timer
+    if (timeFrozen)
     {
-        ball->update(dt);
+        freezeTimer -= dt;
+        if (freezeTimer <= 0.0f)
+        {
+            setTimeFrozen(false);
+        }
+    }
+
+    // Balls only update when NOT frozen
+    if (!timeFrozen)
+    {
+        for (const auto& ball : lsBalls)
+        {
+            ball->update(dt);
+        }
     }
 
     for (const auto& shot : lsShoots)
@@ -801,6 +849,12 @@ void Scene::updateEntities(float dt)
     for (const auto& ladder : lsLadders)
     {
         ladder->update(dt);
+    }
+
+    // Pickups always fall regardless of freeze state
+    for (const auto& pickup : lsPickups)
+    {
+        pickup->update(dt);
     }
 
     for (const auto& effect : lsEffects)
@@ -821,10 +875,11 @@ void Scene::cleanupPhase()
     // Ball cleanup is special - creates children during cleanup
     cleanupBalls();
 
-    // Standard cleanup for shots, floors, ladders, and effects (unique_ptr)
+    // Standard cleanup for shots, floors, ladders, pickups, and effects (unique_ptr)
     cleanupDeadObjects(lsShoots);
     cleanupDeadObjects(lsFloor);
     cleanupDeadObjects(lsLadders);
+    cleanupDeadObjects(lsPickups);
     cleanupDeadObjects(lsEffects);
 }
 
@@ -1106,6 +1161,7 @@ GameState* Scene::handlePlayingState(float dt)
         lsBalls,
         lsShoots,
         lsFloor,
+        lsPickups,
         { gameinf.player[AppData::PLAYER1].get(), gameinf.player[AppData::PLAYER2].get() },
         true  // checkPlayerCollisions = true during Playing state
     };
@@ -1231,6 +1287,7 @@ int Scene::release()
     lsShoots.clear();
     lsFloor.clear();
     lsLadders.clear();
+    lsPickups.clear();
 
     // Release only scene-specific sprites (background)
     bmp.back.release();
@@ -1484,11 +1541,12 @@ void Scene::drawDebugOverlay()
     }
 
     // Add game state info to default section
-    textOverlay.addTextF("Objects: Balls=%d Shoots=%d Floors=%d Ladders=%d",
+    textOverlay.addTextF("Objects: Balls=%d Shoots=%d Floors=%d Ladders=%d Pickups=%d",
             (int)lsBalls.size(),
             (int)lsShoots.size(),
             (int)lsFloor.size(),
-            (int)lsLadders.size());
+            (int)lsLadders.size(),
+            (int)lsPickups.size());
 
     textOverlay.addTextF("Stage: %d  Time=%d  Timeline=%d",
             stage->id, timeRemaining, timeLine);
@@ -1524,6 +1582,12 @@ void Scene::drawEntities()
     for (const auto& ball : lsBalls)
     {
         draw(ball.get());
+    }
+
+    // Draw pickups (above balls, below effects)
+    for (const auto& pickup : lsPickups)
+    {
+        pickup->draw(&appGraph);
     }
 
     // Draw one-shot animation effects (pop sparks, muzzle flashes) above balls

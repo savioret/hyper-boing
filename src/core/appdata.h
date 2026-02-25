@@ -101,7 +101,10 @@ struct StageResources
     
     // Font sprites
     Sprite fontnum[3];     ///< Number fonts (3 sizes)
-    
+
+    // Pickup sprites
+    Sprite pickupSprites[7];  ///< Pickup sprites (one per PickupType)
+
     bool initialized;      ///< True if resources have been loaded
     
     StageResources() : initialized(false) {}

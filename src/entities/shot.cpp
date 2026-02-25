@@ -29,18 +29,17 @@ Shot::Shot(Scene* scn, Player* pl, WeaponType type)
     {
         // Player X is center; calculate spawn position based on facing direction
         float halfWidth = pl->getWidth() / 2.0f;
-        float spriteOffset = pl->getSprite()->getXOff();
 
         // When facing left, spawn on left side; when facing right, spawn on right side
         if (pl->getFacing() == FacingDirection::LEFT)
         {
             // Convert center to left edge, then apply offsets
-            xPos = xInit = pl->getX() - halfWidth + spriteOffset - 2.0f;
+            xPos = xInit = pl->getX() - halfWidth - 2.0f;
         }
         else  // FacingDirection::RIGHT
         {
             // Player X is already center; add offset for right-side spawn
-            xPos = xInit = pl->getX() + spriteOffset + 5.0f;
+            xPos = xInit = pl->getX() + 5.0f;
         }
     }
 

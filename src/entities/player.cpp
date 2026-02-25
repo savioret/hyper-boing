@@ -58,6 +58,8 @@ void Player::init()
     visible = true;
     immuneCounter = 0;
     playing = true;
+    hasShield = false;
+    extraShots = 0;
 
     shotInterval = 15;
     animSpeed = shotCounter = 10;
@@ -552,7 +554,9 @@ void Player::kill()
  */
 void Player::onDeath()
 {
-    // Currently no additional logic needed here
+    // Reset power-up states on death
+    hasShield = false;
+    extraShots = 0;
     // Death animation is handled via PlayerDeadAction in onPlayerHit()
 }
 
@@ -584,6 +588,8 @@ void Player::setWeapon(WeaponType type)
     const WeaponConfig& config = WeaponConfig::get(type);
     maxShoots = config.maxShots;
     shotInterval = config.cooldown;
+    // Reset double-shoot buff when weapon changes
+    extraShots = 0;
 }
 
 /**
@@ -634,47 +640,61 @@ void Player::draw(Graph* graph)
 {
     if (!visible) return;
 
-    Sprite* spr = getActiveSprite();
+    Sprite* spr = sprite.getActiveSprite();
     if (!spr) return;
 
     RenderProps props = renderProps;
-    props.x = toRenderX(getX(), spr->getWidth());
-    props.y = toRenderY(getY(), spr->getHeight());
+    props.x = toRenderX(getX(), sprite.getWidth());
+    props.y = toRenderY(getY(), sprite.getHeight());
 
     graph->drawEx(spr, props);
+
+    // Draw shield effect (circle around player)
+    if (hasShield)
+    {
+        int centerX = static_cast<int>(getX());
+        int centerY = static_cast<int>(getY()) - spr->getHeight() / 2;
+        int radius = spr->getWidth() / 2 + 4;
+        graph->setDrawColor(0, 200, 255, 180);  // Cyan semi-transparent
+        graph->circle(centerX, centerY, radius);
+    }
 }
 
-Sprite* Player::getActiveSprite() const
+AnimSpriteSheet* Player::getActiveAnim() const
 {
     switch (currentState)
     {
         case PlayerState::WALKING:
         case PlayerState::VICTORY:
             // These use sprite's active animation
-            return sprite.getActiveSprite();
+            return sprite.getActiveAnimation();
 
         case PlayerState::CLIMBING:
         case PlayerState::WAKING_UP:
             // Climbing uses its own animation with internal states
             if (climbAnim)
-                return climbAnim->getCurrentSprite();
+                return climbAnim.get();
             break;
 
         case PlayerState::IDLE:
         case PlayerState::SHOOTING:
         case PlayerState::DEAD:
         default:
-            // Use fallback sprites from sprite
-            return sprite.getActiveSprite();
+            // Use fallback sprites from sprite (these don't have animations)
+            return nullptr;
     }
 
     // Fallback
-    return sprite.getActiveSprite();
+    return nullptr;
 }
 
 CollisionBox Player::getCollisionBox() const
 {
-    Sprite* spr = getActiveSprite();
+    Sprite* spr = sprite.getActiveSprite();
+    if (!spr) {
+        // Return empty collision box if no sprite available
+        return {0, 0, 0, 0};
+    }
 
     // Visual position matches draw() logic:
     // toRenderX/Y gives top-left of source canvas, drawEx adds xOff/yOff

@@ -306,13 +306,22 @@ public:
 
     /**
      * @brief Draw a filled rectangle
-     * 
+     *
      * @param a Left X coordinate
      * @param b Top Y coordinate
      * @param c Right X coordinate
      * @param d Bottom Y coordinate
      */
     void filledRectangle(int a, int b, int c, int d);
+
+    /**
+     * @brief Draw an unfilled circle
+     *
+     * @param cx Center X coordinate
+     * @param cy Center Y coordinate
+     * @param radius Radius in pixels
+     */
+    void circle(int cx, int cy, int radius);
 
     /**
      * @brief Copy a bitmap surface to a texture

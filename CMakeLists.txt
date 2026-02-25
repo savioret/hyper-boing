@@ -59,7 +59,7 @@ set(SOURCES
     src/core/gameevent.cpp
     src/core/graph.cpp
     src/core/isprite.cpp
-    src/game/item.cpp
+    src/entities/pickup.cpp
     src/core/logger.cpp
     src/ui/menu.cpp
     src/ui/menutitle.cpp
@@ -112,7 +112,7 @@ set(HEADERS
     src/core/gamerunner.h
     src/core/graph.h
     src/core/isprite.h
-    src/game/item.h
+    src/entities/pickup.h
     src/core/logger.h
     src/ui/menu.h
     src/ui/menutitle.h

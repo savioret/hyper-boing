@@ -13,6 +13,7 @@ class Ball;
 class Shot;
 class Floor;
 class Player;
+class Pickup;
 
 /**
  * @brief Compute which side of target was hit by mover using minimum penetration depth
@@ -118,6 +119,7 @@ public:
         std::list<std::unique_ptr<Ball>>& balls;    ///< Active balls
         std::list<std::unique_ptr<Shot>>& shots;    ///< Active shots
         std::list<std::unique_ptr<Floor>>& floors;  ///< Active floors
+        std::list<std::unique_ptr<Pickup>>& pickups; ///< Active pickups
         Player* players[2];                         ///< Players (may be nullptr)
         bool checkPlayerCollisions;                 ///< Whether to check ball-player collisions
     };
@@ -163,6 +165,12 @@ private:
      * Records contacts. Does NOT modify any entities.
      */
     void detectShotVsFloor(const Context& ctx, ContactList& contacts) const;
+
+    /**
+     * @brief Detect pickup vs player collisions
+     * Records contacts. Does NOT modify any entities.
+     */
+    void detectPickupVsPlayer(const Context& ctx, ContactList& contacts) const;
 
     // ========== Phase 2: Physics Resolution (modifies ball directions) ==========
 

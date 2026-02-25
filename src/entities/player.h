@@ -68,6 +68,10 @@ private:
     bool playing;
     int immuneCounter; // for when just revived
 
+    // Pickup power-up states
+    bool hasShield;   // Survives 1 hit when true
+    int extraShots;   // Extra shots for DOUBLE_SHOOT buff (resets on weapon change/death)
+
     // Render properties (from Sprite2D, now composed)
     RenderProps renderProps;
     bool visible = true; // Can be set to false for temporary invisibility (e.g., flashing when hit)
@@ -196,7 +200,7 @@ public:
     bool isImmune() const { return immuneCounter > 0; }
     int getNumShoots() const { return numShoots; }
     int getIdWeapon() const { return idWeapon; }
-    Sprite* getSprite() const { return getActiveSprite(); } // Returns actual rendered sprite
+    //Sprite* getSprite() const { return getActiveSprite(); } // Returns actual rendered sprite
     FacingDirection getFacing() const { return facing; }
     int getWidth() const { return sprite.getWidth(); }
     int getHeight() const { return sprite.getHeight(); }
@@ -206,7 +210,7 @@ public:
      * Get the actual sprite being rendered (accounts for walk/victory modes).
      * Used for collision detection and bounding boxes.
      */
-    Sprite* getActiveSprite() const;
+    AnimSpriteSheet* getActiveAnim() const;
 
     /**
      * Get collision box in top-left coordinate space for AABB collision detection.
@@ -229,6 +233,12 @@ public:
     void setPlaying(bool p) { playing = p; }
     void setLives(int l) { lives = l; }
     void setImmuneCounter(int counter) { immuneCounter = counter; }
+
+    // Shield and power-up methods
+    bool getShield() const { return hasShield; }
+    void setShield(bool shield) { hasShield = shield; }
+    int getExtraShots() const { return extraShots; }
+    void setExtraShots(int shots) { extraShots = shots; }
 
     // For access during refactoring
     friend class Scene;

@@ -134,6 +134,10 @@ bool StageLoader::parseObjectLine(Stage& stage, float currentTime, const std::st
     {
         processLadderObject(stage, currentTime, params);
     }
+    else if (objectType == "pickup")
+    {
+        processPickupObject(stage, currentTime, params);
+    }
     else
     {
         LOG_WARNING("Unknown object type: %s", objectType.c_str());
@@ -234,6 +238,46 @@ void StageLoader::processLadderObject(Stage& stage, float time, const std::map<s
     // Ladder-specific properties
     if (params.count("height"))
         builder.height(std::stoi(params.at("height")));
+
+    stage.spawn(builder);
+}
+
+void StageLoader::processPickupObject(Stage& stage, float time, const std::map<std::string, std::string>& params)
+{
+    // Parse pickup type from string
+    PickupType type = PickupType::GUN;  // Default
+    if (params.count("type"))
+    {
+        const std::string& typeStr = params.at("type");
+        if (typeStr == "gun")
+            type = PickupType::GUN;
+        else if (typeStr == "doubleshoot")
+            type = PickupType::DOUBLE_SHOOT;
+        else if (typeStr == "extratime")
+            type = PickupType::EXTRA_TIME;
+        else if (typeStr == "timefreeze")
+            type = PickupType::TIME_FREEZE;
+        else if (typeStr == "1up" || typeStr == "extralife")
+            type = PickupType::EXTRA_LIFE;
+        else if (typeStr == "shield")
+            type = PickupType::SHIELD;
+        else if (typeStr == "claw")
+            type = PickupType::CLAW;
+        else
+        {
+            LOG_WARNING("Unknown pickup type: %s, defaulting to gun", typeStr.c_str());
+        }
+    }
+
+    // Use StageObjectBuilder for consistency
+    auto builder = StageObjectBuilder::pickup(type);
+
+    // Set spawn time
+    builder.time(static_cast<int>(time));
+
+    // Position (pickups always use fixed coordinates)
+    if (params.count("x") && params.count("y"))
+        builder.at(std::stoi(params.at("x")), std::stoi(params.at("y")));
 
     stage.spawn(builder);
 }

@@ -4,6 +4,7 @@
 #include <memory>
 #include <climits>
 #include <string>
+#include "../entities/pickup.h"  // For PickupType enum
 
 /**
  * StageObjectParams base class
@@ -151,6 +152,36 @@ struct ActionParams : public StageObjectParams
     bool validate() const
     {
         return !command.empty();
+    }
+};
+
+/**
+ * PickupParams struct
+ *
+ * Type-safe parameters for pickup/powerup objects.
+ *
+ * Fields:
+ * - pickupType: Type of pickup (GUN, DOUBLE_SHOOT, etc.)
+ */
+struct PickupParams : public StageObjectParams
+{
+    PickupType pickupType = PickupType::GUN;
+
+    PickupParams() = default;
+
+    std::unique_ptr<StageObjectParams> clone() const override
+    {
+        return std::make_unique<PickupParams>(*this);
+    }
+
+    /**
+     * Validate pickup parameters
+     * @return true if all parameters are within valid ranges
+     */
+    bool validate() const
+    {
+        int typeInt = static_cast<int>(pickupType);
+        return typeInt >= 0 && typeInt <= 6;
     }
 };
 
@@ -426,6 +457,17 @@ public:
     }
 
     /**
+     * Create a pickup object builder
+     * @param type Pickup type (default: GUN)
+     */
+    static StageObjectBuilder pickup(PickupType type = PickupType::GUN)
+    {
+        auto params = std::make_unique<PickupParams>();
+        params->pickupType = type;
+        return StageObjectBuilder(StageObjectType::Item, std::move(params));
+    }
+
+    /**
      * Set exact position (both X and Y)
      * @param x X coordinate
      * @param y Y coordinate
@@ -529,6 +571,19 @@ public:
         if (auto* ladder = dynamic_cast<LadderParams*>(objectParams.get()))
         {
             ladder->numTiles = tiles;
+        }
+        return *this;
+    }
+
+    /**
+     * Set pickup type (pickup objects only)
+     * @param type Pickup type (GUN, DOUBLE_SHOOT, etc.)
+     */
+    StageObjectBuilder& pickupType(PickupType type)
+    {
+        if (auto* pickup = dynamic_cast<PickupParams*>(objectParams.get()))
+        {
+            pickup->pickupType = type;
         }
         return *this;
     }

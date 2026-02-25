@@ -11,7 +11,9 @@
 class Player;
 class Ball;
 class Shot;
+class Pickup;
 enum class WeaponType;
+enum class PickupType : int;
 
 /**
  * Game event types
@@ -31,6 +33,7 @@ enum class GameEventType
     PLAYER_REVIVED,           // Player respawned after death
     BALL_HIT,                 // Ball hit by weapon
     BALL_SPLIT,               // Ball divided into smaller balls
+    PICKUP_COLLECTED,         // Player collected a pickup
 
     // Gameplay actions
     PLAYER_SHOOT,             // Player fired weapon
@@ -88,6 +91,13 @@ struct BallSplitEventData
 {
     Ball* parentBall;
     int parentSize;
+};
+
+struct PickupCollectedEventData
+{
+    Pickup* pickup;
+    Player* player;
+    PickupType type;
 };
 
 struct TimeElapsedEventData
@@ -160,6 +170,7 @@ struct GameEventData
         ScoreChangedEventData scoreChanged;
         PlayerShootEventData playerShoot;
         BallSplitEventData ballSplit;
+        PickupCollectedEventData pickupCollected;
         TimeElapsedEventData timeElapsed;
         StageLoadedEventData stageLoaded;
         StageStartedEventData stageStarted;

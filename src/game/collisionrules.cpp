@@ -4,6 +4,7 @@
 #include "../entities/ball.h"
 #include "../entities/shot.h"
 #include "../entities/player.h"
+#include "../entities/pickup.h"
 #include "floor.h"
 #include "../core/eventmanager.h"
 
@@ -28,6 +29,10 @@ void CollisionRules::processContacts(const ContactList& contacts, Scene* scene)
             case ContactType::BallFloor:
                 // Physics already handled by CollisionSystem
                 // No gameplay reaction needed
+                break;
+
+            case ContactType::PickupPlayer:
+                handlePickupPlayer(c.getPickup(), c.getPlayer());
                 break;
         }
     }
@@ -61,6 +66,16 @@ void CollisionRules::handleBallPlayer(Ball* ball, Player* player)
     // Skip if either already dead
     if (ball->isDead() || player->isDead()) return;
 
+    // Check if player has shield
+    if (player->getShield())
+    {
+        // Consume shield instead of dying
+        player->setShield(false);
+        // Grant brief immunity so they don't die immediately
+        player->setImmuneCounter(120);  // ~2 seconds
+        return;
+    }
+
     // Fire PLAYER_HIT event for sound effects and other listeners
     GameEventData event(GameEventType::PLAYER_HIT);
     event.playerHit.player = player;
@@ -78,6 +93,25 @@ void CollisionRules::handleShotFloor(Shot* shot, Floor* floor)
 
     // Weapon-specific behavior (harpoon sticks, gun bullet explodes, etc.)
     shot->onFloorHit(floor);
+}
+
+void CollisionRules::handlePickupPlayer(Pickup* pickup, Player* player)
+{
+    // Skip if either already dead
+    if (pickup->isDead() || player->isDead()) return;
+
+    // Apply the pickup effect to the player
+    pickup->applyEffect(player);
+
+    // Fire PICKUP_COLLECTED event
+    GameEventData event(GameEventType::PICKUP_COLLECTED);
+    event.pickupCollected.pickup = pickup;
+    event.pickupCollected.player = player;
+    event.pickupCollected.type = pickup->getType();
+    EVENT_MGR.trigger(event);
+
+    // Mark pickup for deletion
+    pickup->kill();
 }
 
 int CollisionRules::calculateBallScore(int diameter)

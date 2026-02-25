@@ -37,12 +37,11 @@ GunShot::GunShot(Scene* scn, Player* pl, AnimSpriteSheet* animSheet)
     // Player uses bottom-middle coordinates (X = center, Y = bottom)
     // Calculate shot spawn position based on player facing direction
     float halfWidth = pl->getWidth() / 2.0f;
-    float spriteOffset = pl->getSprite()->getXOff();
 
     // When facing left, spawn on left side; when facing right, spawn on right side
     if (pl->getFacing() == FacingDirection::LEFT)
     {
-        xPos = xInit = pl->getX() + - 10;
+        xPos = xInit = pl->getX() - 10;
     }
     else  // FacingDirection::RIGHT
     {

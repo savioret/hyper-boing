@@ -2,6 +2,7 @@
 #include "../entities/ball.h"
 #include "../entities/shot.h"
 #include "../entities/player.h"
+#include "../entities/pickup.h"
 #include "floor.h"
 #include <unordered_map>
 #include <vector>
@@ -18,6 +19,7 @@ ContactList CollisionSystem::detectAndResolve(Context& ctx)
     if (ctx.checkPlayerCollisions)
     {
         detectBallVsPlayer(ctx, contacts);
+        detectPickupVsPlayer(ctx, contacts);
     }
 
     detectShotVsFloor(ctx, contacts);
@@ -274,4 +276,35 @@ void CollisionSystem::resolveMultiFloorCollision(Ball* ball, std::vector<Contact
     // Apply bounces
     if (bounceX) ball->setDirX(-ball->getDirX());
     if (bounceY) ball->setDirY(-ball->getDirY());
+}
+
+void CollisionSystem::detectPickupVsPlayer(const Context& ctx, ContactList& contacts) const
+{
+    for (const auto& pickup : ctx.pickups)
+    {
+        if (pickup->isDead()) continue;
+
+        for (int i = 0; i < 2; i++)
+        {
+            if (!ctx.players[i]) continue;
+            if (ctx.players[i]->isDead()) continue;
+
+            CollisionBox pickupBox = pickup->getCollisionBox();
+            CollisionBox playerBox = ctx.players[i]->getCollisionBox();
+
+            if (intersects(pickupBox, playerBox))
+            {
+                contacts.push_back({
+                    ContactType::PickupPlayer,
+                    pickup.get(),
+                    ctx.players[i],
+                    pickupBox,
+                    playerBox,
+                    {}  // No collision side needed for pickup
+                });
+
+                break;  // Pickup can only be collected by one player
+            }
+        }
+    }
 }

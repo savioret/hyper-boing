@@ -9,6 +9,7 @@ class Ball;
 class Shot;
 class Floor;
 class Player;
+class Pickup;
 
 /**
  * @enum ContactType
@@ -19,7 +20,8 @@ enum class ContactType
     BallFloor,    ///< Ball bounced off a floor/wall (physics already resolved)
     BallShot,     ///< Ball was hit by a shot (needs gameplay handling)
     BallPlayer,   ///< Ball hit a player (needs gameplay handling)
-    ShotFloor     ///< Shot hit a floor/ceiling (needs gameplay handling)
+    ShotFloor,    ///< Shot hit a floor/ceiling (needs gameplay handling)
+    PickupPlayer  ///< Pickup collected by player (needs gameplay handling)
 };
 
 /**
@@ -61,7 +63,15 @@ struct Contact
             : reinterpret_cast<Shot*>(entityB);
     }
     Floor* getFloor() const { return reinterpret_cast<Floor*>(entityB); }
-    Player* getPlayer() const { return reinterpret_cast<Player*>(entityB); }
+    Player* getPlayer() const {
+        // For PickupPlayer: player is in entityB
+        // For BallPlayer: player is in entityB
+        return reinterpret_cast<Player*>(entityB);
+    }
+    Pickup* getPickup() const {
+        // For PickupPlayer: pickup is in entityA
+        return reinterpret_cast<Pickup*>(entityA);
+    }
 
     /**
      * @brief Get the contact point (center of overlap between collision boxes)

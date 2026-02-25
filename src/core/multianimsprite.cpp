@@ -134,6 +134,9 @@ AnimSpriteSheet* MultiAnimSprite::getActiveAnimation() const
         return it->second;
     }
 
+    // Animation key is set but animation not found - inconsistent state
+    // This can happen if animation was unregistered after being set active
+    // Gracefully handle by returning nullptr
     return nullptr;
 }
 
@@ -145,4 +148,42 @@ AnimSpriteSheet* MultiAnimSprite::getAnimation(const std::string& name) const
         return it->second;
     }
     return nullptr;
+}
+
+int MultiAnimSprite::getWidth() const
+{
+    if (useFallback)
+    {
+        // For fallback sprites, use sprite dimensions
+        Sprite* spr = getActiveSprite();
+        return spr ? spr->getWidth() : 0;
+    }
+
+    // For animations, use animation bounding box dimensions
+    AnimSpriteSheet* anim = getActiveAnimation();
+    if (anim)
+    {
+        return anim->getWidth();
+    }
+
+    return 0;
+}
+
+int MultiAnimSprite::getHeight() const
+{
+    if (useFallback)
+    {
+        // For fallback sprites, use sprite dimensions
+        Sprite* spr = getActiveSprite();
+        return spr ? spr->getHeight() : 0;
+    }
+
+    // For animations, use animation bounding box dimensions
+    AnimSpriteSheet* anim = getActiveAnimation();
+    if (anim)
+    {
+        return anim->getHeight();
+    }
+
+    return 0;
 }

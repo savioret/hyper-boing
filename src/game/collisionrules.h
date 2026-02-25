@@ -8,6 +8,7 @@ class Ball;
 class Shot;
 class Floor;
 class Player;
+class Pickup;
 
 /**
  * @class CollisionRules
@@ -58,6 +59,15 @@ private:
      * - Calls shot->onFloorHit() for weapon-specific behavior
      */
     void handleShotFloor(Shot* shot, Floor* floor);
+
+    /**
+     * @brief Handle pickup-player collision
+     *
+     * - Calls pickup->applyEffect() to apply power-up
+     * - Fires PICKUP_COLLECTED event
+     * - Marks pickup for death
+     */
+    void handlePickupPlayer(Pickup* pickup, Player* player);
 
     /**
      * @brief Calculate score for destroying a ball

@@ -106,5 +106,6 @@ private:
     static void processBallObject(Stage& stage, float time, const std::map<std::string, std::string>& params);
     static void processFloorObject(Stage& stage, float time, const std::map<std::string, std::string>& params);
     static void processLadderObject(Stage& stage, float time, const std::map<std::string, std::string>& params);
+    static void processPickupObject(Stage& stage, float time, const std::map<std::string, std::string>& params);
     static void processActionObject(Stage& stage, float time, const std::string& command);
 };

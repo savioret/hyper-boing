@@ -15,7 +15,7 @@ PlayerDeadAction::PlayerDeadAction(Player* player, float velX, float velY)
 
 void PlayerDeadAction::start()
 {
-    if (player && player->getSprite())
+    if (player)
     {
         // Dead frame is already set via Player::setState(PlayerState::DEAD) in onPlayerHit()
 
@@ -32,10 +32,6 @@ bool PlayerDeadAction::update(float dt)
     if (isDone || !player) return false;
 
     //LOG_DEBUG("PlayerDeadAction update: rotation = %.2f", rotationMotion.value());
-
-    Sprite* spr= player->getSprite();
-    if (!spr) return false;
-
 
     // Update rotation animation (continuous 720 deg/sec = 2 rotations/sec)
     rotationMotion.update(dt);

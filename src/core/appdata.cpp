@@ -236,6 +236,15 @@ void AppData::initStageResources()
     // Preload player sound effects
     AudioManager::instance().registerSound("player_dies", "assets/sounds/player_dies.ogg");
 
+    // Load pickup sprites
+    stageRes.pickupSprites[0].init(&appGraph, "assets/graph/entities/pickup_gun.png");
+    stageRes.pickupSprites[1].init(&appGraph, "assets/graph/entities/pickup_doubleshoot.png");
+    stageRes.pickupSprites[2].init(&appGraph, "assets/graph/entities/pickup_extratime.png");
+    stageRes.pickupSprites[3].init(&appGraph, "assets/graph/entities/pickup_timefreeze.png");
+    stageRes.pickupSprites[4].init(&appGraph, "assets/graph/entities/pickup_1up.png");
+    stageRes.pickupSprites[5].init(&appGraph, "assets/graph/entities/pickup_shield.png");
+    stageRes.pickupSprites[6].init(&appGraph, "assets/graph/entities/pickup_claw.png");
+
     stageRes.initialized = true;
 }
 
@@ -506,7 +515,11 @@ void AppData::release()
         stageRes.gameover.release();
         stageRes.continu.release();
         stageRes.ready.release();
-        
+
+        // Release pickup sprites
+        for (int i = 0; i < 7; i++)
+            stageRes.pickupSprites[i].release();
+
         stageRes.initialized = false;
     }
     

@@ -12,7 +12,7 @@
 #include "spritesheet.h"
 #include "floor.h"
 #include "ladder.h"
-#include "item.h"
+#include "pickup.h"
 #include "stage.h"
 #include "app.h"
 #include "eventmanager.h"
@@ -114,7 +114,12 @@ private:
     int dSecond;         ///< Deciseconds counter (60 = 1 second)
     int timeRemaining;   ///< Time left on stage timer (in seconds)
     int timeLine;        ///< Current timeline position for spawning stage objects
-    
+
+    // Time freeze state (from TIME_FREEZE pickup)
+    bool timeFrozen;                    ///< When true, balls don't update
+    float freezeTimer;                  ///< Remaining freeze duration in seconds
+    static constexpr float FREEZE_DURATION = 10.0f;  ///< Default freeze duration
+
     // FPS and performance tracking
     int moveTick;      ///< SDL tick timestamp for movement updates
     int moveLastTick;  ///< Last movement update timestamp
@@ -313,7 +318,7 @@ public:
 
     // Entity lists
     std::list<std::unique_ptr<Ball>> lsBalls;       ///< Active balls in scene
-    std::list<std::unique_ptr<Item>> lsItems;       ///< Active items (unused currently)
+    std::list<std::unique_ptr<Pickup>> lsPickups;   ///< Active pickups in scene
     std::list<std::unique_ptr<Floor>> lsFloor;      ///< Active floors/platforms
     std::list<std::unique_ptr<Ladder>> lsLadders;   ///< Active ladders (climbable)
     std::list<std::unique_ptr<Shot>> lsShoots;      ///< Active weapon shots
@@ -346,13 +351,13 @@ public:
     void addBall(int x = 250, int y = -20, int size = 0, int top = 0, int dirX = 1, int dirY = 1, int id = 0);
     
     /**
-     * @brief Adds an item to the scene
-     * @param x X position
-     * @param y Y position
-     * @param id Item type
+     * @brief Adds a pickup to the scene
+     * @param x X position (center)
+     * @param y Y position (bottom)
+     * @param type Pickup type
      */
-    void addItem(int x, int y, int id);
-    
+    void addPickup(int x, int y, PickupType type);
+
     /**
      * @brief Adds a floor/platform to the scene
      * @param x X position
@@ -566,6 +571,19 @@ public:
      * @return Time remaining in seconds
      */
     int getTimeRemaining() const { return timeRemaining; }
+
+    /**
+     * @brief Sets the time freeze state (from TIME_FREEZE pickup)
+     * @param frozen True to freeze balls, false to unfreeze
+     * @param duration Duration of freeze in seconds (only used when frozen=true)
+     */
+    void setTimeFrozen(bool frozen, float duration = FREEZE_DURATION);
+
+    /**
+     * @brief Gets the time freeze state
+     * @return True if time is frozen
+     */
+    bool isTimeFrozen() const { return timeFrozen; }
 
     /**
      * @brief Processes stage timeline to spawn objects

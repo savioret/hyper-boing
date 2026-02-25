@@ -309,6 +309,33 @@ void Graph::filledRectangle(int a, int b, int c, int d) {
     SDL_RenderFillRect(renderer, &rect);
 }
 
+void Graph::circle(int cx, int cy, int radius) {
+    // Midpoint circle algorithm
+    int x = radius;
+    int y = 0;
+    int err = 0;
+
+    while (x >= y) {
+        SDL_RenderDrawPoint(renderer, cx + x, cy + y);
+        SDL_RenderDrawPoint(renderer, cx + y, cy + x);
+        SDL_RenderDrawPoint(renderer, cx - y, cy + x);
+        SDL_RenderDrawPoint(renderer, cx - x, cy + y);
+        SDL_RenderDrawPoint(renderer, cx - x, cy - y);
+        SDL_RenderDrawPoint(renderer, cx - y, cy - x);
+        SDL_RenderDrawPoint(renderer, cx + y, cy - x);
+        SDL_RenderDrawPoint(renderer, cx + x, cy - y);
+
+        if (err <= 0) {
+            y += 1;
+            err += 2 * y + 1;
+        }
+        if (err > 0) {
+            x -= 1;
+            err -= 2 * x + 1;
+        }
+    }
+}
+
 void Graph::loadBitmap(Sprite* spr, const char* szBitmap) {
     SDL_Surface* loadedSurface = IMG_Load(szBitmap);
     if (loadedSurface == nullptr) {

@@ -135,4 +135,16 @@ public:
      * Get animation by name (nullptr if not found)
      */
     AnimSpriteSheet* getAnimation(const std::string& name) const;
+
+    /**
+     * Get width - for animations, returns animation width; for fallback, returns sprite width
+     * Override ISprite default to provide animation-aware dimensions
+     */
+    int getWidth() const;
+
+    /**
+     * Get height - for animations, returns animation height; for fallback, returns sprite height
+     * Override ISprite default to provide animation-aware dimensions
+     */
+    int getHeight() const;
 };
