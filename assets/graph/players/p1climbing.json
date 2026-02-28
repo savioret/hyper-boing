@@ -5,7 +5,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 1, "y": 4, "w": 38, "h": 72 },
     "sourceSize": { "w": 67, "h": 78 },
-    "duration": 200
+    "duration": 150
    },
    "climbing_final 1.aseprite": {
     "frame": { "x": 38, "y": 0, "w": 40, "h": 72 },
@@ -13,7 +13,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 4, "w": 40, "h": 72 },
     "sourceSize": { "w": 67, "h": 78 },
-    "duration": 200
+    "duration": 150
    },
    "climbing_final 2.aseprite": {
     "frame": { "x": 78, "y": 0, "w": 38, "h": 73 },
@@ -21,7 +21,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 1, "y": 3, "w": 38, "h": 73 },
     "sourceSize": { "w": 67, "h": 78 },
-    "duration": 200
+    "duration": 150
    },
    "climbing_final 3.aseprite": {
     "frame": { "x": 116, "y": 0, "w": 37, "h": 73 },
@@ -29,7 +29,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 2, "y": 4, "w": 37, "h": 73 },
     "sourceSize": { "w": 67, "h": 78 },
-    "duration": 200
+    "duration": 150
    },
    "climbing_final 4.aseprite": {
     "frame": { "x": 153, "y": 0, "w": 42, "h": 48 },

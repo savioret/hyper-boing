@@ -2,6 +2,7 @@
 
 #include "../core/gameobject.h"
 #include "../core/singlesprite.h"
+#include "../core/animspritesheet.h"
 
 // Forward declarations
 class Scene;
@@ -44,6 +45,7 @@ public:
 private:
     Scene* scene;
     SingleSprite sprite;
+    std::unique_ptr<AnimSpriteSheet> shieldAnim;  // Used only for SHIELD type
     PickupType pickupType;
     bool falling;
     float groundY;  // Y position where pickup stops falling

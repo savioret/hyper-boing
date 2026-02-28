@@ -52,14 +52,13 @@ void Player::init()
     resetDead();  // Reset IGameObject's dead flag
     score = 0;
     currentWeapon = WeaponType::HARPOON;  // Default weapon
-    maxShoots = 2;
+    maxShoots = WeaponConfig::get(currentWeapon).maxShots;
     numShoots = 0;
     lives = 3;
     visible = true;
     immuneCounter = 0;
     playing = true;
     hasShield = false;
-    extraShots = 0;
 
     shotInterval = 15;
     animSpeed = shotCounter = 10;
@@ -158,7 +157,7 @@ void Player::revive()
     immuneCounter = 350;
 
     currentWeapon = WeaponType::HARPOON;  // Reset to default on death
-    maxShoots = 2;
+    maxShoots = WeaponConfig::get(currentWeapon).maxShots;
     numShoots = 0;
     playing = true;
 
@@ -556,8 +555,6 @@ void Player::onDeath()
 {
     // Reset power-up states on death
     hasShield = false;
-    extraShots = 0;
-    // Death animation is handled via PlayerDeadAction in onPlayerHit()
 }
 
 /**
@@ -589,7 +586,6 @@ void Player::setWeapon(WeaponType type)
     maxShoots = config.maxShots;
     shotInterval = config.cooldown;
     // Reset double-shoot buff when weapon changes
-    extraShots = 0;
 }
 
 /**

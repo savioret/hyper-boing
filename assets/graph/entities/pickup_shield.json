@@ -1,0 +1,54 @@
+{ "frames": {
+   "shield_anim 0.aseprite": {
+    "frame": { "x": 0, "y": 0, "w": 13, "h": 14 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 9, "y": 8, "w": 13, "h": 14 },
+    "sourceSize": { "w": 83, "h": 32 },
+    "duration": 130
+   },
+   "shield_anim 1.aseprite": {
+    "frame": { "x": 13, "y": 0, "w": 23, "h": 23 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 4, "y": 4, "w": 23, "h": 23 },
+    "sourceSize": { "w": 83, "h": 32 },
+    "duration": 130
+   },
+   "shield_anim 2.aseprite": {
+    "frame": { "x": 36, "y": 0, "w": 31, "h": 31 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 31, "h": 31 },
+    "sourceSize": { "w": 83, "h": 32 },
+    "duration": 130
+   },
+   "shield_anim 3.aseprite": {
+    "frame": { "x": 67, "y": 0, "w": 36, "h": 32 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 36, "h": 32 },
+    "sourceSize": { "w": 83, "h": 32 },
+    "duration": 130
+   },
+   "shield_anim 4.aseprite": {
+    "frame": { "x": 103, "y": 0, "w": 35, "h": 32 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 35, "h": 32 },
+    "sourceSize": { "w": 83, "h": 32 },
+    "duration": 130
+   }
+ },
+ "meta": {
+  "app": "https://www.aseprite.org/",
+  "version": "1.3.16-beta3",
+  "image": "pickup_shield.png",
+  "format": "RGBA8888",
+  "size": { "w": 138, "h": 32 },
+  "scale": "1",
+  "frameTags": [
+   { "name": "Loop", "from": 0, "to": 4, "direction": "pingpong", "color": "#000000ff" }
+  ]
+ }
+}

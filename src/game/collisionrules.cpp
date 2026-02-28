@@ -19,7 +19,7 @@ void CollisionRules::processContacts(const ContactList& contacts, Scene* scene)
                 break;
 
             case ContactType::BallPlayer:
-                handleBallPlayer(c.getBall(), c.getPlayer());
+                handleBallPlayer(c.getBall(), c.getPlayer(), scene);
                 break;
 
             case ContactType::ShotFloor:
@@ -61,10 +61,13 @@ void CollisionRules::handleBallShot(Ball* ball, Shot* shot)
     ball->kill();
 }
 
-void CollisionRules::handleBallPlayer(Ball* ball, Player* player)
+void CollisionRules::handleBallPlayer(Ball* ball, Player* player, Scene* scene)
 {
     // Skip if either already dead
     if (ball->isDead() || player->isDead()) return;
+
+    // Skip if time is frozen (TIME_FREEZE pickup is active)
+    if (scene->isTimeFrozen()) return;
 
     // Check if player has shield
     if (player->getShield())

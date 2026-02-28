@@ -6,6 +6,7 @@
 #include "../core/appdata.h"
 #include "../core/graph.h"
 #include "../core/logger.h"
+#include "../core/coordhelper.h"
 
 Pickup::Pickup(Scene* scene, int x, int y, PickupType type)
     : scene(scene), pickupType(type), falling(true), groundY(Stage::MAX_Y)
@@ -17,12 +18,25 @@ Pickup::Pickup(Scene* scene, int x, int y, PickupType type)
 
     // Set sprite from shared resources
     StageResources& res = AppData::instance().getStageRes();
-    sprite.setSprite(&res.pickupSprites[static_cast<int>(type)]);
+    if (type == PickupType::SHIELD)
+    {
+        if (res.pickupShieldAnim)
+            shieldAnim = res.pickupShieldAnim->clone();
+    }
+    else
+    {
+        // SHIELD (enum 5) is handled above; CLAW (enum 6) maps to array index 5
+        int idx = (type == PickupType::CLAW) ? 5 : static_cast<int>(type);
+        sprite.setSprite(&res.pickupSprites[idx]);
+    }
 }
 
 void Pickup::update(float dt)
 {
     if (isDead()) return;
+
+    if (shieldAnim)
+        shieldAnim->update(dt * 1000.0f);
 
     if (falling)
     {
@@ -42,13 +56,14 @@ void Pickup::draw(Graph* graph)
 {
     if (isDead()) return;
 
-    Sprite* spr = sprite.getSprite();
+    Sprite* spr = shieldAnim ? shieldAnim->getCurrentSprite() : sprite.getSprite();
     if (spr)
     {
-        // Draw at top-left (convert from bottom-middle pivot)
-        int drawX = static_cast<int>(xPos) - SPRITE_SIZE / 2;
-        int drawY = static_cast<int>(yPos) - SPRITE_SIZE;
-        graph->draw(spr, drawX, drawY);
+        // Use the animation bounding box for stable positioning across frames;
+        // fall back to SPRITE_SIZE for static pickups.
+        int w = shieldAnim ? shieldAnim->getWidth()  : sprite.getSprite()->getWidth();
+        int h = shieldAnim ? shieldAnim->getHeight() : sprite.getSprite()->getHeight();
+        graph->draw(spr, toRenderX(xPos, w), toRenderY(yPos, h));
     }
 }
 
@@ -65,8 +80,9 @@ void Pickup::applyEffect(Player* player)
             break;
 
         case PickupType::DOUBLE_SHOOT:
-            // Allow 2 harpoon shots
-            player->setExtraShots(1);
+            // Switch to harpoon (in case player has gun) and allow 2 simultaneous shots
+            player->setWeapon(WeaponType::HARPOON);
+            player->setMaxShoots(2);
             LOG_INFO("Player %d collected DOUBLE_SHOOT pickup", player->getId() + 1);
             break;
 

@@ -23,7 +23,6 @@ Scene::Scene(Stage* stg, std::unique_ptr<StageClear> pstgclr)
       gameOverSubState(GameOverSubState::ContinueCountdown),
       pStageClear(std::move(pstgclr)), gameOverCountdown(10),
       stage(stg), dSecond(0), timeRemaining(0), timeLine(0),
-      timeFrozen(false), freezeTimer(0.0f),
       moveTick(0), moveLastTick(0), moveCount(0),
       drawTick(0), drawLastTick(0), drawCount(0),
       boundingBoxes(false),
@@ -165,6 +164,14 @@ void Scene::subscribeToEvents()
                 appAudio.playSound("player_dies");
             }
         });
+
+    // Subscribe to pickup collected event for pickup sound effect
+    pickupCollectedHandle = EVENT_MGR.subscribe(GameEventType::PICKUP_COLLECTED,
+        [this](const GameEventData& data) {
+            if (appAudio.isSoundLoaded("pickup")) {
+                appAudio.playSound("pickup");
+            }
+        });
 }
 
 void Scene::unsubscribeFromEvents()
@@ -175,6 +182,7 @@ void Scene::unsubscribeFromEvents()
     ballHitHandle = EventManager::ListenerHandle();
     playerShootHandle = EventManager::ListenerHandle();
     playerHitHandle = EventManager::ListenerHandle();
+    pickupCollectedHandle = EventManager::ListenerHandle();
 }
 
 /**
@@ -206,6 +214,9 @@ int Scene::initBitmaps()
     fontNum[1].setValues(offs1);
     fontNum[2].init(&res.fontnum[2]);
     fontNum[2].setValues(offs2);
+
+    // Load freeze countdown font (3-2-1 during last 3s of time freeze)
+    freezeEffect.init(&appGraph);
 
     // Configure ball-info section
     TextSection& ballSection = textOverlay.getSection("ball-info");
@@ -367,10 +378,14 @@ Ladder* Scene::findLadderBelowPlayer(Player* player) const
     {
         if (ladder->isDead()) continue;
 
-        // Check if ladder top is at or just below player's feet
+        // Check if player is within the top entry zone of the ladder.
+        // The ladder graphic often protrudes slightly above the floor surface, so the
+        // ladder top (getTopY) can be a few pixels ABOVE the player's feet when standing
+        // on the platform. We accept anything within one tile height of the ladder top.
         int ladderTop = ladder->getTopY();
-        if (ladderTop >= playerBottom - LADDER_ENTRY_TOLERANCE &&
-            ladderTop <= playerBottom + LADDER_ENTRY_TOLERANCE)
+        int ladderTopSection = ladderTop + ladder->getTileHeight();
+        if (playerBottom >= ladderTop - LADDER_ENTRY_TOLERANCE &&
+            playerBottom <= ladderTopSection)
         {
             CollisionBox ladderBox = ladder->getCollisionBox();
 
@@ -784,17 +799,10 @@ void Scene::setState(SceneState newState)
 
 void Scene::setTimeFrozen(bool frozen, float duration)
 {
-    timeFrozen = frozen;
     if (frozen)
-    {
-        freezeTimer = duration;
-        LOG_DEBUG("Time frozen for %.1f seconds", duration);
-    }
+        freezeEffect.start(duration);
     else
-    {
-        freezeTimer = 0.0f;
-        LOG_DEBUG("Time unfrozen");
-    }
+        freezeEffect.stop();
 }
 
 void Scene::updateFPSCounters()
@@ -817,18 +825,11 @@ void Scene::updateEntities(float dt)
     // === PHASE 1: Movement ===
     // Update all objects without modifying lists
 
-    // Update freeze timer
-    if (timeFrozen)
-    {
-        freezeTimer -= dt;
-        if (freezeTimer <= 0.0f)
-        {
-            setTimeFrozen(false);
-        }
-    }
+    // Update freeze timer and ball-blink
+    freezeEffect.update(dt);
 
     // Balls only update when NOT frozen
-    if (!timeFrozen)
+    if (!freezeEffect.isActive())
     {
         for (const auto& ball : lsBalls)
         {
@@ -1017,6 +1018,12 @@ GameState* Scene::handlePlayingState(float dt)
     for (i = 0; i < 2; i++)
     {
         Player* player = gameinf.getPlayer(i);
+
+        // Track shoot key edge: fire only on press, not while held (Super Pang behaviour)
+        bool shootKeyNow = appInput.key(gameinf.getKeys(i).getShoot());
+        bool shootJustPressed = shootKeyNow && !shootKeyWasDown[i];
+        shootKeyWasDown[i] = shootKeyNow;
+
         if (player && !player->isDead() && player->isPlaying())
         {
             // Get UP/DOWN keys from configuration
@@ -1024,7 +1031,7 @@ GameState* Scene::handlePlayingState(float dt)
             SDL_Scancode downKey = gameinf.getKeys(i).getDown();
 
             // Handle shooting (can shoot while climbing)
-            if (appInput.key(gameinf.getKeys(i).getShoot()))
+            if (shootJustPressed)
             {
                 shoot(player);
             }
@@ -1308,6 +1315,7 @@ void Scene::drawBackground()
 
 void Scene::draw(Ball* b)
 {
+    if (!freezeEffect.areBallsVisible()) return;  // Hidden during freeze-warning blink
     StageResources& res = gameinf.getStageRes();
     appGraph.draw(&res.redball[b->getSize()], (int)b->getX(), (int)b->getY());
 }
@@ -1620,6 +1628,9 @@ void Scene::drawHUD()
 void Scene::drawStateOverlay()
 {
     StageResources& res = gameinf.getStageRes();
+
+    // Freeze countdown: show 3-2-1 during the last 3 seconds of a time freeze
+    freezeEffect.drawCountdown();
 
     // Game over overlay
     if (currentState == SceneState::GameOver)

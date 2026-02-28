@@ -18,6 +18,7 @@
 #include "eventmanager.h"
 #include "oncehelper.h"
 #include "action.h"
+#include "freezeeffect.h"
 #include "collisionsystem.h"
 #include "collisionrules.h"
 
@@ -115,10 +116,9 @@ private:
     int timeRemaining;   ///< Time left on stage timer (in seconds)
     int timeLine;        ///< Current timeline position for spawning stage objects
 
-    // Time freeze state (from TIME_FREEZE pickup)
-    bool timeFrozen;                    ///< When true, balls don't update
-    float freezeTimer;                  ///< Remaining freeze duration in seconds
-    static constexpr float FREEZE_DURATION = 10.0f;  ///< Default freeze duration
+    // Time freeze state (delegated to FreezeEffect helper)
+    static constexpr float FREEZE_DURATION = 10.0f;  ///< Default freeze duration (seconds)
+    FreezeEffect freezeEffect;                        ///< Encapsulates timer, ball-blink, and countdown
 
     // FPS and performance tracking
     int moveTick;      ///< SDL tick timestamp for movement updates
@@ -130,6 +130,9 @@ private:
     
     // Debug and utility
     bool boundingBoxes;  ///< Debug mode: show collision bounding boxes
+
+    // Shoot key edge detection (fire only on press, not while held)
+    bool shootKeyWasDown[2] = {false, false};
     
     // Ready screen state (time-based using BlinkAction)
     std::unique_ptr<BlinkAction> readyBlinkAction;  ///< Time-based blinking (200ms interval, 13 toggles, ends invisible)
@@ -139,10 +142,11 @@ private:
     std::unique_ptr<DelayAction> gameOverInputDelay;  ///< Time-based delay (2 seconds) before accepting input on game over screen (prevents accidental skip)
 
     // Event subscriptions
-    EventManager::ListenerHandle timeWarningHandle;  ///< Subscription for time warning sound
-    EventManager::ListenerHandle ballHitHandle;      ///< Subscription for ball hit pop sounds
-    EventManager::ListenerHandle playerShootHandle;  ///< Subscription for weapon shoot sounds
-    EventManager::ListenerHandle playerHitHandle;    ///< Subscription for player death sound
+    EventManager::ListenerHandle timeWarningHandle;      ///< Subscription for time warning sound
+    EventManager::ListenerHandle ballHitHandle;          ///< Subscription for ball hit pop sounds
+    EventManager::ListenerHandle playerShootHandle;      ///< Subscription for weapon shoot sounds
+    EventManager::ListenerHandle playerHitHandle;        ///< Subscription for player death sound
+    EventManager::ListenerHandle pickupCollectedHandle;  ///< Subscription for pickup collected sound
     
     // Stage-level utility
     OnceHelper stageOnceHelper;  ///< Helper for one-time actions per stage
@@ -583,7 +587,7 @@ public:
      * @brief Gets the time freeze state
      * @return True if time is frozen
      */
-    bool isTimeFrozen() const { return timeFrozen; }
+    bool isTimeFrozen() const { return freezeEffect.isActive(); }
 
     /**
      * @brief Processes stage timeline to spawn objects

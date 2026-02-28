@@ -48,10 +48,11 @@ private:
     /**
      * @brief Handle ball-player collision
      *
+     * - Skips if time is frozen (TIME_FREEZE pickup is active)
      * - Fires PLAYER_HIT event
      * - Marks player for death
      */
-    void handleBallPlayer(Ball* ball, Player* player);
+    void handleBallPlayer(Ball* ball, Player* player, Scene* scene);
 
     /**
      * @brief Handle shot-floor collision

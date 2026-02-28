@@ -70,7 +70,6 @@ private:
 
     // Pickup power-up states
     bool hasShield;   // Survives 1 hit when true
-    int extraShots;   // Extra shots for DOUBLE_SHOOT buff (resets on weapon change/death)
 
     // Render properties (from Sprite2D, now composed)
     RenderProps renderProps;
@@ -233,12 +232,11 @@ public:
     void setPlaying(bool p) { playing = p; }
     void setLives(int l) { lives = l; }
     void setImmuneCounter(int counter) { immuneCounter = counter; }
+    void setMaxShoots(int n) { maxShoots = n; }
 
     // Shield and power-up methods
     bool getShield() const { return hasShield; }
     void setShield(bool shield) { hasShield = shield; }
-    int getExtraShots() const { return extraShots; }
-    void setExtraShots(int shots) { extraShots = shots; }
 
     // For access during refactoring
     friend class Scene;

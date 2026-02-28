@@ -103,7 +103,8 @@ struct StageResources
     Sprite fontnum[3];     ///< Number fonts (3 sizes)
 
     // Pickup sprites
-    Sprite pickupSprites[7];  ///< Pickup sprites (one per PickupType)
+    Sprite pickupSprites[6];              ///< Pickup sprites (SHIELD excluded; CLAW at index 5)
+    std::unique_ptr<AnimSpriteSheet> pickupShieldAnim;  ///< Shield pickup animated spritesheet
 
     bool initialized;      ///< True if resources have been loaded
     
