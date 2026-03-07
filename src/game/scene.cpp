@@ -1576,7 +1576,11 @@ void Scene::drawScore()
             afterLivesX1 += 24;  // Space for "xN" text
         }
 
-        // Draw weapon icon after lives (gun, doubleshoot, claw - not default harpoon)
+        // Draw weapon slot holder aligned to miniplayer bottom
+        int miniBottom1 = Stage::MAX_Y + 7 + res.miniplayer[AppData::PLAYER1].getHeight();
+        int holderY1 = miniBottom1 - res.itemHolder.getHeight();
+        int weaponX1 = livesBaseX1 + LIVES_ICON_SPACING * MAX_LIVES_ICONS + WEAPON_ICON_GAP;
+        appGraph.draw(&res.itemHolder, weaponX1 - 5, holderY1);
         Sprite* weaponIcon = nullptr;
         if (p1->getWeapon() == WeaponType::GUN)
             weaponIcon = &res.pickupSprites[0];
@@ -1585,7 +1589,7 @@ void Scene::drawScore()
         else if (p1->getWeapon() == WeaponType::CLAW)
             weaponIcon = &res.pickupSprites[5];
         if (weaponIcon)
-            appGraph.draw(weaponIcon, afterLivesX1 + WEAPON_ICON_GAP, Stage::MAX_Y + 30);
+            appGraph.draw(weaponIcon, weaponX1, holderY1 + 5);
     }
 
     if (gameinf.getPlayer(AppData::PLAYER2))
@@ -1617,7 +1621,11 @@ void Scene::drawScore()
                 afterLivesX2 += 24;  // Space for "xN" text
             }
 
-            // Draw weapon icon after lives for player 2
+            // Draw weapon slot holder aligned to miniplayer bottom
+            int miniBottom2 = Stage::MAX_Y + 7 + res.miniplayer[AppData::PLAYER2].getHeight();
+            int holderY2 = miniBottom2 - res.itemHolder.getHeight();
+            int weaponX2 = livesBaseX2 + LIVES_ICON_SPACING * MAX_LIVES_ICONS + WEAPON_ICON_GAP;
+            appGraph.draw(&res.itemHolder, weaponX2 - 5, holderY2);
             Sprite* weaponIcon2 = nullptr;
             if (p2->getWeapon() == WeaponType::GUN)
                 weaponIcon2 = &res.pickupSprites[0];
@@ -1626,7 +1634,7 @@ void Scene::drawScore()
             else if (p2->getWeapon() == WeaponType::CLAW)
                 weaponIcon2 = &res.pickupSprites[5];
             if (weaponIcon2)
-                appGraph.draw(weaponIcon2, afterLivesX2 + WEAPON_ICON_GAP, Stage::MAX_Y + 30);
+                appGraph.draw(weaponIcon2, weaponX2, holderY2 + 5);
         }
 }
 

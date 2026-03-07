@@ -107,6 +107,7 @@ struct StageResources
     // Pickup sprites
     Sprite pickupSprites[6];              ///< Pickup sprites (SHIELD excluded; CLAW at index 5)
     std::unique_ptr<AnimSpriteSheet> pickupShieldAnim;  ///< Shield pickup animated spritesheet
+    Sprite itemHolder;                    ///< Item holder box (42x42) drawn behind active weapon icon
 
     // Player shield effect animation template (cloned per player)
     std::unique_ptr<AnimSpriteSheet> shieldAnim;  ///< Player shield effect animation
