@@ -87,7 +87,7 @@ void CollisionSystem::detectBallVsFloor(const Context& ctx, ContactList& contact
         int ballRadius = b->getCollisionRadius();
         CollisionBox ballBox = b->getCollisionBox();  // For Contact struct compatibility
 
-        int dirX = b->getDirX();
+        float dirX = b->getDirX();
         int dirY = b->getDirY();
 
         for (const auto& fl : ctx.floors)
@@ -106,8 +106,8 @@ void CollisionSystem::detectBallVsFloor(const Context& ctx, ContactList& contact
             // Only register collision if ball is moving TOWARD that side
             // This prevents "sticking" when ball grazes a surface while moving parallel
             // Exception: if ball is fully inside floor, always register to escape
-            bool validX = side.x && ((side.x == SIDE_LEFT && dirX == 1) ||
-                                     (side.x == SIDE_RIGHT && dirX == -1) ||
+            bool validX = side.x && ((side.x == SIDE_LEFT && dirX > 0) ||
+                                     (side.x == SIDE_RIGHT && dirX < 0) ||
                                      ballInsideFloor);
             bool validY = side.y && ((side.y == SIDE_TOP && dirY == 1) ||
                                      (side.y == SIDE_BOTTOM && dirY == -1) ||

@@ -25,7 +25,8 @@ private:
     int size;
     int id;
 
-    int dirX, dirY; // direction
+    float dirX; // horizontal direction (float: 1.0=right, -1.0=left; magnitude acts as speed multiplier)
+    int dirY;   // vertical direction (-1=up, 1=down)
     float time, maxTime;
     float y0; // initial space
     float gravity; // acceleration (acc)
@@ -40,7 +41,7 @@ private:
 
 public:
     Ball(Scene* scene, Ball* oldBall, int dir);
-    Ball(Scene* scene, int x, int y, int size, int dirX = 1, int dirY = 1, int top = 0, int id = 0);
+    Ball(Scene* scene, int x, int y, int size, float dirX = 1.0f, int dirY = 1, int top = 0, int id = 0);
     ~Ball();
 
     void init();
@@ -66,14 +67,14 @@ public:
     bool collision(Platform* floor);
     bool collision(Player* player);
 
-    void setDir(int dx, int dy);
-    void setDirX(int dx);
+    void setDir(float dx, int dy);
+    void setDirX(float dx);
     void setDirY(int dy);
     void setPos(int x, int y);
     void setDeathPickup(PickupType type) { hasDeathPickup = true; deathPickupType = type; }
 
     // Getters
-    int getDirX() const { return dirX; }
+    float getDirX() const { return dirX; }
     int getDirY() const { return dirY; }
     int getSize() const { return size; }
     float getTime() const { return time; }

@@ -5,6 +5,7 @@
 #include <memory>
 #include "../main.h"
 #include "appdata.h"
+#include "stageloader.h"
 #include "appconsole.h"
 #include "logger.h"
 #include "eventmanager.h"
@@ -39,6 +40,10 @@ int Scene::init()
 
     char txt[MAX_PATH];
 
+    // Load stage content from file (background, music, and spawn sequence)
+    if (!stage->stageFile.empty())
+        StageLoader::load(*stage, stage->stageFile);
+
     timeLine = 0;
     dSecond = 0;
     timeRemaining = stage->timelimit;
@@ -53,8 +58,12 @@ int Scene::init()
     }
 
     gameinf.getPlayer(AppData::PLAYER1)->setX((float)stage->xpos[AppData::PLAYER1]);
+    gameinf.getPlayer(AppData::PLAYER1)->setSpawnX((float)stage->xpos[AppData::PLAYER1]);
     if (gameinf.getPlayer(AppData::PLAYER2))
+    {
         gameinf.getPlayer(AppData::PLAYER2)->setX((float)stage->xpos[AppData::PLAYER2]);
+        gameinf.getPlayer(AppData::PLAYER2)->setSpawnX((float)stage->xpos[AppData::PLAYER2]);
+    }
 
     CloseMusic();
     initBitmaps();
@@ -255,7 +264,7 @@ int Scene::initBitmaps()
     return 1;
 }
 
-void Scene::addBall(int x, int y, int size, int top, int dirX, int dirY, int id)
+void Scene::addBall(int x, int y, int size, int top, float dirX, int dirY, int id)
 {
     // Get ball diameter for collision check
     const int diameters[] = { 64, 40, 24, 16 }; // size 0-3

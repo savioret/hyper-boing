@@ -205,7 +205,6 @@ public:
     
     // Music preloading methods
     void preloadMenuMusic();
-    void preloadStageMusic();
 
     // Accessors for convenience (to ease migration)
     Player* getPlayer(int p) { return reinterpret_cast<Player**>(player)[p]; }

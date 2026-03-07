@@ -1,0 +1,125 @@
+# Stage 1 Configuration - Stair Platforms
+#
+# Simplified layout for t=0 (not to scale, Y shown by rows):
+#
+# y~100  o o o o o o o o o o    o o o o o o o o o o
+#
+# y~255  =                                       =
+# y~271   =                                     =
+# y~287    =                                   =
+# y~303     =                                 =
+# y~319      =                               =
+# y~335       =                             =
+# y~351        ===                       ===
+# y~367           ===                 ===
+# y~383              ===   1   2  ===
+# y~399                 ====   ====
+# y~MAX_Y------------------------------------------
+#
+# Symbol legend:
+#   1      player 1 start position
+#   2      player 2 start position
+#   =      small floor (16px)
+#   ===    middle floor (48px)
+#   ====   big floor (64px)
+#   º      tiny ball (size 3)
+#   o      small ball (size 2)
+#   O      middle ball (size 1)
+#   @      big ball (size 0)
+#   *      small hexa (size 2)
+#   X      big hexa (size 0)
+#   ~      small glass platform (16px)
+#   ~~~    middle glass platform (48px)
+#   ~~~~   big glass platform (64px)
+#   H      ladder segment
+#
+# Game sizes and boundaries:
+#   MIN_X:16 MAX_X: 623 MIN_Y:16 MAX_Y:415
+#   Ladder width=40 height=32
+#   Ball (size 0) width=82 height=82
+#   Ball (size 1) width=41 height=?41
+#   Ball (size 2) width=21 height=21
+#   Ball (size 3) width=11 height=11
+#   Hexa (size 0) width=51 height=51
+#   Hexa (size 1) width=26 height=26
+#   Hexa (size 2) width=16 height=16
+#   Floor (type horiz_big ) width=64 height=16
+#   Floor (type horiz_middle ) width=48 height=16
+#   Floor (type small ) width=16 height=16
+#   Floor (type vert_big ) width=16 height=64
+#   Floor (type vert_middle ) width=16 height=48
+#   Glass (type horiz_big ) width=64 height=16
+#   Glass (type horiz_middle ) width=48 height=16
+#   Glass (type small ) width=16 height=16
+#   Glass (type vert_big ) width=16 height=64
+#   Glass (type vert_middle ) width=16 height=48
+#   Pickup width=32 height:32
+#
+# Stage authoring notes:
+#   - Ball size mapping in loader is inverse of intuitive naming:
+#       size=0 largest, size=1 medium, size=2 small, size=3 smallest.
+#   - For a centered 64px platform/glass on a 640px-wide stage, use x=288.
+#   - To hide a pickup inside glass, use: glass: x=..., y=..., type=horiz_big, pickup=doubleshoot
+#     (pickup appears only after the glass is broken).
+#   - Mirrored layouts are faster to tune when using x pairs around center x=320:
+#       128 <-> 512, 160 <-> 480, 208 <-> 432, 256 <-> 384.
+#   - Keep moving balls at least one tile (16px) away from nearby floor/glass edges
+#     at spawn time to avoid immediate collision jitter.
+#
+
+stage_id: 1
+background: fondo2.png
+music: stage2.ogg
+time_limit: 100
+player1_x: 270
+player2_x: 270
+
+at 0:
+  # Left formation - small balls moving left
+  hexa: x=128, y=30, size=0, top=220, dirX=-1, dirY=1
+  ball: x=128, y=100, size=3, top=200, dirX=-1, dirY=1
+  ball: x=144, y=100, size=3, top=200, dirX=-1, dirY=1
+  ball: x=160, y=100, size=3, top=200, dirX=-1, dirY=1
+  ball: x=176, y=100, size=3, top=200, dirX=-1, dirY=1
+  ball: x=192, y=100, size=3, top=200, dirX=-1, dirY=1
+  ball: x=208, y=100, size=3, top=200, dirX=-1, dirY=1
+  ball: x=224, y=100, size=3, top=200, dirX=-1, dirY=1
+  ball: x=240, y=100, size=3, top=200, dirX=-1, dirY=1
+  ball: x=256, y=100, size=3, top=200, dirX=-1, dirY=1
+  ball: x=272, y=100, size=3, top=200, dirX=-1, dirY=1
+
+  # Right formation - small balls moving right
+  ball: x=428, y=100, size=3, top=200, dirX=1, dirY=1
+  ball: x=444, y=100, size=3, top=200, dirX=1, dirY=1
+  ball: x=460, y=100, size=3, top=200, dirX=1, dirY=1
+  ball: x=476, y=100, size=3, top=200, dirX=1, dirY=1
+  ball: x=492, y=100, size=3, top=200, dirX=1, dirY=1
+  ball: x=508, y=100, size=3, top=200, dirX=1, dirY=1
+  ball: x=524, y=100, size=3, top=200, dirX=1, dirY=1
+  ball: x=540, y=100, size=3, top=200, dirX=1, dirY=1
+  ball: x=556, y=100, size=3, top=200, dirX=1, dirY=1
+  ball: x=572, y=100, size=3, top=200, dirX=1, dirY=1
+
+  # Left stairs (center -> MIN_X): 1 big, next 3 middle, rest small
+  floor: x=256, y=399, type=horiz_big
+  floor: x=208, y=383, type=horiz_middle
+  floor: x=160, y=367, type=horiz_middle
+  floor: x=112, y=351, type=horiz_middle
+  floor: x=96,  y=335, type=small
+  floor: x=80,  y=319, type=small
+  floor: x=64,  y=303, type=small
+  floor: x=48,  y=287, type=small
+  floor: x=32,  y=271, type=small
+  floor: x=16,  y=255, type=small
+
+  # Right stairs (center -> MAX_X), mirrored
+  floor: x=320, y=399, type=horiz_big
+  floor: x=384, y=383, type=horiz_middle
+  floor: x=432, y=367, type=horiz_middle
+  floor: x=480, y=351, type=horiz_middle
+  floor: x=528, y=335, type=small
+  floor: x=544, y=319, type=small
+  floor: x=560, y=303, type=small
+  floor: x=576, y=287, type=small
+  floor: x=592, y=271, type=small
+  floor: x=608, y=255, type=small

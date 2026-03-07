@@ -100,6 +100,9 @@ private:
     EventManager::ListenerHandle levelClearHandle;
     EventManager::ListenerHandle stageLoadedHandle;
 
+    // Spawn position (set from stage config; used on revive)
+    float spawnX;
+
     // Ladder/climbing state
     Ladder* currentLadder;   // Ladder player is currently climbing (nullptr if not climbing)
     float climbSpeed;        // Climb speed in pixels per frame
@@ -241,6 +244,7 @@ public:
     void setPlaying(bool p) { playing = p; }
     void setLives(int l) { lives = l; }
     void setImmuneCounter(int counter) { immuneCounter = counter; }
+    void setSpawnX(float x) { spawnX = x; }
     void setMaxShoots(int n) { maxShoots = n; }
     int getMaxShoots() const { return maxShoots; }
 

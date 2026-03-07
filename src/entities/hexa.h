@@ -64,9 +64,10 @@ public:
      * Create a child Hexa from a parent
      * @param scene Parent scene
      * @param parent Parent hexa being destroyed
-     * @param dir Direction (-1=left, 1=right)
+     * @param dirX Horizontal direction (-1=left, 1=right)
+     * @param dirY Vertical direction (-1=up, 1=down)
      */
-    Hexa(Scene* scene, Hexa* parent, int dir);
+    Hexa(Scene* scene, Hexa* parent, int dirX, int dirY);
 
     ~Hexa() = default;
 

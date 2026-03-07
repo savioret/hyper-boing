@@ -1,22 +1,45 @@
 # Stage 1 Configuration
+#
+# Simplified layout for t=0 (not to scale, Y shown by rows):
+#
+# y~40  º                                       º
+#        º                                     º
+#         º                                   º
+# y~200    º              ~~~~               º
+#           º                               º
+#            º                             º
+#             º                           º
+#              º                         º
+# y~MAX_Y                1   2
+#        ----------------------------------------
+
 stage_id: 1
-background: fondo1.png
-music: stage1.ogg
+background: japan1.png
+music: scifi2.ogg
 time_limit: 100
 player1_x: 250
 player2_x: 350
 
 at 0:
-  # Floor platforms
-  floor: x=550, y=50, type=0
-  floor: x=250, y=250, type=0
-  floor: x=350, y=150, type=1
-  floor: x=550, y=150, type=1
-  /weapon gun 1
-  #/boxes 1
+  # Center big glass (64x16) with hidden doubleshoot pickup
+  glass: x=288, y=200, type=horiz_big, pickup=doubleshoot
 
-  # Ball spawning at top with random X position
-  ball: y_max
+  # Left side balls (8)
+  ball: x=48,  y=40,  size=3, top=220, dirX=1, dirY=1
+  ball: x=64,  y=64,  size=3, top=220, dirX=1, dirY=1
+  ball: x=80,  y=88,  size=3, top=220, dirX=1, dirY=1
+  ball: x=96,  y=112, size=3, top=220, dirX=1, dirY=1
+  ball: x=112, y=136, size=3, top=220, dirX=1, dirY=1
+  ball: x=128, y=160, size=3, top=220, dirX=1, dirY=1
+  ball: x=144, y=184, size=3, top=220, dirX=1, dirY=1
+  ball: x=160, y=208, size=3, top=220, dirX=1, dirY=1
 
-at 20:
-  ball: y_max
+  # Right side balls (8)
+  ball: x=592, y=40,  size=3, top=220, dirX=-1, dirY=1
+  ball: x=576, y=64,  size=3, top=220, dirX=-1, dirY=1
+  ball: x=560, y=88,  size=3, top=220, dirX=-1, dirY=1
+  ball: x=544, y=112, size=3, top=220, dirX=-1, dirY=1
+  ball: x=528, y=136, size=3, top=220, dirX=-1, dirY=1
+  ball: x=512, y=160, size=3, top=220, dirX=-1, dirY=1
+  ball: x=496, y=184, size=3, top=220, dirX=-1, dirY=1
+  ball: x=480, y=208, size=3, top=220, dirX=-1, dirY=1

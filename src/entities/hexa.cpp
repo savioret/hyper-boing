@@ -29,7 +29,7 @@ Hexa::Hexa(Scene* scn, int x, int y, int sz, float vx, float vy)
     animCtrl = std::make_unique<FrameSequenceAnim>(FrameSequenceAnim::range(start, start + 3, 100, 0));
 }
 
-Hexa::Hexa(Scene* scn, Hexa* parent, int dir)
+Hexa::Hexa(Scene* scn, Hexa* parent, int dirX, int dirY)
     : scene(scn)
 {
     // Child is one size smaller
@@ -39,21 +39,19 @@ Hexa::Hexa(Scene* scn, Hexa* parent, int dir)
     width = SIZES[size][0];
     height = SIZES[size][1];
 
-    // Inherit velocity magnitude but set direction based on dir parameter
-    float speed = std::sqrt(parent->velX * parent->velX + parent->velY * parent->velY);
+    // Horizontal: spread outward using parent's horizontal speed magnitude
+    velX = dirX * std::abs(parent->velX);
+    if (velX == 0.0f) velX = dirX * 1.5f;  // Default if parent had no horizontal movement
 
-    // Child hexas spread outward
-    velX = dir * std::abs(parent->velX);
-    if (velX == 0.0f) velX = dir * 1.5f;  // Default horizontal velocity if parent was vertical
+    // Vertical: apply dirY to parent's vertical speed magnitude
+    velY = dirY * std::abs(parent->velY);
+    if (velY == 0.0f) velY = dirY * 1.0f;  // Default if parent had no vertical movement
 
-    // Inherit vertical velocity direction
-    velY = parent->velY;
-
-    // Position at parent's center, offset by direction
+    // Position at parent's center, offset horizontally by direction
     float parentCenterX = parent->xPos + (parent->width / 2.0f);
     float parentCenterY = parent->yPos + (parent->height / 2.0f);
 
-    this->xPos = parentCenterX - (width / 2.0f) + (dir * width * 0.5f);
+    this->xPos = parentCenterX - (width / 2.0f) + (dirX * width * 0.5f);
     this->yPos = parentCenterY - (height / 2.0f);
 
     int start = HEXA_ANIM_START[size];
@@ -111,7 +109,8 @@ void Hexa::kill()
     {
         flashing = true;
         flashTimer = FLASH_DURATION;
-        onDeath();  // Spawn splash effect, fire events
+        // onDeath() is called by IGameObject::kill() when the flash expires,
+        // ensuring it fires exactly once (splash effect, events, pickup spawn).
     }
 }
 
@@ -170,8 +169,13 @@ std::pair<std::unique_ptr<Hexa>, std::unique_ptr<Hexa>> Hexa::createChildren()
         return { nullptr, nullptr };
     }
 
-    auto child1 = std::make_unique<Hexa>(scene, this, -1);  // Left
-    auto child2 = std::make_unique<Hexa>(scene, this, 1);   // Right
+    // Children inherit parent's vertical direction:
+    // - parent going down → children go down-left and down-right
+    // - parent going up   → children go up-left and up-right
+    int childDirY = -1;//(velY >= 0.0f) ? 1 : -1;
+
+    auto child1 = std::make_unique<Hexa>(scene, this, -1, childDirY);  // Left
+    auto child2 = std::make_unique<Hexa>(scene, this,  1, childDirY);  // Right
 
     return { std::move(child1), std::move(child2) };
 }

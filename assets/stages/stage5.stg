@@ -1,84 +1,58 @@
 # Stage 5 Configuration - Staircases and Side Spawns
+#
+# Simplified layout for t=0 (not to scale, Y shown by rows):
+#
+# y~80   @                                       @
+#
+#
+#
+#                  H=H          H=H
+#                  H=H          H=H
+# y~MAX_Y          H H  1   2   H H
+#        ----------------------------------------
+#
+# Symbol legend:
+#   1      player 1 start position
+#   2      player 2 start position
+#   @      big ball (size 0)
+#   H      ladder segment (39px wide, 10 tiles tall = 320px)
+#   [gun]  gun pickup flanking each ladder
+#
+# Game sizes and boundaries:
+#   MIN_X:16 MAX_X:623 MIN_Y:16 MAX_Y:415
+#   Ladder width=39 height=32 per tile
+#   Ball (size 0) width=82 height=82
+#
+# Stage authoring notes:
+#   - Two large balls spawn high on each side, bouncing inward.
+#   - Two tall ladders (10 tiles) flank the player start zone.
+#   - Each ladder has a gun pickup beside it at mid-height.
+#   - Ladder x is bottom-middle anchor; y is bottom (ground = MAX_Y).
+#   - pickups: doubleshoot, timefreeze, extratime, shield
+
 stage_id: 5
-background: fondo5.png
-music: stage5.ogg
+background: mexico1.png
+music: beach1.ogg
 time_limit: 100
-player1_x: 250
+player1_x: 295
 player2_x: 350
 
 at 0:
-  # Left staircase
-  floor: x=16, y=100, type=horiz_big
-  floor: x=80, y=164, type=horiz_big
-  floor: x=144, y=164, type=vert_big
-  floor: x=144, y=228, type=horiz_big
-  floor: x=208, y=228, type=vert_big
-  floor: x=208, y=292, type=horiz_big
+  # Two big balls - left side moving right, right side moving left
+  ball: x=85, y=80, size=0, dirX=1,  dirY=1
+  ball: x=460, y=80, size=0, dirX=-1, dirY=1
 
-  # Right staircase
-  floor: x=560, y=100, type=horiz_big
-  floor: x=512, y=164, type=horiz_big
-  floor: x=496, y=164, type=vert_big
-  floor: x=448, y=228, type=horiz_big
-  floor: x=432, y=228, type=vert_big
-  floor: x=384, y=292, type=horiz_big
+  # Left ladder pair (two side-by-side ladders, center-left of stage)
+  ladder: x=195, y=415, height=3
+  ladder: x=251, y=415, height=3
+  # two floor items between the two ladders
+  floor: x=215, y=320, type=small
+  floor: x=215, y=350, type=vert_middle
 
-  # First wave - left and right
-  ball: x=17, y=50, size=3, top=186, dirX=1, dirY=1
-  ball: x=610, y=50, size=3, top=186, dirX=-1, dirY=1
+  # Right ladder pair (mirrored, center-right of stage)
+  ladder: x=395, y=415, height=3
+  ladder: x=451, y=415, height=3
 
-at 5:
-  ball: x=17, y=50, size=3, top=229, dirX=1, dirY=1
-  ball: x=610, y=50, size=3, top=229, dirX=-1, dirY=1
-
-at 10:
-  ball: x=17, y=50, size=3, top=163, dirX=1, dirY=1
-  ball: x=610, y=50, size=3, top=163, dirX=-1, dirY=1
-
-at 15:
-  ball: x=17, y=50, size=3, top=268, dirX=1, dirY=1
-  ball: x=610, y=50, size=3, top=268, dirX=-1, dirY=1
-
-at 20:
-  ball: x=17, y=50, size=3, top=223, dirX=1, dirY=1
-  ball: x=610, y=50, size=3, top=223, dirX=-1, dirY=1
-
-at 25:
-  ball: x=17, y=50, size=3, top=195, dirX=1, dirY=1
-  ball: x=610, y=50, size=3, top=195, dirX=-1, dirY=1
-
-at 30:
-  ball: x=17, y=50, size=3, top=276, dirX=1, dirY=1
-  ball: x=610, y=50, size=3, top=276, dirX=-1, dirY=1
-
-at 35:
-  ball: x=17, y=50, size=3, top=170, dirX=1, dirY=1
-  ball: x=610, y=50, size=3, top=170, dirX=-1, dirY=1
-
-at 40:
-  ball: x=17, y=50, size=3, top=241, dirX=1, dirY=1
-  ball: x=610, y=50, size=3, top=241, dirX=-1, dirY=1
-
-at 45:
-  ball: x=17, y=50, size=3, top=209, dirX=1, dirY=1
-  ball: x=610, y=50, size=3, top=209, dirX=-1, dirY=1
-
-at 50:
-  ball: x=17, y=50, size=3, top=183, dirX=1, dirY=1
-  ball: x=610, y=50, size=3, top=183, dirX=-1, dirY=1
-
-at 55:
-  ball: x=17, y=50, size=3, top=255, dirX=1, dirY=1
-  ball: x=610, y=50, size=3, top=255, dirX=-1, dirY=1
-
-at 60:
-  ball: x=17, y=50, size=3, top=291, dirX=1, dirY=1
-  ball: x=610, y=50, size=3, top=291, dirX=-1, dirY=1
-
-at 65:
-  ball: x=17, y=50, size=3, top=218, dirX=1, dirY=1
-  ball: x=610, y=50, size=3, top=218, dirX=-1, dirY=1
-
-at 70:
-  ball: x=17, y=50, size=3, top=162, dirX=1, dirY=1
-  ball: x=610, y=50, size=3, top=162, dirX=-1, dirY=1
+  # two floor items between the two ladders
+  floor: x=415, y=320, type=small
+  floor: x=415, y=350, type=vert_middle

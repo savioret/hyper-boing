@@ -381,7 +381,7 @@ public:
      * @param dirY Vertical direction (-1, 1)
      * @param id Ball type/color (0=red)
      */
-    void addBall(int x = 250, int y = -20, int size = 0, int top = 0, int dirX = 1, int dirY = 1, int id = 0);
+    void addBall(int x = 250, int y = -20, int size = 0, int top = 0, float dirX = 1.0f, int dirY = 1, int id = 0);
     
     /**
      * @brief Adds a pickup to the scene

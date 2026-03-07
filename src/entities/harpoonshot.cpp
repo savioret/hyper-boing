@@ -112,7 +112,7 @@ void HarpoonShot::draw(Graph* graph)
     }
 
     // Draw animated chain from tip bottom down to the anchor point (yInit)
-    LOG_DEBUG("Harpoon tailAnim frame: %d", chainSpr.getCurrentFrame());
+    //LOG_DEBUG("Harpoon tailAnim frame: %d", chainSpr.getCurrentFrame());
     if (!chainFrame) return;  // Safety check
 
     int tileHeight = chainFrame->getHeight();

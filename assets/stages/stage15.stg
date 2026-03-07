@@ -1,0 +1,84 @@
+# Stage 5 Configuration - Staircases and Side Spawns
+stage_id: 5
+background: fondo5.png
+music: stage5.ogg
+time_limit: 100
+player1_x: 250
+player2_x: 350
+
+at 0:
+  # Left staircase
+  floor: x=16, y=100, type=horiz_big
+  floor: x=80, y=164, type=horiz_big
+  floor: x=144, y=164, type=vert_big
+  floor: x=144, y=228, type=horiz_big
+  floor: x=208, y=228, type=vert_big
+  floor: x=208, y=292, type=horiz_big
+
+  # Right staircase
+  floor: x=560, y=100, type=horiz_big
+  floor: x=512, y=164, type=horiz_big
+  floor: x=496, y=164, type=vert_big
+  floor: x=448, y=228, type=horiz_big
+  floor: x=432, y=228, type=vert_big
+  floor: x=384, y=292, type=horiz_big
+
+  # First wave - left and right
+  ball: x=17, y=50, size=3, top=186, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=186, dirX=-1, dirY=1
+
+at 5:
+  ball: x=17, y=50, size=3, top=229, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=229, dirX=-1, dirY=1
+
+at 10:
+  ball: x=17, y=50, size=3, top=163, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=163, dirX=-1, dirY=1
+
+at 15:
+  ball: x=17, y=50, size=3, top=268, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=268, dirX=-1, dirY=1
+
+at 20:
+  ball: x=17, y=50, size=3, top=223, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=223, dirX=-1, dirY=1
+
+at 25:
+  ball: x=17, y=50, size=3, top=195, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=195, dirX=-1, dirY=1
+
+at 30:
+  ball: x=17, y=50, size=3, top=276, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=276, dirX=-1, dirY=1
+
+at 35:
+  ball: x=17, y=50, size=3, top=170, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=170, dirX=-1, dirY=1
+
+at 40:
+  ball: x=17, y=50, size=3, top=241, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=241, dirX=-1, dirY=1
+
+at 45:
+  ball: x=17, y=50, size=3, top=209, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=209, dirX=-1, dirY=1
+
+at 50:
+  ball: x=17, y=50, size=3, top=183, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=183, dirX=-1, dirY=1
+
+at 55:
+  ball: x=17, y=50, size=3, top=255, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=255, dirX=-1, dirY=1
+
+at 60:
+  ball: x=17, y=50, size=3, top=291, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=291, dirX=-1, dirY=1
+
+at 65:
+  ball: x=17, y=50, size=3, top=218, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=218, dirX=-1, dirY=1
+
+at 70:
+  ball: x=17, y=50, size=3, top=162, dirX=1, dirY=1
+  ball: x=610, y=50, size=3, top=162, dirX=-1, dirY=1

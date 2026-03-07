@@ -1,20 +1,31 @@
-# Stage 3 Configuration - Mixed Approaches
+# Stage 3 Configuration
+#
+# Simplified layout for t=0 (not to scale, Y shown by rows):
+#
+#
+# y~80                      X
+# 
+# y~200              =      X     =
+#
+#
+#
+#
+# y~MAX_Y                 1   2
+#        ----------------------------------------
+
 stage_id: 3
-background: fondo3.png
-music: stage3.ogg
+background: italy1.png
+music: beach1.ogg
 time_limit: 100
 player1_x: 200
 player2_x: 350
 
 at 0:
   # Single floor platform
-  floor: x=250, y=70, type=horiz_big
+  floor: x=152, y=70, type=small
+  floor: x=472, y=70, type=small
 
   # Random top balls (fully random X, Y at top)
-  ball: y_max
-  ball: y_max
+  hexa: x=294 y=80 velX=1 velY=2.0 pickup=claw
+  hexa: x=294 y=200 velX=-1 velY=-2.0 pickup=doubleshoot
 
-at 5:
-  # Balls with random X at specific Y (size 2)
-  ball: y=30, size=2
-  ball: y=30, size=2, dirX=-1, dirY=1

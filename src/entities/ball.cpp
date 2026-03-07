@@ -21,7 +21,7 @@
  * The ball starts either moving up or down (dirY) and moving in the
  * horizontal direction (dirX).
  */
-Ball::Ball(Scene* scn, int x, int y, int size, int dx, int dy, int topVal, int idVal)
+Ball::Ball(Scene* scn, int x, int y, int size, float dx, int dy, int topVal, int idVal)
 {
     scene = scn;
     this->xPos = (float)x;
@@ -150,7 +150,8 @@ void Ball::kill()
     {
         flashing = true;
         flashTimer = FLASH_DURATION;
-        onDeath();  // Spawn splash effect, fire events
+        // onDeath() is called by IGameObject::kill() when the flash expires,
+        // ensuring it fires exactly once (splash effect, events, pickup spawn).
     }
 }
 
@@ -176,15 +177,15 @@ void Ball::initTop()
         top = (int)(d * 0.1f);
 }
 
-void Ball::setDir(int dx, int dy)
+void Ball::setDir(float dx, int dy)
 {
     dirX = dx;
-    dirY = dy;	
+    dirY = dy;
 }
 
-void Ball::setDirX(int dx)
+void Ball::setDirX(float dx)
 {
-    dirX = dx;	
+    dirX = dx;
 }
 
 void Ball::setDirY(int dy)
@@ -280,20 +281,20 @@ void Ball::update(float dt)
         }
     }
 
-    if (dirX == 1)	
+    if (dirX > 0)
     {
         if (xPos + diameter >= Stage::MAX_X)
         {
             xPos = (float)(Stage::MAX_X - diameter);
-            dirX = -1;
+            dirX = -dirX;
         }
     }
-    else if (dirX == -1)
+    else if (dirX < 0)
     {
         if (xPos <= Stage::MIN_X)
         {
             xPos = (float)Stage::MIN_X;
-            dirX = 1;
+            dirX = -dirX;
         }
     }
 }

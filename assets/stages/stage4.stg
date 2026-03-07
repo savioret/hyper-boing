@@ -1,21 +1,26 @@
-# Stage 4 Configuration
-stage_id: 4
-background: fondo4.png
-music: stage4.ogg
+# Stage 3 Configuration - Complex Formation
+# Simplified layout (not to scale, Y shown by rows):
+#
+# y~80              ~~~~           @              ~~~~
+#
+# y~MAX_Y                       1     2
+#         -----------------------------------------------------
+#
+# Stage authoring notes:
+#   - Left ball formation moves left (dirX=-1), right formation moves right (dirX=1).
+#   - Glass platforms contain hidden pickups:
+#       left = doubleshoot, right = timefreeze.
+#   - Ball rows are intentionally separated to keep the center lane clearer at spawn.
+#
+stage_id: 3
+background: mexico1.png
+music: beach1.ogg
 time_limit: 100
-player1_x: 250
+player1_x: 270
 player2_x: 350
 
 at 0:
-  # Single floor platform
-  floor: x=250, y=70, type=horiz_big
+  ball: x=280, y=80, size=0, dirX=1, dirY=1, pickup=doubleshoot
 
-at 1:
-  # Small ball at random top position
-  ball: y_max, size=3
-
-  # Regular ball at random top position
-  ball: y_max
-
-at 20:
-  ball: y_max
+  glass: x=128, y=80, type=horiz_big, pickup=extratime
+  glass: x=448, y=80, type=horiz_big, pickup=timefreeze

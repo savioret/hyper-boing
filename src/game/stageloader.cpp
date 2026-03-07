@@ -218,8 +218,12 @@ void StageLoader::processBallObject(Stage& stage, float time, const std::map<std
         builder.size(std::stoi(params.at("size")));
     if (params.count("top"))
         builder.top(std::stoi(params.at("top")));
-    if (params.count("dirX") && params.count("dirY"))
-        builder.dir(std::stoi(params.at("dirX")), std::stoi(params.at("dirY")));
+    if (params.count("dirX") || params.count("dirY"))
+    {
+        float dx = params.count("dirX") ? std::stof(params.at("dirX")) : 1.0f;
+        int   dy = params.count("dirY") ? std::stoi(params.at("dirY")) : 1;
+        builder.dir(dx, dy);
+    }
     if (params.count("type"))
         builder.type(std::stoi(params.at("type")));
     if (params.count("pickup"))

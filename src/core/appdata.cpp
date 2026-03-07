@@ -3,11 +3,11 @@
 #include "sprite.h"
 #include "player.h"
 #include "stage.h"
-#include "stageloader.h"
 #include "main.h"
 #include "logger.h"
 #include "asepriteloader.h"
 #include "animspritesheet.h"
+#include <cstdio>
 #include <cstdlib>
 
 // Temporarily undefine macros that conflict with member names during construction
@@ -73,17 +73,14 @@ const char* Keys::getKeyName(SDL_Scancode scancode)
 
 
 AppData::AppData()
-    : numPlayers(1), numStages(6), currentStage(1), inMenu(true),
-      activeScene(nullptr), sharedBackground(nullptr), scrollX(0.0f), 
+    : numPlayers(1), numStages(0), currentStage(1), inMenu(true),
+      activeScene(nullptr), sharedBackground(nullptr), scrollX(0.0f),
       scrollY(0.0f), backgroundInitialized(false), debugMode(false),
       quit(false), goBack(false), renderMode(RENDERMODE_NORMAL),
       currentScreen(nullptr), nextScreen(nullptr)
 {
     player[PLAYER1] = nullptr;
     player[PLAYER2] = nullptr;
-    
-    // Initialize stages vector
-    stages.resize(6);
 }
 
 // Redefine macros after construction
@@ -256,228 +253,22 @@ void AppData::initStageResources()
 
 void AppData::initStages()
 {
-    numStages = 6;
+    stages.clear();
 
-    for (int i = 0; i < numStages; i++)
-        stages[i].reset();
-
-    /*************** START OF SCREENS ***********************/
-    /***** USING NEW CLEAN BUILDER API                  *****/
-
-    /* Stage 1 - Clean builder syntax */
-    int i = 0;
-    if (!StageLoader::load(stages[i], "assets/stages/stage1.stg"))
+    char path[260];
+    for (int i = 1; ; i++)
     {
-        // Fallback to programmatic definition if file loading fails
-        stages[i].xpos[PLAYER1] = 250;
-        stages[i].xpos[PLAYER2] = 350;
-        stages[i].setBack("fondo1.png");
-        stages[i].setMusic("stage1.ogg");
-        stages[i].timelimit = 100;
-        stages[i].id = i + 1;
-        
-        // Floors using clean builder syntax
-        stages[i].spawn(StageObjectBuilder::floor().at(550, 50).type(0).time(0));
-        stages[i].spawn(StageObjectBuilder::floor().at(250, 250).type(0).time(0));
-        stages[i].spawn(StageObjectBuilder::floor().at(350, 150).type(1).time(0));
-        stages[i].spawn(StageObjectBuilder::floor().at(550, 150).type(1).time(0));
-
-        // Test ladder - 10 tiles high at ground level
-        stages[i].spawn(StageObjectBuilder::ladder().at(100, Stage::MAX_Y).height(10).time(0));
-
-        // Balls at top with random X
-        stages[i].spawn(StageObjectBuilder::ball().time(1).atMaxY());
-        stages[i].spawn(StageObjectBuilder::ball().time(20).atMaxY());
-        
-        // Count balls after all spawns
-        stages[i].countItemsLeft();
+        std::snprintf(path, sizeof(path), "assets/stages/stage%d.stg", i);
+        FILE* f = std::fopen(path, "r");
+        if (!f)
+            break;
+        std::fclose(f);
+        stages.emplace_back();
+        stages.back().stageFile = path;
     }
 
-    /* Stage 2 - Complex formation */
-    i = 1;
-    if (!StageLoader::load(stages[i], "assets/stages/stage2.stg"))
-    {
-        // Fallback to programmatic definition if file loading fails
-        stages[i].xpos[PLAYER1] = stages[i].xpos[PLAYER2] = 270;
-        stages[i].setBack("fondo2.png");
-        stages[i].setMusic("stage2.ogg");
-        stages[i].timelimit = 100;
-        stages[i].id = i + 1;
-        
-        // Create small balls in formation (fixed positions)
-        for (int y = 0; y < 2; y++)
-        {
-            int dirX = (y == 0) ? -1 : 1;
-            for (int x = 0; x < 10; x++)
-            {
-                stages[i].spawn(
-                    StageObjectBuilder::ball()
-                        .at(128 + 300 * y + x * 16, 100)
-                        .time(1)
-                        .size(3)
-                        .top(200)
-                        .dir(dirX, 1)
-                );
-            }
-        }
-        
-        // Count balls after all spawns
-        stages[i].countItemsLeft();
-    }
-
-    /* Stage 3 - Mixed approaches */
-    i = 2;
-    if (!StageLoader::load(stages[i], "assets/stages/stage3.stg"))
-    {
-        // Fallback to programmatic definition if file loading fails
-        stages[i].xpos[PLAYER1] = 200;
-        stages[i].xpos[PLAYER2] = 350;
-        stages[i].setBack("fondo3.png");
-        stages[i].setMusic("stage3.ogg");
-        stages[i].timelimit = 100;
-        stages[i].id = i + 1;
-        
-        // Floor
-        stages[i].spawn(StageObjectBuilder::floor().at(250, 70).type(0).time(0));
-        
-        // Random top balls
-        stages[i].spawn(StageObjectBuilder::ball().time(1).atMaxY());
-        stages[i].spawn(StageObjectBuilder::ball().time(1).atMaxY());
-        
-        // Balls with random X at specific Y
-        stages[i].spawn(StageObjectBuilder::ball().time(1).size(2).atY(400));
-        stages[i].spawn(StageObjectBuilder::ball().time(1).size(2).atY(400).dir(-1, 1));
-        
-        // Count balls after all spawns
-        stages[i].countItemsLeft();
-    }
-
-    /* Stage 4 - Now using new API */
-    i = 3;
-    if (!StageLoader::load(stages[i], "assets/stages/stage4.stg"))
-    {
-        // Fallback to programmatic definition if file loading fails
-        stages[i].setBack("fondo4.png");
-        stages[i].setMusic("stage4.ogg");
-        stages[i].timelimit = 100;
-        stages[i].id = i + 1;
-        
-        stages[i].spawn(StageObjectBuilder::floor().at(250, 70).type(0).time(0));
-        
-        // Small ball at random top position
-        stages[i].spawn(StageObjectBuilder::ball().time(1).size(3).atMaxY());
-        
-        // Regular balls at random top positions
-        stages[i].spawn(StageObjectBuilder::ball().time(1).atMaxY());
-        stages[i].spawn(StageObjectBuilder::ball().time(20).atMaxY());
-        
-        // Count balls after all spawns
-        stages[i].countItemsLeft();
-    }
-
-    /* Stage 5 - Staircases and side spawns */
-    i = 4;
-    if (!StageLoader::load(stages[i], "assets/stages/stage5.stg"))
-    {
-        // Fallback to programmatic definition if file loading fails
-        stages[i].xpos[PLAYER1] = 250;
-        stages[i].xpos[PLAYER2] = 350;
-        stages[i].setBack("fondo5.png");
-        stages[i].setMusic("stage5.ogg");
-        stages[i].timelimit = 100;
-        stages[i].id = i + 1;
-        
-        // Left staircase
-        stages[i].spawn(StageObjectBuilder::floor().at(16, 100).type(0).time(0));
-        stages[i].spawn(StageObjectBuilder::floor().at(80, 164).type(0).time(0));
-        stages[i].spawn(StageObjectBuilder::floor().at(144, 164).type(1).time(0));
-        stages[i].spawn(StageObjectBuilder::floor().at(144, 228).type(0).time(0));
-        stages[i].spawn(StageObjectBuilder::floor().at(208, 228).type(1).time(0));
-        stages[i].spawn(StageObjectBuilder::floor().at(208, 292).type(0).time(0));
-        
-        // Right staircase
-        stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 80, 100).type(0).time(0));
-        stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 128, 164).type(0).time(0));
-        stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 144, 164).type(1).time(0));
-        stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 192, 228).type(0).time(0));
-        stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 208, 228).type(1).time(0));
-        stages[i].spawn(StageObjectBuilder::floor().at(RES_X - 256, 292).type(0).time(0));
-        
-        // Small balls spawning from sides (fixed X positions)
-        for (int x = 0; x < 15; x++)
-        {
-            int randomTop = std::rand() % 150 + 150;
-            
-            // Left side
-            stages[i].spawn(
-                StageObjectBuilder::ball()
-                    .at(17, 50)
-                    .time(5 * x)
-                    .size(3)
-                    .top(randomTop)
-                    .dir(1, 1)
-            );
-            
-            // Right side
-            stages[i].spawn(
-                StageObjectBuilder::ball()
-                    .at(Stage::MAX_X - 30, 50)
-                    .time(5 * x)
-                    .size(3)
-                    .top(randomTop)
-                    .dir(-1, 1)
-            );
-        }
-        
-        // Count balls after all spawns
-        stages[i].countItemsLeft();
-    }
-
-    /* Stage 6 - Grid pattern */
-    i = 5;
-    stages[i].xpos[PLAYER1] = 250;
-    stages[i].xpos[PLAYER2] = 350;
-    stages[i].setBack("fondo6.png");
-    stages[i].setMusic("stage6.ogg");
-    stages[i].timelimit = 100;
-    stages[i].id = i + 1;
-    
-    // Floor grid
-    for (int x = 56; x < 600; x += 64)
-    {
-        for (int y = 22; y < 288; y += 64)
-        {
-            stages[i].spawn(StageObjectBuilder::floor().at(x, y).type(1).time(0));
-        }
-    }
-    
-    // Ball grid with gaps for players (all fixed positions)
-    for (int x = 10; x < 650; x += 64)
-    {
-        if (x < 250 || x > 350)
-        {
-            stages[i].spawn(
-                StageObjectBuilder::ball()
-                    .at(x, 30)
-                    .time(1)
-                    .size(1)
-                    .top(395)
-                    .dir(0, 1)
-            );
-            
-            stages[i].spawn(
-                StageObjectBuilder::ball()
-                    .at(x, 150)
-                    .time(1)
-                    .size(1)
-                    .top(395)
-                    .dir(0, 1)
-            );
-        }
-    }
-    
-    // Count balls after all spawns
-    stages[i].countItemsLeft();
+    numStages = (int)stages.size();
+    LOG_INFO("Found %d stage(s) in assets/stages/", numStages);
 }
 void AppData::setCurrent(GameState* state)
 {
@@ -550,12 +341,3 @@ void AppData::preloadMenuMusic()
     AudioManager::instance().preloadMusic("assets/music/menu.ogg");
 }
 
-void AppData::preloadStageMusic()
-{
-    // Preload all stage music tracks
-    AudioManager::instance().preloadMusic("assets/music/stage1.ogg");
-    AudioManager::instance().preloadMusic("assets/music/stage2.ogg");
-    AudioManager::instance().preloadMusic("assets/music/stage3.ogg");
-    AudioManager::instance().preloadMusic("assets/music/stage4.ogg");
-    AudioManager::instance().preloadMusic("assets/music/stage5.ogg");
-}

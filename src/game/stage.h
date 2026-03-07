@@ -47,7 +47,7 @@ struct BallParams : public StageObjectParams
 {
     int size = 0;
     int top = 0;
-    int dirX = 1;
+    float dirX = 1.0f;
     int dirY = 1;
     int ballType = 0;
     bool hasDeathPickup = false;
@@ -68,7 +68,7 @@ struct BallParams : public StageObjectParams
     {
         if (size < 0 || size > 3) return false;
         if (top < 0) return false;
-        if (dirX != -1 && dirX != 0 && dirX != 1) return false;
+        // dirX is float; any finite value is valid
         if (dirY != -1 && dirY != 1) return false;
         if (ballType < 0) return false;
         return true;
@@ -374,6 +374,7 @@ public:
     char music[64];
     int timelimit;
     int xpos[2]; // initial positions for players 1 and 2 TODO: Review this
+    std::string stageFile;  ///< Path to .stg file (set by AppData::initStages, loaded by Scene::init)
                    
 private:
     std::vector<std::unique_ptr<StageObject>> sequence;
@@ -659,7 +660,7 @@ public:
      * @param dirX Horizontal direction (-1=left, 1=right)
      * @param dirY Vertical direction (-1=up, 1=down)
      */
-    StageObjectBuilder& dir(int dirX, int dirY)
+    StageObjectBuilder& dir(float dirX, int dirY)
     {
         if (auto* ball = dynamic_cast<BallParams*>(objectParams.get()))
         {
