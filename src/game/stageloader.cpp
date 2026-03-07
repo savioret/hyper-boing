@@ -1,5 +1,6 @@
 #include "stageloader.h"
 #include "stage.h"
+#include "glass.h"
 #include "logger.h"
 #include "main.h"
 #include <fstream>
@@ -137,6 +138,10 @@ bool StageLoader::parseObjectLine(Stage& stage, float currentTime, const std::st
     else if (objectType == "pickup")
     {
         processPickupObject(stage, currentTime, params);
+    }
+    else if (objectType == "glass")
+    {
+        processGlassObject(stage, currentTime, params);
     }
     else
     {
@@ -276,6 +281,36 @@ void StageLoader::processPickupObject(Stage& stage, float time, const std::map<s
     builder.time(static_cast<int>(time));
 
     // Position (pickups always use fixed coordinates)
+    if (params.count("x") && params.count("y"))
+        builder.at(std::stoi(params.at("x")), std::stoi(params.at("y")));
+
+    stage.spawn(builder);
+}
+
+void StageLoader::processGlassObject(Stage& stage, float time, const std::map<std::string, std::string>& params)
+{
+    // Parse glass type from string
+    GlassType type = GlassType::HORIZ_BIG;  // default
+    if (params.count("type"))
+    {
+        const std::string& t = params.at("type");
+        if (t == "vert_big")
+            type = GlassType::VERT_BIG;
+        else if (t == "vert_middle")
+            type = GlassType::VERT_MIDDLE;
+        else if (t == "horiz_big")
+            type = GlassType::HORIZ_BIG;
+        else if (t == "horiz_middle")
+            type = GlassType::HORIZ_MIDDLE;
+        else if (t == "small")
+            type = GlassType::SMALL;
+        else
+            LOG_WARNING("Unknown glass type: %s, defaulting to horiz_big", t.c_str());
+    }
+
+    auto builder = StageObjectBuilder::glass(type);
+    builder.time(static_cast<int>(time));
+
     if (params.count("x") && params.count("y"))
         builder.at(std::stoi(params.at("x")), std::stoi(params.at("y")));
 

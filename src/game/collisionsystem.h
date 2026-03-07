@@ -11,7 +11,7 @@
 // Forward declarations
 class Ball;
 class Shot;
-class Floor;
+class Platform;
 class Player;
 class Pickup;
 
@@ -118,7 +118,7 @@ public:
     {
         std::list<std::unique_ptr<Ball>>& balls;    ///< Active balls
         std::list<std::unique_ptr<Shot>>& shots;    ///< Active shots
-        std::list<std::unique_ptr<Floor>>& floors;  ///< Active floors
+        std::list<std::unique_ptr<Platform>>& floors;  ///< Active platforms (Floor + Glass)
         std::list<std::unique_ptr<Pickup>>& pickups; ///< Active pickups
         Player* players[2];                         ///< Players (may be nullptr)
         bool checkPlayerCollisions;                 ///< Whether to check ball-player collisions

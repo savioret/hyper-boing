@@ -9,7 +9,7 @@
 class Scene;
 class Shot;
 class Player;
-class Floor;
+class Platform;
 
 /**
  * Ball class
@@ -56,7 +56,7 @@ public:
     std::pair<std::unique_ptr<Ball>, std::unique_ptr<Ball>> createChildren();
 
     bool collision(Shot* shot);
-    bool collision(Floor* floor);
+    bool collision(Platform* floor);
     bool collision(Player* player);
 
     void setDir(int dx, int dy);

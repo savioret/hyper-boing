@@ -6,7 +6,7 @@
 class Scene;
 class Ball;
 class Shot;
-class Floor;
+class Platform;
 class Player;
 class Pickup;
 
@@ -55,11 +55,12 @@ private:
     void handleBallPlayer(Ball* ball, Player* player, Scene* scene);
 
     /**
-     * @brief Handle shot-floor collision
+     * @brief Handle shot-platform collision
      *
      * - Calls shot->onFloorHit() for weapon-specific behavior
+     * - Calls platform->onHit() to degrade Glass (no-op for Floor)
      */
-    void handleShotFloor(Shot* shot, Floor* floor);
+    void handleShotFloor(Shot* shot, Platform* platform);
 
     /**
      * @brief Handle pickup-player collision

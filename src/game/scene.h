@@ -11,6 +11,8 @@
 #include "shot.h"
 #include "spritesheet.h"
 #include "floor.h"
+#include "glass.h"
+#include "platform.h"
 #include "ladder.h"
 #include "pickup.h"
 #include "stage.h"
@@ -323,7 +325,7 @@ public:
     // Entity lists
     std::list<std::unique_ptr<Ball>> lsBalls;       ///< Active balls in scene
     std::list<std::unique_ptr<Pickup>> lsPickups;   ///< Active pickups in scene
-    std::list<std::unique_ptr<Floor>> lsFloor;      ///< Active floors/platforms
+    std::list<std::unique_ptr<Platform>> lsFloor;   ///< Active platforms (Floor and Glass)
     std::list<std::unique_ptr<Ladder>> lsLadders;   ///< Active ladders (climbable)
     std::list<std::unique_ptr<Shot>> lsShoots;      ///< Active weapon shots
     std::list<std::unique_ptr<AnimEffect>> lsEffects; ///< Active one-shot animations (pops, sparks)
@@ -371,6 +373,14 @@ public:
     void addFloor(int x, int y, int id);
 
     /**
+     * @brief Adds a glass platform to the scene
+     * @param x X position
+     * @param y Y position
+     * @param type Glass shape variant
+     */
+    void addGlass(int x, int y, GlassType type);
+
+    /**
      * @brief Adds a ladder to the scene
      * @param x X position (center, bottom-middle anchor)
      * @param y Y position (bottom of ladder)
@@ -399,11 +409,11 @@ public:
     Ladder* findLadderBelowPlayer(Player* player) const;
 
     /**
-     * @brief Finds a floor directly under the player's feet
+     * @brief Finds a platform directly under the player's feet
      * @param player The player to check
-     * @return Pointer to floor if found, nullptr otherwise
+     * @return Pointer to platform if found, nullptr otherwise
      */
-    Floor* findFloorUnderPlayer(Player* player) const;
+    Platform* findFloorUnderPlayer(Player* player) const;
 
     /**
      * @brief Finds the top of a ladder under the player's feet
@@ -516,10 +526,10 @@ public:
     void draw(Player* pl);
     
     /**
-     * @brief Draws a floor sprite
-     * @param fl Floor to draw
+     * @brief Draws a platform sprite (Floor or Glass)
+     * @param pl Platform to draw
      */
-    void draw(Floor* fl);
+    void draw(Platform* pl);
     
     /**
      * @brief Draws player scores and lives UI

@@ -8,7 +8,7 @@
 class Scene;
 class Player;
 class Ball;
-class Floor;
+class Platform;
 class Graph;
 
 /**
@@ -63,10 +63,10 @@ public:
     virtual void onBallHit(Ball* b);
 
     /**
-     * Called when shot hits a floor
+     * Called when shot hits a platform (Floor or Glass)
      * Default: Decrements player shot count and kills the shot
      */
-    virtual void onFloorHit(Floor* f);
+    virtual void onFloorHit(Platform* f);
 
     /**
      * Called when shot hits the ceiling (Y <= MIN_Y)
@@ -104,5 +104,5 @@ public:
      *
      * Virtual to allow weapon-specific collision logic (e.g., gun vs harpoon)
      */
-    virtual bool collision(Floor* fl);
+    virtual bool collision(Platform* fl);
 };

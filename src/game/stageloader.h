@@ -53,6 +53,10 @@ class Stage;
  * - x, y: Position (required)
  * - type: Floor type (0=horizontal, 1=vertical)
  *
+ * Glass properties:
+ * - x, y: Position (required)
+ * - type: Shape variant string: vert_big, vert_middle, horiz_big, horiz_middle, small
+ *
  * Ladder properties:
  * - x, y: Position (required, bottom-middle coordinates)
  * - height: Number of tiles (default=3)
@@ -107,5 +111,6 @@ private:
     static void processFloorObject(Stage& stage, float time, const std::map<std::string, std::string>& params);
     static void processLadderObject(Stage& stage, float time, const std::map<std::string, std::string>& params);
     static void processPickupObject(Stage& stage, float time, const std::map<std::string, std::string>& params);
+    static void processGlassObject(Stage& stage, float time, const std::map<std::string, std::string>& params);
     static void processActionObject(Stage& stage, float time, const std::string& command);
 };

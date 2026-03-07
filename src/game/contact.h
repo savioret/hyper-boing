@@ -7,7 +7,7 @@
 // Forward declarations
 class Ball;
 class Shot;
-class Floor;
+class Platform;
 class Player;
 class Pickup;
 
@@ -37,10 +37,10 @@ struct Contact
     ContactType type;
 
     // Entity pointers - interpretation depends on type:
-    // BallFloor:  ball, floor
+    // BallFloor:  ball, platform
     // BallShot:   ball, shot
     // BallPlayer: ball, player
-    // ShotFloor:  shot, floor
+    // ShotFloor:  shot, platform
     IGameObject* entityA;
     IGameObject* entityB;
 
@@ -62,7 +62,7 @@ struct Contact
             ? reinterpret_cast<Shot*>(entityA)
             : reinterpret_cast<Shot*>(entityB);
     }
-    Floor* getFloor() const { return reinterpret_cast<Floor*>(entityB); }
+    Platform* getPlatform() const { return reinterpret_cast<Platform*>(entityB); }
     Player* getPlayer() const {
         // For PickupPlayer: player is in entityB
         // For BallPlayer: player is in entityB

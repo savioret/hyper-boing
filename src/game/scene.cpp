@@ -284,7 +284,7 @@ void Scene::checkValidPosition(int& x, int& y, int ballDiameter)
             if (floor->isDead())
                 continue;
             
-            // Use existing Ball::collision(Floor*) method
+            // Use existing Ball::collision(Platform*) method
             if (tempBall.collision(floor.get()))
             {
                 // Collision detected! Generate new random position
@@ -331,6 +331,11 @@ void Scene::addPickup(int x, int y, PickupType type)
 void Scene::addFloor(int x, int y, int id)
 {
     lsFloor.push_back(std::make_unique<Floor>(this, x, y, id));
+}
+
+void Scene::addGlass(int x, int y, GlassType type)
+{
+    lsFloor.push_back(std::make_unique<Glass>(x, y, type));
 }
 
 void Scene::addLadder(int x, int y, int numTiles)
@@ -399,7 +404,7 @@ Ladder* Scene::findLadderBelowPlayer(Player* player) const
     return nullptr;
 }
 
-Floor* Scene::findFloorUnderPlayer(Player* player) const
+Platform* Scene::findFloorUnderPlayer(Player* player) const
 {
     if (!player) return nullptr;
 
@@ -413,7 +418,7 @@ Floor* Scene::findFloorUnderPlayer(Player* player) const
     int playerLeft = (int)(playerCenterX - SURFACE_CHECK_WIDTH / 2);
     int playerRight = (int)(playerCenterX + SURFACE_CHECK_WIDTH / 2);
 
-    Floor* bestFloor = nullptr;
+    Platform* bestFloor = nullptr;
     int closestY = Stage::MAX_Y + 1;
 
     for (const auto& floor : lsFloor)
@@ -494,7 +499,7 @@ float Scene::findGroundLevel(Player* player) const
     const char* groundSource = "MAX_Y";
 
     // Check floors
-    Floor* floor = findFloorUnderPlayer(player);
+    Platform* floor = findFloorUnderPlayer(player);
     if (floor)
     {
         float floorY = (float)floor->getCollisionBox().y;
@@ -674,6 +679,23 @@ void Scene::checkSequence()
             {
                 // Fallback: default floor (should not happen with new API)
                 addFloor(obj.x, obj.y, 0);
+            }
+            break;
+
+        case StageObjectType::Glass:
+            if (obj.params)
+            {
+                if (auto* glass = obj.getParams<GlassParams>())
+                {
+                    addGlass(obj.x, obj.y, glass->glassType);
+
+                    // Fire STAGE_OBJECT_SPAWNED event
+                    GameEventData event(GameEventType::STAGE_OBJECT_SPAWNED);
+                    event.objectSpawned.id = static_cast<int>(obj.id);
+                    event.objectSpawned.x = obj.x;
+                    event.objectSpawned.y = obj.y;
+                    EVENT_MGR.trigger(event);
+                }
             }
             break;
 
@@ -1325,10 +1347,11 @@ void Scene::draw(Player* pl)
     pl->draw(&appGraph);
 }
 
-void Scene::draw(Floor* fl)
+void Scene::draw(Platform* pl)
 {
-    StageResources& res = gameinf.getStageRes();
-    appGraph.draw(&res.floor[fl->getId()], fl->getX(), fl->getY());
+    Sprite* spr = pl->getCurrentSprite();
+    if (spr)
+        appGraph.draw(spr, pl->getX(), pl->getY());
 }
 
 void Scene::drawScore()

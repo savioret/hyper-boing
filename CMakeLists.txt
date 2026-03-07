@@ -54,6 +54,7 @@ set(SOURCES
     src/game/collisionsystem.cpp
     src/game/collisionrules.cpp
     src/game/floor.cpp
+    src/game/glass.cpp
     src/game/freezeeffect.cpp
     src/game/ladder.cpp
     src/core/gamerunner.cpp

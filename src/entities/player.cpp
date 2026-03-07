@@ -132,6 +132,12 @@ void Player::init()
         });
     }
 
+    // Clone shield effect animation from shared template
+    if (gameinf.getStageRes().shieldAnim)
+    {
+        shieldAnimInstance = gameinf.getStageRes().shieldAnim->clone();
+    }
+
     // Set initial state - use fallback sprite (idle)
     currentState = PlayerState::IDLE;
     sprite.useAsFallback();
@@ -426,6 +432,12 @@ void Player::update(float dt, Scene* scene)
             break;
     }
 
+    // Update shield animation regardless of player state
+    if (hasShield && shieldAnimInstance)
+    {
+        shieldAnimInstance->update(dtMs);
+    }
+
     if (isDead())
     {
         // Update death action (rotation + physics trajectory)
@@ -643,17 +655,23 @@ void Player::draw(Graph* graph)
     props.x = toRenderX(getX(), sprite.getWidth());
     props.y = toRenderY(getY(), sprite.getHeight());
 
-    graph->drawEx(spr, props);
-
-    // Draw shield effect (circle around player)
-    if (hasShield)
+    // Draw shield effect animation behind player
+    if (hasShield && shieldAnimInstance)
     {
-        int centerX = static_cast<int>(getX());
-        int centerY = static_cast<int>(getY()) - spr->getHeight() / 2;
-        int radius = spr->getWidth() / 2 + 4;
-        graph->setDrawColor(0, 200, 255, 180);  // Cyan semi-transparent
-        graph->circle(centerX, centerY, radius);
+        Sprite* shieldSpr = shieldAnimInstance->getCurrentSprite();
+        if (shieldSpr)
+        {
+            RenderProps shieldProps;
+            int shieldX = toRenderX(getX(), shieldAnimInstance->getWidth());
+            int shieldY = toRenderY(getY(), shieldAnimInstance->getHeight());
+
+            //shieldProps.x = static_cast< int >(getX()) - shieldAnimInstance->getWidth() / 2;
+            //shieldProps.y = static_cast<int>(getY()) - spr->getHeight() / 2 - shieldAnimInstance->getHeight() / 2;
+            graph->draw(shieldSpr, shieldX, shieldY+11);
+        }
     }
+
+    graph->drawEx(spr, props);
 }
 
 AnimSpriteSheet* Player::getActiveAnim() const

@@ -115,6 +115,7 @@ private:
     void cmdBall(const std::string& args);
     void cmdFloor(const std::string& args);
     void cmdImmune(const std::string& args);
+    void cmdShield(const std::string& args);
 
 public:
     // Singleton accessor

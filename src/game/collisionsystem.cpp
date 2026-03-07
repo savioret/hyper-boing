@@ -3,7 +3,7 @@
 #include "../entities/shot.h"
 #include "../entities/player.h"
 #include "../entities/pickup.h"
-#include "floor.h"
+#include "platform.h"
 #include <unordered_map>
 #include <vector>
 

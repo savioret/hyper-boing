@@ -171,7 +171,7 @@ bool Ball::collision(Shot* sh)
     return intersects(getCollisionBox(), sh->getCollisionBox());
 }
 
-bool Ball::collision(Floor* fl)
+bool Ball::collision(Platform* fl)
 {
     return intersects(getCollisionBox(), fl->getCollisionBox());
 }

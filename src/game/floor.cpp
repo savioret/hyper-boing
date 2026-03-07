@@ -18,3 +18,8 @@ void Floor::update(float dt)
 {
     // Currently floors are static, but dt is available for future animations
 }
+
+Sprite* Floor::getCurrentSprite() const
+{
+    return &gameinf.getStageRes().floor[id];
+}

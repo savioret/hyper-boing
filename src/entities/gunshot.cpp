@@ -2,7 +2,7 @@
 #include "gunshot.h"
 #include "../core/animspritesheet.h"
 #include "../game/scene.h"
-#include "../game/floor.h"
+#include "../game/platform.h"
 #include "player.h"
 #include "../core/graph.h"
 #include "../core/spritesheet.h"
@@ -134,7 +134,7 @@ void GunShot::draw(Graph* graph)
 /**
  * Handle floor collision - trigger die animation
  */
-void GunShot::onFloorHit(Floor* f)
+void GunShot::onFloorHit(Platform* f)
 {
     triggerImpact(f->getY() + f->getHeight());
 }
@@ -163,7 +163,7 @@ void GunShot::onBallHit(Ball* b)
  * The collision box properly represents the bullet sprite, so we can use
  * the generic intersection test instead of custom point-based logic.
  */
-bool GunShot::collision(Floor* fl)
+bool GunShot::collision(Platform* fl)
 {
     return intersects(getCollisionBox(), fl->getCollisionBox());
 }

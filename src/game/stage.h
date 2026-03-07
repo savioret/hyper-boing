@@ -5,6 +5,7 @@
 #include <climits>
 #include <string>
 #include "../entities/pickup.h"  // For PickupType enum
+#include "glass.h"               // For GlassType enum
 
 /**
  * StageObjectParams base class
@@ -186,6 +187,32 @@ struct PickupParams : public StageObjectParams
 };
 
 /**
+ * GlassParams struct
+ *
+ * Type-safe parameters for glass platform objects.
+ *
+ * Fields:
+ * - glassType: Shape variant (VERT_BIG, VERT_MIDDLE, HORIZ_BIG, HORIZ_MIDDLE, SMALL)
+ */
+struct GlassParams : public StageObjectParams
+{
+    GlassType glassType = GlassType::HORIZ_BIG;
+
+    GlassParams() = default;
+
+    std::unique_ptr<StageObjectParams> clone() const override
+    {
+        return std::make_unique<GlassParams>(*this);
+    }
+
+    bool validate() const
+    {
+        int t = static_cast<int>(glassType);
+        return t == 0 || t == 5 || t == 10 || t == 15 || t == 20;
+    }
+};
+
+/**
  * Identifies the type of a stage spawn object.
  * Used in StageObject::id and the Scene spawn switch.
  */
@@ -198,7 +225,8 @@ enum class StageObjectType : int
     Item   = 4,
     Player = 5,
     Action = 6,
-    Ladder = 7
+    Ladder = 7,
+    Glass  = 8
 };
 
 /**
@@ -465,6 +493,17 @@ public:
         auto params = std::make_unique<PickupParams>();
         params->pickupType = type;
         return StageObjectBuilder(StageObjectType::Item, std::move(params));
+    }
+
+    /**
+     * Create a glass platform object builder
+     * @param type Glass shape variant (default: HORIZ_BIG)
+     */
+    static StageObjectBuilder glass(GlassType type = GlassType::HORIZ_BIG)
+    {
+        auto params = std::make_unique<GlassParams>();
+        params->glassType = type;
+        return StageObjectBuilder(StageObjectType::Glass, std::move(params));
     }
 
     /**

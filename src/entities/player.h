@@ -90,6 +90,9 @@ private:
     // Climbing animation (loaded from Aseprite JSON with StateMachineAnim)
     std::unique_ptr<AnimSpriteSheet> climbAnim;
 
+    // Shield effect animation (cloned from stageRes template)
+    std::unique_ptr<AnimSpriteSheet> shieldAnimInstance;
+
     // Death animation using Action system
     std::unique_ptr<Action> deathAction;
     EventManager::ListenerHandle playerDiedHandle;

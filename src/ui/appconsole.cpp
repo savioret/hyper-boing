@@ -187,6 +187,9 @@ void AppConsole::registerBuiltinCommands()
 
     registerCommand("immune", "Toggle player immunity: /immune [player_num] [0|1]",
         [this](const std::string& args) { cmdImmune(args); });
+
+    registerCommand("shield", "Toggle player shield: /shield [player_num] [0|1]",
+        [this](const std::string& args) { cmdShield(args); });
 }
 
 void AppConsole::cmdHelp(const std::string& args)
@@ -1225,6 +1228,65 @@ void AppConsole::scrollDown(int lines)
 void AppConsole::scrollToBottom()
 {
     scrollOffset = 0;
+}
+
+/**
+ * Command: /shield [player_num] [0|1]
+ *
+ * Enables or disables the shield power-up for a player.
+ * If player_num is omitted, applies to all active players.
+ * If 0|1 is omitted, toggles current shield state.
+ */
+void AppConsole::cmdShield(const std::string& args)
+{
+    AppData& appData = AppData::instance();
+    Scene* scene = dynamic_cast<Scene*>(appData.currentScreen.get());
+    if (!scene)
+    {
+        LOG_WARNING("Shield command only available during gameplay");
+        return;
+    }
+
+    int playerNum = -1;  // -1 means all players
+    int enable = -1;     // -1 means toggle
+
+    if (!args.empty())
+    {
+        std::istringstream iss(args);
+        iss >> playerNum;
+        iss >> enable;
+    }
+
+    if (playerNum < -1 || playerNum > 2 || playerNum == 0)
+    {
+        LOG_ERROR("Invalid player number: %d (must be 1, 2, or omit for all)", playerNum);
+        return;
+    }
+
+    if (enable != -1 && enable != 0 && enable != 1)
+    {
+        LOG_ERROR("Invalid value: %d (must be 0, 1, or omit to toggle)", enable);
+        return;
+    }
+
+    bool changed = false;
+
+    auto applyShield = [&](Player* player, const char* playerName) {
+        if (!player) return;
+
+        bool newState = (enable == -1) ? !player->getShield() : (enable == 1);
+        player->setShield(newState);
+        LOG_SUCCESS("%s shield %s", playerName, newState ? "enabled" : "disabled");
+        changed = true;
+    };
+
+    if (playerNum == -1 || playerNum == 1)
+        applyShield(scene->getPlayer(0), "Player 1");
+    if (playerNum == -1 || playerNum == 2)
+        applyShield(scene->getPlayer(1), "Player 2");
+
+    if (!changed)
+        LOG_WARNING("No active players found");
 }
 
 void AppConsole::print(const std::string& message, LogColor color)

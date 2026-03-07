@@ -42,12 +42,12 @@ public:
     CollisionBox getCollisionBox() const override;
 
     // Override collision hooks for impact animation
-    void onFloorHit(Floor* f) override;
+    void onFloorHit(Platform* f) override;
     void onCeilingHit() override;
     void onBallHit(Ball* b) override;
 
     // Override collision detection to match bullet sprite center
-    bool collision(Floor* fl) override;
+    bool collision(Platform* fl) override;
 
     // Accessors for debug visualization
     Sprite* getCurrentSprite() const { return anim->getCurrentSprite(); }

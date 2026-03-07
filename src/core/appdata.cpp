@@ -247,6 +247,10 @@ void AppData::initStageResources()
     stageRes.pickupSprites[4].init(&appGraph, "assets/graph/entities/pickup_1up.png");
     stageRes.pickupShieldAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/pickup_shield.json");
     stageRes.pickupSprites[5].init(&appGraph, "assets/graph/entities/pickup_claw.png");
+    stageRes.shieldAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/shield_anim.json");
+
+    // Load glass bricks sprite sheet (damage frames accessed by index)
+    stageRes.glassBricksAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/glass_bricks.json");
 
     stageRes.initialized = true;
 }

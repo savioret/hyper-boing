@@ -106,6 +106,12 @@ struct StageResources
     Sprite pickupSprites[6];              ///< Pickup sprites (SHIELD excluded; CLAW at index 5)
     std::unique_ptr<AnimSpriteSheet> pickupShieldAnim;  ///< Shield pickup animated spritesheet
 
+    // Player shield effect animation template (cloned per player)
+    std::unique_ptr<AnimSpriteSheet> shieldAnim;  ///< Player shield effect animation
+
+    // Glass platform sprite sheet (shared; instances index frames directly)
+    std::unique_ptr<AnimSpriteSheet> glassBricksAnim;  ///< Glass bricks sprite sheet
+
     bool initialized;      ///< True if resources have been loaded
     
     StageResources() : initialized(false) {}

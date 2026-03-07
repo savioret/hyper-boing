@@ -5,7 +5,7 @@
 #include "../entities/shot.h"
 #include "../entities/player.h"
 #include "../entities/pickup.h"
-#include "floor.h"
+#include "platform.h"
 #include "../core/eventmanager.h"
 
 void CollisionRules::processContacts(const ContactList& contacts, Scene* scene)
@@ -23,7 +23,7 @@ void CollisionRules::processContacts(const ContactList& contacts, Scene* scene)
                 break;
 
             case ContactType::ShotFloor:
-                handleShotFloor(c.getShot(), c.getFloor());
+                handleShotFloor(c.getShot(), c.getPlatform());
                 break;
 
             case ContactType::BallFloor:
@@ -89,13 +89,16 @@ void CollisionRules::handleBallPlayer(Ball* ball, Player* player, Scene* scene)
     player->kill();
 }
 
-void CollisionRules::handleShotFloor(Shot* shot, Floor* floor)
+void CollisionRules::handleShotFloor(Shot* shot, Platform* platform)
 {
     // Skip if shot already dead
     if (shot->isDead()) return;
 
     // Weapon-specific behavior (harpoon sticks, gun bullet explodes, etc.)
-    shot->onFloorHit(floor);
+    shot->onFloorHit(platform);
+
+    // Advance glass damage state (no-op for regular floors)
+    platform->onHit();
 }
 
 void CollisionRules::handlePickupPlayer(Pickup* pickup, Player* player)

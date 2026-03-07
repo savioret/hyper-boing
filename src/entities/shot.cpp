@@ -2,7 +2,7 @@
 #include "shot.h"
 #include "../game/scene.h"
 #include "player.h"
-#include "../game/floor.h"
+#include "../game/platform.h"
 
 /**
  * Shot base constructor
@@ -60,7 +60,7 @@ void Shot::onBallHit(Ball* b)
 /**
  * Default floor hit behavior - decrement player shot count and kill
  */
-void Shot::onFloorHit(Floor* f)
+void Shot::onFloorHit(Platform* f)
 {
     player->looseShoot();
     kill();
@@ -83,7 +83,7 @@ void Shot::onCeilingHit()
  * Default implementation using AABB collision detection.
  * Can be overridden by subclasses for specialized behavior.
  */
-bool Shot::collision(Floor* fl)
+bool Shot::collision(Platform* fl)
 {
     return intersects(getCollisionBox(), fl->getCollisionBox());
 }
