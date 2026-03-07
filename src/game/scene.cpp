@@ -177,6 +177,17 @@ void Scene::subscribeToEvents()
                 std::make_unique<HitScore>(&hitScoreFontRenderer, cx, cy, score));
         });
 
+    // Subscribe to hexa hit event to spawn floating score popups
+    hexaHitScoreHandle = EVENT_MGR.subscribe(GameEventType::HEXA_HIT,
+        [this](const GameEventData& data) {
+            Hexa* hexa = data.hexaHit.hexa;
+            int cx = (int)hexa->getX() + hexa->getWidth() / 2;
+            int cy = (int)hexa->getY() - 10;
+            int score = 1000 / hexa->getWidth();
+            lsHitScores.push_back(
+                std::make_unique<HitScore>(&hitScoreFontRenderer, cx, cy, score));
+        });
+
     // Subscribe to pickup collected event for pickup sound effect
     pickupCollectedHandle = EVENT_MGR.subscribe(GameEventType::PICKUP_COLLECTED,
         [this](const GameEventData& data) {
@@ -196,6 +207,7 @@ void Scene::unsubscribeFromEvents()
     playerHitHandle = EventManager::ListenerHandle();
     pickupCollectedHandle = EventManager::ListenerHandle();
     hitScoreHandle = EventManager::ListenerHandle();
+    hexaHitScoreHandle = EventManager::ListenerHandle();
 }
 
 /**
@@ -1535,26 +1547,90 @@ void Scene::draw(Platform* pl)
 void Scene::drawScore()
 {
     StageResources& res = gameinf.getStageRes();
-    
+    constexpr int MAX_LIVES_ICONS = 3;
+    constexpr int LIVES_ICON_SPACING = 26;
+    constexpr int LIVES_ICON_WIDTH = 16;
+    constexpr int WEAPON_ICON_GAP = 8;
+
     if (gameinf.getPlayer(AppData::PLAYER1)->isPlaying())
     {
-        appGraph.draw(&fontNum[1], gameinf.getPlayer(AppData::PLAYER1)->getScore(), 80, RES_Y - 55);
+        Player* p1 = gameinf.getPlayer(AppData::PLAYER1);
+        int lives1 = p1->getLives();
+        int livesBaseX1 = 80;
+
+        appGraph.draw(&fontNum[1], p1->getScore(), livesBaseX1, RES_Y - 55);
         appGraph.draw(&res.miniplayer[AppData::PLAYER1], 20, Stage::MAX_Y + 7);
-        for (int i = 0; i < gameinf.getPlayer(AppData::PLAYER1)->getLives(); i++)
+
+        // Draw up to 3 lives icons
+        int iconsToShow1 = (lives1 > MAX_LIVES_ICONS) ? MAX_LIVES_ICONS : lives1;
+        for (int i = 0; i < iconsToShow1; i++)
         {
-            appGraph.draw(&res.lives[AppData::PLAYER1], 80 + 26 * i, Stage::MAX_Y + 30);
+            appGraph.draw(&res.lives[AppData::PLAYER1], livesBaseX1 + LIVES_ICON_SPACING * i, Stage::MAX_Y + 30);
         }
+
+        // Calculate X position after lives icons
+        int afterLivesX1 = livesBaseX1 + LIVES_ICON_SPACING * iconsToShow1;
+
+        // If more than 3 lives, show "xN" text
+        if (lives1 > MAX_LIVES_ICONS)
+        {
+            char livesText[8];
+            std::snprintf(livesText, sizeof(livesText), "x%d", lives1);
+            appGraph.text(livesText, afterLivesX1, Stage::MAX_Y + 35);
+            afterLivesX1 += 24;  // Space for "xN" text
+        }
+
+        // Draw weapon icon after lives (gun, doubleshoot, claw - not default harpoon)
+        Sprite* weaponIcon = nullptr;
+        if (p1->getWeapon() == WeaponType::GUN)
+            weaponIcon = &res.pickupSprites[0];
+        else if (p1->getWeapon() == WeaponType::HARPOON && p1->getMaxShoots() == 2)
+            weaponIcon = &res.pickupSprites[1];  // Double shoot
+        else if (p1->getWeapon() == WeaponType::CLAW)
+            weaponIcon = &res.pickupSprites[5];
+        if (weaponIcon)
+            appGraph.draw(weaponIcon, afterLivesX1 + WEAPON_ICON_GAP, Stage::MAX_Y + 30);
     }
 
     if (gameinf.getPlayer(AppData::PLAYER2))
         if (gameinf.getPlayer(AppData::PLAYER2)->isPlaying())
         {
+            Player* p2 = gameinf.getPlayer(AppData::PLAYER2);
+            int lives2 = p2->getLives();
+            int livesBaseX2 = 460;
+
             appGraph.draw(&res.miniplayer[AppData::PLAYER2], 400, Stage::MAX_Y + 7);
-            appGraph.draw(&fontNum[1], gameinf.getPlayer(AppData::PLAYER2)->getScore(), 460, RES_Y - 55);
-            for (int i = 0; i < gameinf.getPlayer(AppData::PLAYER2)->getLives(); i++)
+            appGraph.draw(&fontNum[1], p2->getScore(), livesBaseX2, RES_Y - 55);
+
+            // Draw up to 3 lives icons
+            int iconsToShow2 = (lives2 > MAX_LIVES_ICONS) ? MAX_LIVES_ICONS : lives2;
+            for (int i = 0; i < iconsToShow2; i++)
             {
-                appGraph.draw(&res.lives[AppData::PLAYER2], 460 + 26 * i, Stage::MAX_Y + 30);
+                appGraph.draw(&res.lives[AppData::PLAYER2], livesBaseX2 + LIVES_ICON_SPACING * i, Stage::MAX_Y + 30);
             }
+
+            // Calculate X position after lives icons
+            int afterLivesX2 = livesBaseX2 + LIVES_ICON_SPACING * iconsToShow2;
+
+            // If more than 3 lives, show "xN" text
+            if (lives2 > MAX_LIVES_ICONS)
+            {
+                char livesText[8];
+                std::snprintf(livesText, sizeof(livesText), "x%d", lives2);
+                appGraph.text(livesText, afterLivesX2, Stage::MAX_Y + 35);
+                afterLivesX2 += 24;  // Space for "xN" text
+            }
+
+            // Draw weapon icon after lives for player 2
+            Sprite* weaponIcon2 = nullptr;
+            if (p2->getWeapon() == WeaponType::GUN)
+                weaponIcon2 = &res.pickupSprites[0];
+            else if (p2->getWeapon() == WeaponType::HARPOON && p2->getMaxShoots() == 2)
+                weaponIcon2 = &res.pickupSprites[1];  // Double shoot
+            else if (p2->getWeapon() == WeaponType::CLAW)
+                weaponIcon2 = &res.pickupSprites[5];
+            if (weaponIcon2)
+                appGraph.draw(weaponIcon2, afterLivesX2 + WEAPON_ICON_GAP, Stage::MAX_Y + 30);
         }
 }
 
@@ -1847,7 +1923,7 @@ void Scene::drawHUD()
     drawMark();
     drawScore();
     appGraph.draw(&res.time, 320 - res.time.getWidth() / 2, Stage::MAX_Y + 3);
-    appGraph.draw(&fontNum[FONT_BIG], timeRemaining, 300, Stage::MAX_Y + 25);
+    appGraph.draw(&fontNum[FONT_BIG], timeRemaining, 320, Stage::MAX_Y + 25, ALIGN_CENTER);
 }
 
 void Scene::drawStateOverlay()
@@ -1864,7 +1940,7 @@ void Scene::drawStateOverlay()
         {
             // Show continue prompt and countdown (no "GAME OVER" text)
             appGraph.draw(&res.continu, 130, 200);
-            appGraph.draw(&fontNum[FONT_HUGE], gameOverCountdown, 315, 300);
+            appGraph.draw(&fontNum[FONT_HUGE], gameOverCountdown, 320, 300, ALIGN_CENTER);
         }
         else  // GameOverSubState::Definitive
         {

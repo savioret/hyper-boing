@@ -242,6 +242,7 @@ public:
     void setLives(int l) { lives = l; }
     void setImmuneCounter(int counter) { immuneCounter = counter; }
     void setMaxShoots(int n) { maxShoots = n; }
+    int getMaxShoots() const { return maxShoots; }
 
     // Shield and power-up methods
     bool getShield() const { return hasShield; }

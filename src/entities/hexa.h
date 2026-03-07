@@ -32,9 +32,11 @@ private:
     bool hasDeathPickup = false;
     PickupType deathPickupType = PickupType::GUN;
 
-    // Rotation state
-    float rotation = 0.0f;          // Current rotation angle (degrees)
-    float rotationSpeed = 90.0f;    // Degrees per second
+    // Rotation state (discrete steps at ~60ms intervals)
+    float rotation = 0.0f;              // Current rotation angle (degrees)
+    float rotationTimer = 0.0f;         // Time accumulator for rotation steps
+    static constexpr float ROTATION_INTERVAL = 0.06f;  // 60ms between rotation steps
+    static constexpr float ROTATION_STEP = 15.0f;      // Degrees per step
 
     // Hit flash state
     bool flashing = false;

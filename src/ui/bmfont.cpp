@@ -34,13 +34,31 @@ SDL_Rect BmNumFont::getRect(char numChar) const
         rcchr.y = 0;
         rcchr.h = sprite->getHeight();
         rcchr.x = offsets[code];
-        if (code == numChars - 1) 
+        if (code == numChars - 1)
             rcchr.w = sprite->getWidth() - offsets[code];
-        else 
+        else
             rcchr.w = offsets[code + 1] - offsets[code];
     }
 
     return rcchr;
+}
+
+int BmNumFont::getWidth(const char* numStr) const
+{
+    int width = 0;
+    for (int i = 0; numStr[i] != '\0'; i++)
+    {
+        SDL_Rect rc = getRect(numStr[i]);
+        width += rc.w;
+    }
+    return width;
+}
+
+int BmNumFont::getWidth(int num) const
+{
+    char cad[16];
+    std::snprintf(cad, sizeof(cad), "%d", num);
+    return getWidth(cad);
 }
 
 /********************************************************

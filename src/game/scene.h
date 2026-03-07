@@ -151,7 +151,8 @@ private:
     EventManager::ListenerHandle playerShootHandle;      ///< Subscription for weapon shoot sounds
     EventManager::ListenerHandle playerHitHandle;        ///< Subscription for player death sound
     EventManager::ListenerHandle pickupCollectedHandle;  ///< Subscription for pickup collected sound
-    EventManager::ListenerHandle hitScoreHandle;         ///< Subscription for hit score popups
+    EventManager::ListenerHandle hitScoreHandle;         ///< Subscription for hit score popups (balls)
+    EventManager::ListenerHandle hexaHitScoreHandle;     ///< Subscription for hit score popups (hexas)
     
     // Stage-level utility
     OnceHelper stageOnceHelper;  ///< Helper for one-time actions per stage

@@ -302,6 +302,15 @@ void Graph::draw(BmNumFont* font, int num, int x, int y) {
     draw(font, cad, x, y);
 }
 
+void Graph::draw(BmNumFont* font, int num, int x, int y, int align) {
+    // align: 0=Left, 1=Center, 2=Right
+    if (align == 1)
+        x -= font->getWidth(num) / 2;
+    else if (align == 2)
+        x -= font->getWidth(num);
+    draw(font, num, x, y);
+}
+
 void Graph::draw(BmNumFont* font, const std::string& cad, int x, int y) {
     SDL_Rect srcRect;
     int esp = 0;

@@ -48,6 +48,13 @@ constexpr int RES_X = 640;
  */
 constexpr int RES_Y = 480;
 
+/**
+ * @brief Text alignment constants for BmNumFont rendering
+ */
+constexpr int ALIGN_LEFT = 0;
+constexpr int ALIGN_CENTER = 1;
+constexpr int ALIGN_RIGHT = 2;
+
 class Graph;
 
 /**
@@ -237,7 +244,7 @@ public:
 
     /**
      * @brief Draw a number using bitmap font
-     * 
+     *
      * @param font Pointer to the bitmap font
      * @param num Number to draw
      * @param x X coordinate on screen
@@ -246,8 +253,19 @@ public:
     void draw(BmNumFont* font, int num, int x, int y);
 
     /**
+     * @brief Draw a number using bitmap font with alignment
+     *
+     * @param font Pointer to the bitmap font
+     * @param num Number to draw
+     * @param x X coordinate on screen (interpreted based on alignment)
+     * @param y Y coordinate on screen
+     * @param align Text alignment (Left, Center, Right)
+     */
+    void draw(BmNumFont* font, int num, int x, int y, int align);
+
+    /**
      * @brief Draw a string using bitmap font
-     * 
+     *
      * @param font Pointer to the bitmap font
      * @param cad String to draw
      * @param x X coordinate on screen

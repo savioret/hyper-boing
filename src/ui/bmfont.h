@@ -36,6 +36,20 @@ public:
     void setValues(const int* xOff);
 
     Sprite* getSprite() const { return sprite; }
+
+    /**
+     * @brief Calculate the total width of a numeric string
+     * @param numStr String of digits to measure
+     * @return Total width in pixels
+     */
+    int getWidth(const char* numStr) const;
+
+    /**
+     * @brief Calculate the total width of a number
+     * @param num Number to measure
+     * @return Total width in pixels
+     */
+    int getWidth(int num) const;
 };
 
 /**

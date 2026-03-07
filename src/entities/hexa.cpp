@@ -64,9 +64,14 @@ void Hexa::update(float dt)
         return;  // Don't move during flash
     }
 
-    // Rotate continuously
-    rotation += rotationSpeed * dt;
-    if (rotation >= 360.0f) rotation -= 360.0f;
+    // Rotate in discrete steps at ~60ms intervals
+    rotationTimer += dt;
+    while (rotationTimer >= ROTATION_INTERVAL)
+    {
+        rotationTimer -= ROTATION_INTERVAL;
+        rotation += ROTATION_STEP;
+        if (rotation >= 360.0f) rotation -= 360.0f;
+    }
 
     // Constant velocity movement
     xPos += velX;

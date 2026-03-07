@@ -9,7 +9,7 @@
 #include "../core/coordhelper.h"
 
 Pickup::Pickup(Scene* scene, int x, int y, PickupType type)
-    : scene(scene), pickupType(type), falling(true), groundY(Stage::MAX_Y)
+    : scene(scene), pickupType(type), falling(true), groundY(Stage::MAX_Y), groundTimer(0.0f)
 {
     xPos = static_cast<float>(x);
     yPos = static_cast<float>(y);
@@ -50,11 +50,27 @@ void Pickup::update(float dt)
             falling = false;
         }
     }
+    else
+    {
+        // Pickup is on ground - count down lifetime
+        groundTimer += dt;
+        if (groundTimer >= LIFETIME)
+        {
+            kill();
+        }
+    }
 }
 
 void Pickup::draw(Graph* graph)
 {
     if (isDead()) return;
+
+    // Blink during the last BLINK_DURATION seconds (toggle every 0.1 seconds)
+    if (!falling && groundTimer >= (LIFETIME - BLINK_DURATION))
+    {
+        int blinkPhase = static_cast<int>(groundTimer * 10) % 2;
+        if (blinkPhase == 0) return;  // Skip drawing every other 0.1 second
+    }
 
     Sprite* spr = shieldAnim ? shieldAnim->getCurrentSprite() : sprite.getSprite();
     if (spr)
