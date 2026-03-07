@@ -8,7 +8,7 @@ player2_x: 350
 
 at 0:
   # Single floor platform
-  floor: x=250, y=70, type=0
+  floor: x=250, y=70, type=horiz_big
 
 at 1:
   # Small ball at random top position

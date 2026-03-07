@@ -343,9 +343,9 @@ void Scene::addPickup(int x, int y, PickupType type)
     lsPickups.push_back(std::make_unique<Pickup>(this, x, y, type));
 }
 
-void Scene::addFloor(int x, int y, int id)
+void Scene::addFloor(int x, int y, FloorType type)
 {
-    lsFloor.push_back(std::make_unique<Floor>(this, x, y, id));
+    lsFloor.push_back(std::make_unique<Floor>(this, x, y, type));
 }
 
 void Scene::addGlass(int x, int y, GlassType type)
@@ -695,7 +695,7 @@ void Scene::checkSequence()
             else
             {
                 // Fallback: default floor (should not happen with new API)
-                addFloor(obj.x, obj.y, 0);
+                addFloor(obj.x, obj.y, FloorType::HORIZ_BIG);
             }
             break;
 

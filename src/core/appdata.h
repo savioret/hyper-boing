@@ -71,8 +71,8 @@ struct StageResources
     // Ball sprites
     Sprite redball[4];  ///< Ball sprites (4 sizes)
     
-    // Floor sprites
-    Sprite floor[2];    ///< Floor sprites (0=horizontal, 1=vertical)
+    // Floor sprite sheet (shared; instances index frames directly)
+    std::unique_ptr<AnimSpriteSheet> floorBricksAnim;  ///< Floor bricks sprite sheet (5 variants)
 
     // Ladder sprite
     Sprite ladder;      ///< Ladder tile sprite (tiled vertically)

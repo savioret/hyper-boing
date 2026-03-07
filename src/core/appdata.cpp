@@ -182,9 +182,8 @@ void AppData::initStageResources()
     for (i = 0; i < 5; i++)
         appGraph.setColorKey(stageRes.mark[i].getBmp(), 0x00FF00);
 
-    // Load floor sprites
-    stageRes.floor[0].init(&appGraph, "assets/graph/entities/floor1.png");
-    stageRes.floor[1].init(&appGraph, "assets/graph/entities/floor2.png");
+    // Load floor sprite sheet
+    stageRes.floorBricksAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/floor_bricks.json");
 
     // Load ladder sprite
     stageRes.ladder.init(&appGraph, "assets/graph/entities/ladder.png");
@@ -501,7 +500,6 @@ void AppData::release()
             stageRes.redball[i].release();
         for (int i = 0; i < 2; i++)
         {
-            stageRes.floor[i].release();
             stageRes.miniplayer[i].release();
             stageRes.lives[i].release();
         }

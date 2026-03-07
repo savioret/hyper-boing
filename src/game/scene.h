@@ -374,9 +374,9 @@ public:
      * @brief Adds a floor/platform to the scene
      * @param x X position
      * @param y Y position
-     * @param id Floor type (0=horizontal, 1=vertical)
+     * @param type Floor shape variant
      */
-    void addFloor(int x, int y, int id);
+    void addFloor(int x, int y, FloorType type);
 
     /**
      * @brief Adds a glass platform to the scene

@@ -1,8 +1,22 @@
 #pragma once
 
 #include "platform.h"
-#include "singlesprite.h"
 #include "collisionsystem.h"
+
+/**
+ * @enum FloorType
+ *
+ * Identifies the shape variant of a Floor platform.
+ * The enum value equals the frame index in the floor_bricks spritesheet.
+ */
+enum class FloorType : int
+{
+    HORIZ_BIG    = 0,   ///< Horizontal, large  — frame 2
+    HORIZ_MIDDLE = 1,   ///< Horizontal, medium — frame 3
+    VERT_BIG     = 2,   ///< Vertical, large    — frame 0
+    VERT_MIDDLE  = 3,   ///< Vertical, medium   — frame 1
+    SMALL        = 4    ///< Square small       — frame 4
+};
 
 /**
  * Floor class
@@ -17,20 +31,17 @@ class Floor : public Platform
 {
 private:
     Scene* scene;
-    SingleSprite sprite;
-
+    FloorType type;
     int sx, sy;
-    int id;
 
 public:
-    Floor(Scene* scene, int x, int y, int id);
+    Floor(Scene* scene, int x, int y, FloorType type);
     ~Floor();
 
     void update(float dt) override;
 
-    int getWidth() const override { return sx; }
+    int getWidth()  const override { return sx; }
     int getHeight() const override { return sy; }
-    int getId() const { return id; }
 
     Sprite* getCurrentSprite() const override;
 

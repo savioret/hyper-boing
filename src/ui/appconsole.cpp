@@ -182,7 +182,7 @@ void AppConsole::registerBuiltinCommands()
     registerCommand("ball", "Spawn a ball: /ball <x> <y> [size] [count] (-1 for random position)",
         [this](const std::string& args) { cmdBall(args); });
 
-    registerCommand("floor", "Spawn a floor: /floor <x> <y> [type] (-1 for random position)",
+    registerCommand("floor", "Spawn a floor: /floor <x> <y> [type] (type: string or int 0-4)",
         [this](const std::string& args) { cmdFloor(args); });
 
     registerCommand("immune", "Toggle player immunity: /immune [player_num] [0|1]",
@@ -654,18 +654,18 @@ void AppConsole::cmdBall(const std::string& args)
  * Command: /floor <x> <y> [type]
  *
  * Spawns a floor at the specified position during gameplay.
- * Use -1 for x or y to spawn at a random position.
- * Type is optional and defaults to 0 (horizontal floor).
+ * Type can be a string name or integer index matching FloorType enum order.
  */
 void AppConsole::cmdFloor(const std::string& args)
 {
     if (args.empty())
     {
         LOG_WARNING("Usage: /floor <x> <y> [type]");
-        LOG_INFO("  x, y: Position (-1 for random)");
-        LOG_INFO("  type: 0 (horizontal) or 1 (vertical), default 0");
-        LOG_INFO("  Example: /floor 320 200 0");
-        LOG_INFO("  Example: /floor -1 -1 1  (random position, vertical floor)");
+        LOG_INFO("  type (string): vert_big, vert_middle, horiz_big, horiz_middle, small");
+        LOG_INFO("  type (int):    0=vert_big 1=vert_middle 2=horiz_big 3=horiz_middle 4=small");
+        LOG_INFO("  Default type: horiz_big");
+        LOG_INFO("  Example: /floor 320 200 horiz_big");
+        LOG_INFO("  Example: /floor 320 200 2   (same as horiz_big)");
         return;
     }
 
@@ -678,45 +678,50 @@ void AppConsole::cmdFloor(const std::string& args)
         return;
     }
 
-    // Parse arguments
+    // Parse "x y [type]"
     std::istringstream iss(args);
-    int x = 0;
-    int y = 0;
-    int type = 0;  // Default to horizontal floor
-    iss >> x >> y;
+    int x = 0, y = 0;
+    std::string typeStr;
+    iss >> x >> y >> typeStr;
 
-    // Type is optional
-    if (!(iss >> type))
+    FloorType type = FloorType::HORIZ_BIG;  // default
+
+    if (!typeStr.empty())
     {
-        type = 0;  // Default to horizontal floor
+        // Try string name first
+        if      (typeStr == "vert_big")     type = FloorType::VERT_BIG;
+        else if (typeStr == "vert_middle")  type = FloorType::VERT_MIDDLE;
+        else if (typeStr == "horiz_big")    type = FloorType::HORIZ_BIG;
+        else if (typeStr == "horiz_middle") type = FloorType::HORIZ_MIDDLE;
+        else if (typeStr == "small")        type = FloorType::SMALL;
+        else
+        {
+            // Try as integer (enum order 0–4)
+            try
+            {
+                int typeInt = std::stoi(typeStr);
+                if (typeInt >= 0 && typeInt <= 4)
+                    type = static_cast<FloorType>(typeInt);
+                else
+                {
+                    LOG_ERROR("Invalid floor type int: %d (must be 0-4)", typeInt);
+                    return;
+                }
+            }
+            catch (const std::exception&)
+            {
+                LOG_ERROR("Unknown floor type: %s", typeStr.c_str());
+                LOG_INFO("  String: vert_big, vert_middle, horiz_big, horiz_middle, small");
+                LOG_INFO("  Int:    0, 1, 2, 3, 4");
+                return;
+            }
+        }
     }
 
-    // Validate type (0 or 1)
-    if (type < 0 || type > 1)
-    {
-        LOG_ERROR("Invalid floor type: %d (must be 0 or 1)", type);
-        LOG_INFO("  0 = Horizontal, 1 = Vertical");
-        return;
-    }
-
-    // Convert -1 to INT_MAX for random positioning (Scene's convention)
-    // if (x == -1) x = INT_MAX;
-    // if (y == -1) y = INT_MAX;
-
-    // Spawn the floor
     scene->addFloor(x, y, type);
 
-    const char* typeNames[] = { "horizontal", "vertical" };
-    const char* typeName = (type >= 0 && type <= 1) ? typeNames[type] : "unknown";
-
-    if (x == INT_MAX || y == INT_MAX)
-    {
-        LOG_SUCCESS("Spawning %s floor at random position", typeName);
-    }
-    else
-    {
-        LOG_SUCCESS("Spawning %s floor at (%d, %d)", typeName, x, y);
-    }
+    static const char* typeNames[] = { "vert_big", "vert_middle", "horiz_big", "horiz_middle", "small" };
+    LOG_SUCCESS("Spawning %s floor at (%d, %d)", typeNames[static_cast<int>(type)], x, y);
 }
 
 /**

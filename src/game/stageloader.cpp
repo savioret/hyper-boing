@@ -230,19 +230,31 @@ void StageLoader::processBallObject(Stage& stage, float time, const std::map<std
 
 void StageLoader::processFloorObject(Stage& stage, float time, const std::map<std::string, std::string>& params)
 {
-    // Use StageObjectBuilder for consistency
+    // Parse floor type from string (same naming convention as Glass)
+    FloorType type = FloorType::HORIZ_BIG;  // default
+    if (params.count("type"))
+    {
+        const std::string& t = params.at("type");
+        if (t == "vert_big")
+            type = FloorType::VERT_BIG;
+        else if (t == "vert_middle")
+            type = FloorType::VERT_MIDDLE;
+        else if (t == "horiz_big")
+            type = FloorType::HORIZ_BIG;
+        else if (t == "horiz_middle")
+            type = FloorType::HORIZ_MIDDLE;
+        else if (t == "small")
+            type = FloorType::SMALL;
+        else
+            LOG_WARNING("Unknown floor type: %s, defaulting to horiz_big", t.c_str());
+    }
+
     auto builder = StageObjectBuilder::floor();
-
-    // Set spawn time
     builder.time(static_cast<int>(time));
+    builder.type(static_cast<int>(type));
 
-    // Position (floors always use fixed coordinates)
     if (params.count("x") && params.count("y"))
         builder.at(std::stoi(params.at("x")), std::stoi(params.at("y")));
-
-    // Floor-specific properties
-    if (params.count("type"))
-        builder.type(std::stoi(params.at("type")));
 
     stage.spawn(builder);
 }

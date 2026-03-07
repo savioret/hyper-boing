@@ -6,6 +6,7 @@
 #include <string>
 #include "../entities/pickup.h"  // For PickupType enum
 #include "glass.h"               // For GlassType enum
+#include "floor.h"               // For FloorType enum
 
 /**
  * StageObjectParams base class
@@ -78,29 +79,29 @@ struct BallParams : public StageObjectParams
  * FloorParams struct
  *
  * Type-safe parameters for floor/platform objects.
- * 
+ *
  * Fields:
- * - floorType: Type of floor (0=horizontal, 1=vertical)
+ * - floorType: Shape variant (FloorType enum, maps directly to frame index)
  */
 struct FloorParams : public StageObjectParams
 {
-    int floorType = 0;
-    
+    FloorType floorType = FloorType::HORIZ_BIG;
+
     FloorParams() = default;
-    
+
     std::unique_ptr<StageObjectParams> clone() const override
     {
         return std::make_unique<FloorParams>(*this);
     }
-    
+
     /**
      * Validate floor parameters
      * @return true if all parameters are within valid ranges
      */
     bool validate() const
     {
-        if (floorType < 0 || floorType > 1) return false;
-        return true;
+        int v = static_cast<int>(floorType);
+        return v >= 0 && v <= 4;
     }
 };
 
@@ -663,7 +664,7 @@ public:
         }
         else if (auto* floor = dynamic_cast<FloorParams*>(objectParams.get()))
         {
-            floor->floorType = typeValue;
+            floor->floorType = static_cast<FloorType>(typeValue);
         }
         return *this;
     }
