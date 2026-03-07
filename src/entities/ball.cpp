@@ -264,6 +264,13 @@ void Ball::onDeath()
         event.ballSplit.parentSize = size;
         EVENT_MGR.trigger(event);
     }
+
+    if (hasDeathPickup)
+    {
+        int cx = (int)xPos + diameter / 2;
+        int cy = (int)yPos + diameter / 2;
+        scene->addPickup(cx, cy, deathPickupType);
+    }
 }
 
 std::pair<std::unique_ptr<Ball>, std::unique_ptr<Ball>> Ball::createChildren()

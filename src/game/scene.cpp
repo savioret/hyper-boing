@@ -350,7 +350,7 @@ void Scene::addFloor(int x, int y, int id)
 
 void Scene::addGlass(int x, int y, GlassType type)
 {
-    lsFloor.push_back(std::make_unique<Glass>(x, y, type));
+    lsFloor.push_back(std::make_unique<Glass>(this, x, y, type));
 }
 
 void Scene::addLadder(int x, int y, int numTiles)
@@ -659,6 +659,8 @@ void Scene::checkSequence()
                 if (auto* ball = obj.getParams<BallParams>())
                 {
                     addBall(obj.x, obj.y, ball->size, ball->top, ball->dirX, ball->dirY, ball->ballType);
+                    if (ball->hasDeathPickup && !lsBalls.empty())
+                        lsBalls.back()->setDeathPickup(ball->deathPickupType);
 
                     // Fire STAGE_OBJECT_SPAWNED event
                     GameEventData event(GameEventType::STAGE_OBJECT_SPAWNED);
@@ -703,6 +705,11 @@ void Scene::checkSequence()
                 if (auto* glass = obj.getParams<GlassParams>())
                 {
                     addGlass(obj.x, obj.y, glass->glassType);
+                    if (glass->hasDeathPickup && !lsFloor.empty())
+                    {
+                        if (auto* g = dynamic_cast<Glass*>(lsFloor.back().get()))
+                            g->setDeathPickup(glass->deathPickupType);
+                    }
 
                     // Fire STAGE_OBJECT_SPAWNED event
                     GameEventData event(GameEventType::STAGE_OBJECT_SPAWNED);

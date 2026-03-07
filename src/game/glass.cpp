@@ -1,8 +1,9 @@
 #include "glass.h"
 #include "main.h"
+#include "scene.h"
 
-Glass::Glass(int x, int y, GlassType type)
-    : type(type), damageLevel(0)
+Glass::Glass(Scene* scn, int x, int y, GlassType type)
+    : type(type), damageLevel(0), scene(scn)
 {
     xPos = (float)x;
     yPos = (float)y;
@@ -27,6 +28,16 @@ void Glass::onHit()
     ++damageLevel;
     if (damageLevel > 4)
         kill();
+}
+
+void Glass::onDeath()
+{
+    if (hasDeathPickup && scene)
+    {
+        int cx = (int)xPos + sx / 2;
+        int cy = (int)yPos + sy / 2;
+        scene->addPickup(cx, cy, deathPickupType);
+    }
 }
 
 Sprite* Glass::getCurrentSprite() const

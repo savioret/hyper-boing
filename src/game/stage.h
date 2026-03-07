@@ -49,7 +49,9 @@ struct BallParams : public StageObjectParams
     int dirX = 1;
     int dirY = 1;
     int ballType = 0;
-    
+    bool hasDeathPickup = false;
+    PickupType deathPickupType = PickupType::GUN;
+
     BallParams() = default;
     
     std::unique_ptr<StageObjectParams> clone() const override
@@ -197,6 +199,8 @@ struct PickupParams : public StageObjectParams
 struct GlassParams : public StageObjectParams
 {
     GlassType glassType = GlassType::HORIZ_BIG;
+    bool hasDeathPickup = false;
+    PickupType deathPickupType = PickupType::GUN;
 
     GlassParams() = default;
 
@@ -623,6 +627,25 @@ public:
         if (auto* pickup = dynamic_cast<PickupParams*>(objectParams.get()))
         {
             pickup->pickupType = type;
+        }
+        return *this;
+    }
+
+    /**
+     * Set a pickup to spawn at this object's center when it dies.
+     * Supported for ball and glass objects.
+     */
+    StageObjectBuilder& withDeathPickup(PickupType type)
+    {
+        if (auto* ball = dynamic_cast<BallParams*>(objectParams.get()))
+        {
+            ball->hasDeathPickup = true;
+            ball->deathPickupType = type;
+        }
+        else if (auto* glass = dynamic_cast<GlassParams*>(objectParams.get()))
+        {
+            glass->hasDeathPickup = true;
+            glass->deathPickupType = type;
         }
         return *this;
     }

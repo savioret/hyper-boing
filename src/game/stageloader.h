@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "../entities/pickup.h"
 
 class Stage;
 
@@ -113,4 +114,8 @@ private:
     static void processPickupObject(Stage& stage, float time, const std::map<std::string, std::string>& params);
     static void processGlassObject(Stage& stage, float time, const std::map<std::string, std::string>& params);
     static void processActionObject(Stage& stage, float time, const std::string& command);
+
+    // Parse pickup type string ("gun", "shield", etc.) into PickupType
+    // Returns false if the string is unrecognized
+    static bool parsePickupTypeString(const std::string& str, PickupType& out);
 };

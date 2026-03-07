@@ -5,6 +5,7 @@
 #include "gameobject.h"
 #include "singlesprite.h"
 #include "../game/collisionsystem.h"
+#include "pickup.h"
 
 class Scene;
 class Shot;
@@ -30,6 +31,8 @@ private:
     float y0; // initial space
     float gravity; // acceleration (acc)
     Scene* scene;
+    bool hasDeathPickup = false;
+    PickupType deathPickupType = PickupType::GUN;
 
 public:
     Ball(Scene* scene, Ball* oldBall, int dir);
@@ -63,6 +66,7 @@ public:
     void setDirX(int dx);
     void setDirY(int dy);
     void setPos(int x, int y);
+    void setDeathPickup(PickupType type) { hasDeathPickup = true; deathPickupType = type; }
 
     // Getters
     int getDirX() const { return dirX; }

@@ -1,6 +1,9 @@
 #pragma once
 
 #include "platform.h"
+#include "../entities/pickup.h"
+
+class Scene;
 
 /**
  * @enum GlassType
@@ -34,18 +37,24 @@ private:
     GlassType type;
     int damageLevel;  ///< Current damage state (0 = pristine, 4 = fully cracked)
     int sx, sy;       ///< Collision-box dimensions (fixed to undamaged first frame)
+    Scene* scene = nullptr;
+    bool hasDeathPickup = false;
+    PickupType deathPickupType = PickupType::GUN;
 
 public:
-    Glass(int x, int y, GlassType type);
+    Glass(Scene* scene, int x, int y, GlassType type);
     ~Glass() = default;
 
     void update(float dt) override {}
+
+    void setDeathPickup(PickupType type) { hasDeathPickup = true; deathPickupType = type; }
 
     /**
      * @brief Advance damage state by one step.
      * After the fifth hit (damageLevel > 4) the platform is killed.
      */
     void onHit() override;
+    void onDeath() override;
 
     int getWidth()  const override { return sx; }
     int getHeight() const override { return sy; }

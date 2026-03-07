@@ -164,6 +164,19 @@ bool StageLoader::parseActionLine(Stage& stage, float currentTime, const std::st
     return true;
 }
 
+bool StageLoader::parsePickupTypeString(const std::string& str, PickupType& out)
+{
+    if (str == "gun")             { out = PickupType::GUN;          return true; }
+    if (str == "doubleshoot")     { out = PickupType::DOUBLE_SHOOT; return true; }
+    if (str == "extratime")       { out = PickupType::EXTRA_TIME;   return true; }
+    if (str == "timefreeze")      { out = PickupType::TIME_FREEZE;  return true; }
+    if (str == "1up" || str == "extralife") { out = PickupType::EXTRA_LIFE; return true; }
+    if (str == "shield")          { out = PickupType::SHIELD;       return true; }
+    if (str == "claw")            { out = PickupType::CLAW;         return true; }
+    LOG_WARNING("Unknown pickup type: %s", str.c_str());
+    return false;
+}
+
 void StageLoader::processBallObject(Stage& stage, float time, const std::map<std::string, std::string>& params)
 {
     // Use StageObjectBuilder for consistency
@@ -205,6 +218,12 @@ void StageLoader::processBallObject(Stage& stage, float time, const std::map<std
         builder.dir(std::stoi(params.at("dirX")), std::stoi(params.at("dirY")));
     if (params.count("type"))
         builder.type(std::stoi(params.at("type")));
+    if (params.count("pickup"))
+    {
+        PickupType pt;
+        if (parsePickupTypeString(params.at("pickup"), pt))
+            builder.withDeathPickup(pt);
+    }
 
     stage.spawn(builder);
 }
@@ -313,6 +332,12 @@ void StageLoader::processGlassObject(Stage& stage, float time, const std::map<st
 
     if (params.count("x") && params.count("y"))
         builder.at(std::stoi(params.at("x")), std::stoi(params.at("y")));
+    if (params.count("pickup"))
+    {
+        PickupType pt;
+        if (parsePickupTypeString(params.at("pickup"), pt))
+            builder.withDeathPickup(pt);
+    }
 
     stage.spawn(builder);
 }
