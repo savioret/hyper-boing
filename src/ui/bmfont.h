@@ -84,6 +84,16 @@ public:
 };
 
 /**
+ * Text alignment for BMFontRenderer::text()
+ */
+enum class TextAlign
+{
+    Left,   ///< x is the left edge (default)
+    Center, ///< x is the horizontal center
+    Right   ///< x is the right edge
+};
+
+/**
  * BMFontRenderer class
  *
  * Renders text using BMFont data or a built-in system font (5x7 bitmap).
@@ -142,7 +152,7 @@ public:
     
     void setColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a = 255);
     void setScale(float s);
-    void text(const char* texto, int x, int y);
+    void text(const char* texto, int x, int y, TextAlign align = TextAlign::Left);
     int getTextWidth(const char* texto) const;
     int getTextHeight() const;
     void release();

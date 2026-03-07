@@ -8,6 +8,7 @@
 #include "player.h"
 #include "ball.h"
 #include "animeffect.h"
+#include "hitscore.h"
 #include "shot.h"
 #include "spritesheet.h"
 #include "floor.h"
@@ -149,9 +150,13 @@ private:
     EventManager::ListenerHandle playerShootHandle;      ///< Subscription for weapon shoot sounds
     EventManager::ListenerHandle playerHitHandle;        ///< Subscription for player death sound
     EventManager::ListenerHandle pickupCollectedHandle;  ///< Subscription for pickup collected sound
+    EventManager::ListenerHandle hitScoreHandle;         ///< Subscription for hit score popups
     
     // Stage-level utility
     OnceHelper stageOnceHelper;  ///< Helper for one-time actions per stage
+
+    // Font renderer for hit-score popups (system font, owned by Scene)
+    BMFontRenderer hitScoreFontRenderer;
     
     // Ball management
     std::vector<std::unique_ptr<Ball>> pendingBalls;  ///< Buffer for balls created from splits
@@ -329,6 +334,7 @@ public:
     std::list<std::unique_ptr<Ladder>> lsLadders;   ///< Active ladders (climbable)
     std::list<std::unique_ptr<Shot>> lsShoots;      ///< Active weapon shots
     std::list<std::unique_ptr<AnimEffect>> lsEffects; ///< Active one-shot animations (pops, sparks)
+    std::list<std::unique_ptr<HitScore>> lsHitScores; ///< Floating score popups (ball hits)
 
     /**
      * @brief Constructs a new Scene for the given stage

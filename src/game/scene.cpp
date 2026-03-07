@@ -165,6 +165,17 @@ void Scene::subscribeToEvents()
             }
         });
 
+    // Subscribe to ball hit event to spawn floating score popups
+    hitScoreHandle = EVENT_MGR.subscribe(GameEventType::BALL_HIT,
+        [this](const GameEventData& data) {
+            Ball* ball = data.ballHit.ball;
+            int cx = (int)ball->getX() + ball->getDiameter() / 2;
+            int cy = (int)ball->getY() - 10;
+            int score = 1000 / ball->getDiameter();
+            lsHitScores.push_back(
+                std::make_unique<HitScore>(&hitScoreFontRenderer, cx, cy, score));
+        });
+
     // Subscribe to pickup collected event for pickup sound effect
     pickupCollectedHandle = EVENT_MGR.subscribe(GameEventType::PICKUP_COLLECTED,
         [this](const GameEventData& data) {
@@ -183,6 +194,7 @@ void Scene::unsubscribeFromEvents()
     playerShootHandle = EventManager::ListenerHandle();
     playerHitHandle = EventManager::ListenerHandle();
     pickupCollectedHandle = EventManager::ListenerHandle();
+    hitScoreHandle = EventManager::ListenerHandle();
 }
 
 /**
@@ -214,6 +226,9 @@ int Scene::initBitmaps()
     fontNum[1].setValues(offs1);
     fontNum[2].init(&res.fontnum[2]);
     fontNum[2].setValues(offs2);
+
+    // Initialize hit-score popup font
+    hitScoreFontRenderer.loadFont(&appGraph, "assets/fonts/maganize_18.fnt");
 
     // Load freeze countdown font (3-2-1 during last 3s of time freeze)
     freezeEffect.init(&appGraph);
@@ -884,6 +899,11 @@ void Scene::updateEntities(float dt)
     {
         effect->update(dt);
     }
+
+    for (const auto& hs : lsHitScores)
+    {
+        hs->update(dt);
+    }
 }
 
 void Scene::spawnEffect(AnimSpriteSheet* tmpl, int x, int y)
@@ -904,6 +924,7 @@ void Scene::cleanupPhase()
     cleanupDeadObjects(lsLadders);
     cleanupDeadObjects(lsPickups);
     cleanupDeadObjects(lsEffects);
+    cleanupDeadObjects(lsHitScores);
 }
 
 void Scene::updateTimer(float dt)
@@ -1625,6 +1646,12 @@ void Scene::drawEntities()
     for (const auto& effect : lsEffects)
     {
         effect->draw(&appGraph);
+    }
+
+    // Draw floating score popups above everything
+    for (const auto& hs : lsHitScores)
+    {
+        hs->draw(&appGraph);
     }
 }
 

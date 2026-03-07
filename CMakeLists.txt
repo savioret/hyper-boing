@@ -47,6 +47,7 @@ set(SOURCES
     src/core/motion.cpp
     src/core/oncehelper.cpp
     src/entities/animeffect.cpp
+    src/entities/hitscore.cpp
     src/entities/ball.cpp
     src/ui/bmfont.cpp
     src/core/configdata.cpp

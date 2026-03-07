@@ -423,8 +423,13 @@ int BMFontRenderer::getSystemFontTextWidth(const char* texto) const
     return length * charWidth * pixelScale;
 }
 
-void BMFontRenderer::text(const char* texto, int x, int y)
+void BMFontRenderer::text(const char* texto, int x, int y, TextAlign align)
 {
+    if (align == TextAlign::Center)
+        x -= getTextWidth(texto) / 2;
+    else if (align == TextAlign::Right)
+        x -= getTextWidth(texto);
+
     // Use system font if no BMFont is loaded
     if (!fontLoader || !fontTexture)
     {
