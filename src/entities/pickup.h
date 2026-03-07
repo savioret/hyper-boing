@@ -42,7 +42,7 @@ public:
     static constexpr float EXTRA_TIME_BONUS = 20.0f;
     static constexpr float FREEZE_DURATION = 10.0f;
     static constexpr float LIFETIME = 7.0f;        // Seconds before disappearing after landing
-    static constexpr float BLINK_DURATION = 2.0f;  // Blink during last 2 seconds
+    static constexpr float BLINK_DURATION = 3.0f;  // Blink during last 3 seconds
 
 private:
     Scene* scene;

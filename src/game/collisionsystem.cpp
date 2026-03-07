@@ -349,23 +349,26 @@ void CollisionSystem::detectHexaVsShot(const Context& ctx, ContactList& contacts
         // Skip dead OR flashing hexas (flash = already hit, waiting for death)
         if (h->isDead() || h->isInFlashState()) continue;
 
+        int hexaCx, hexaCy;
+        h->getCollisionCenter(hexaCx, hexaCy);
+        int hexaRadius = h->getCollisionRadius();
+
         for (const auto& sh : ctx.shots)
         {
             if (sh->isDead()) continue;
             if (sh->getPlayer()->isDead()) continue;
 
-            CollisionBox hexaBox = h->getCollisionBox();
             CollisionBox shotBox = sh->getCollisionBox();
 
-            if (intersects(hexaBox, shotBox))
+            if (circleIntersectsBox(hexaCx, hexaCy, hexaRadius, shotBox))
             {
                 contacts.push_back({
                     ContactType::HexaShot,
                     h.get(),
                     sh.get(),
-                    hexaBox,
+                    h->getCollisionBox(),
                     shotBox,
-                    getCollisionSide(hexaBox, shotBox)
+                    getCircleBoxCollisionSide(hexaCx, hexaCy, hexaRadius, shotBox)
                 });
 
                 break;  // Hexa can only be hit once per frame
@@ -381,7 +384,9 @@ void CollisionSystem::detectHexaVsFloor(const Context& ctx, ContactList& contact
         // Skip dead OR flashing hexas
         if (h->isDead() || h->isInFlashState()) continue;
 
-        CollisionBox hexaBox = h->getCollisionBox();
+        int hexaCx, hexaCy;
+        h->getCollisionCenter(hexaCx, hexaCy);
+        int hexaRadius = h->getCollisionRadius();
         float velX = h->getVelX();
         float velY = h->getVelY();
 
@@ -389,13 +394,14 @@ void CollisionSystem::detectHexaVsFloor(const Context& ctx, ContactList& contact
         {
             CollisionBox floorBox = fl->getCollisionBox();
 
-            if (!intersects(hexaBox, floorBox))
+            if (!circleIntersectsBox(hexaCx, hexaCy, hexaRadius, floorBox))
                 continue;
 
-            CollisionSide side = getCollisionSide(hexaBox, floorBox);
+            CollisionSide side = getCircleBoxCollisionSide(hexaCx, hexaCy, hexaRadius, floorBox);
 
-            // Check if hexa is fully contained inside floor (emergency escape)
-            bool hexaInsideFloor = containsBox(floorBox, hexaBox);
+            // Check if hexa center is inside floor (emergency escape)
+            bool hexaInsideFloor = (hexaCx >= floorBox.x && hexaCx <= floorBox.x + floorBox.w &&
+                                    hexaCy >= floorBox.y && hexaCy <= floorBox.y + floorBox.h);
 
             // Only register collision if hexa is moving TOWARD that side
             bool validX = side.x && ((side.x == SIDE_LEFT && velX > 0) ||
@@ -416,7 +422,7 @@ void CollisionSystem::detectHexaVsFloor(const Context& ctx, ContactList& contact
                     ContactType::HexaFloor,
                     h.get(),
                     fl.get(),
-                    hexaBox,
+                    h->getCollisionBox(),
                     floorBox,
                     recordedSide
                 });
@@ -432,24 +438,27 @@ void CollisionSystem::detectHexaVsPlayer(const Context& ctx, ContactList& contac
         // Skip dead OR flashing hexas (flash = already hit, waiting for death)
         if (h->isDead() || h->isInFlashState()) continue;
 
+        int hexaCx, hexaCy;
+        h->getCollisionCenter(hexaCx, hexaCy);
+        int hexaRadius = h->getCollisionRadius();
+
         for (int i = 0; i < 2; i++)
         {
             if (!ctx.players[i]) continue;
             if (ctx.players[i]->isImmune()) continue;
             if (ctx.players[i]->isDead()) continue;
 
-            CollisionBox hexaBox = h->getCollisionBox();
             CollisionBox playerBox = ctx.players[i]->getCollisionBox();
 
-            if (intersects(hexaBox, playerBox))
+            if (circleIntersectsBox(hexaCx, hexaCy, hexaRadius, playerBox))
             {
                 contacts.push_back({
                     ContactType::HexaPlayer,
                     h.get(),
                     ctx.players[i],
-                    hexaBox,
+                    h->getCollisionBox(),
                     playerBox,
-                    getCollisionSide(hexaBox, playerBox)
+                    getCircleBoxCollisionSide(hexaCx, hexaCy, hexaRadius, playerBox)
                 });
             }
         }

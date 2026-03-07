@@ -1,9 +1,13 @@
 #include "hexa.h"
 #include "../main.h"
 #include "animspritesheet.h"
+#include "animcontroller.h"
 #include "eventmanager.h"
 #include "../game/collisionsystem.h"
 #include <cmath>
+
+// Frame ranges in hexa_green.json per size
+static constexpr int HEXA_ANIM_START[] = {0, 4, 8};  // size 0=big, 1=medium, 2=small
 
 // Static member initialization
 constexpr int Hexa::SIZES[][2];
@@ -20,6 +24,9 @@ Hexa::Hexa(Scene* scn, int x, int y, int sz, float vx, float vy)
 
     width = SIZES[size][0];
     height = SIZES[size][1];
+
+    int start = HEXA_ANIM_START[size];
+    animCtrl = std::make_unique<FrameSequenceAnim>(FrameSequenceAnim::range(start, start + 3, 100, 0));
 }
 
 Hexa::Hexa(Scene* scn, Hexa* parent, int dir)
@@ -48,6 +55,9 @@ Hexa::Hexa(Scene* scn, Hexa* parent, int dir)
 
     this->xPos = parentCenterX - (width / 2.0f) + (dir * width * 0.5f);
     this->yPos = parentCenterY - (height / 2.0f);
+
+    int start = HEXA_ANIM_START[size];
+    animCtrl = std::make_unique<FrameSequenceAnim>(FrameSequenceAnim::range(start, start + 3, 100, 0));
 }
 
 void Hexa::update(float dt)
@@ -64,14 +74,8 @@ void Hexa::update(float dt)
         return;  // Don't move during flash
     }
 
-    // Rotate in discrete steps at ~60ms intervals
-    rotationTimer += dt;
-    while (rotationTimer >= ROTATION_INTERVAL)
-    {
-        rotationTimer -= ROTATION_INTERVAL;
-        rotation += ROTATION_STEP;
-        if (rotation >= 360.0f) rotation -= 360.0f;
-    }
+    // Advance frame animation (dt is in seconds, animCtrl expects milliseconds)
+    animCtrl->update(dt * 1000.0f);
 
     // Constant velocity movement
     xPos += velX;
@@ -193,9 +197,9 @@ bool Hexa::collision(Player* pl)
 Sprite* Hexa::getCurrentSprite() const
 {
     StageResources& res = gameinf.getStageRes();
-    if (res.hexaAnim)
+    if (res.hexaAnim && animCtrl)
     {
-        return res.hexaAnim->getFrame(size);
+        return res.hexaAnim->getFrame(animCtrl->getCurrentFrame());
     }
     return nullptr;
 }

@@ -1,14 +1,15 @@
 #pragma once
 
 #include <memory>
+#include <algorithm>
 #include "gameobject.h"
 #include "pickup.h"
+#include "animcontroller.h"
 
 class Scene;
 class Shot;
 class Player;
 class Platform;
-class AnimSpriteSheet;
 class Sprite;
 struct CollisionSide;
 
@@ -32,22 +33,19 @@ private:
     bool hasDeathPickup = false;
     PickupType deathPickupType = PickupType::GUN;
 
-    // Rotation state (discrete steps at ~60ms intervals)
-    float rotation = 0.0f;              // Current rotation angle (degrees)
-    float rotationTimer = 0.0f;         // Time accumulator for rotation steps
-    static constexpr float ROTATION_INTERVAL = 0.06f;  // 60ms between rotation steps
-    static constexpr float ROTATION_STEP = 15.0f;      // Degrees per step
+    // Per-instance animation controller (cycles through 4 frames for current size)
+    std::unique_ptr<FrameSequenceAnim> animCtrl;
 
     // Hit flash state
     bool flashing = false;
     float flashTimer = 0.0f;
     static constexpr float FLASH_DURATION = 0.04f;  // 40ms
 
-    // Static size dimensions (from JSON)
+    // Static size dimensions (from hexa_green.json sourceSize/frame bounds)
     static constexpr int SIZES[][2] = {
-        {57, 45},  // Size 0: Large
-        {31, 24},  // Size 1: Medium
-        {16, 12}   // Size 2: Small
+        {51, 51},  // Size 0: Large
+        {28, 27},  // Size 1: Medium
+        {17, 16}   // Size 2: Small
     };
 
 public:
@@ -111,9 +109,14 @@ public:
     int getHeight() const { return height; }
     float getVelX() const { return velX; }
     float getVelY() const { return velY; }
-    float getRotation() const { return rotation; }
     bool isInFlashState() const { return flashing; }
     Sprite* getCurrentSprite() const;
+
+    int getCollisionRadius() const { return std::min(width, height) / 2; }
+    void getCollisionCenter(int& cx, int& cy) const {
+        cx = (int)xPos + width / 2;
+        cy = (int)yPos + height / 2;
+    }
 
     /**
      * Kill the hexa - starts flash effect before actual death
@@ -121,8 +124,7 @@ public:
     void kill() override;
 
     /**
-     * Get collision box for AABB collision detection
-     * @return Collision box in top-left coordinate space
+     * Get AABB for broad-phase / fallback; circle methods are used for actual detection
      */
     CollisionBox getCollisionBox() const override {
         return { (int)xPos, (int)yPos, width, height };

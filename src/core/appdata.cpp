@@ -247,7 +247,7 @@ void AppData::initStageResources()
     stageRes.glassBricksAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/glass_bricks.json");
 
     // Load hexa enemy sprites (3 sizes as frames)
-    stageRes.hexaAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/hexagon_green.json");
+    stageRes.hexaAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/hexa_green.json");
     stageRes.hexaSplashAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/hexagon_splash_green.json");
 
     stageRes.initialized = true;

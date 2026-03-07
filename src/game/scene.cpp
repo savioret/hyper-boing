@@ -1524,10 +1524,6 @@ void Scene::draw(Hexa* h)
     RenderProps props;
     props.x = (int)h->getX();
     props.y = (int)h->getY();
-    props.rotation = h->getRotation();
-    // Pivot at center for rotation
-    props.pivotX = 0.5f;
-    props.pivotY = 0.5f;
 
     appGraph.drawExFlash(spr, props, h->isInFlashState());
 }
@@ -1702,14 +1698,16 @@ void Scene::drawBoundingBoxes()
         appGraph.text(buf, cx - radius, cy - radius);
     }
 
-    // Draw hexa bounding boxes (green to distinguish from balls)
+    // Draw hexa collision circles (green to distinguish from balls)
     appGraph.setDrawColor(0, 200, 0, 255);
     for (const auto& h : lsHexas)
     {
-        CollisionBox box = h->getCollisionBox();
-        appGraph.rectangle(box.x, box.y, box.x + box.w, box.y + box.h);
-        snprintf(buf, sizeof(buf), "%d,%d", box.x, box.y);
-        appGraph.text(buf, box.x, box.y);
+        int cx, cy;
+        h->getCollisionCenter(cx, cy);
+        int radius = h->getCollisionRadius();
+        appGraph.circle(cx, cy, radius);
+        snprintf(buf, sizeof(buf), "%d,%d", cx, cy);
+        appGraph.text(buf, cx - radius, cy - radius);
     }
     appGraph.setDrawColor(0, 0, 0, 255);  // Reset to black
 
