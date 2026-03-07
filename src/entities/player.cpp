@@ -95,6 +95,13 @@ void Player::init()
     walkAnim = AnimSpriteSheet::load(&appGraph, walkPath);
     if (walkAnim)
     {
+        // Callback: "step" one-shot completes → resume walking
+        walkAnim->setOnStateComplete([this](const std::string& stateName) {
+            if (stateName == "step" && currentState == PlayerState::STEP_UP) {
+                yPos = stepUpTargetY;  // Apply Y snap only after animation completes
+                setState(PlayerState::WALKING);
+            }
+        });
         sprite.registerAnimation("walk", walkAnim.get());
     }
     else
@@ -307,6 +314,14 @@ void Player::startClimbing(Ladder* ladder)
     setX((float)ladder->getCenterX());
 }
 
+void Player::startStepUp(float targetY)
+{
+    stepUpTargetY = targetY;
+    yVelocity = 0.0f;
+    grounded = true;
+    setState(PlayerState::STEP_UP);
+}
+
 void Player::stopClimbing()
 {
     setState(PlayerState::IDLE);
@@ -424,6 +439,13 @@ void Player::update(float dt, Scene* scene)
             }
             break;
 
+        case PlayerState::STEP_UP:
+            if (walkAnim) {
+                walkAnim->update(dtMs);
+                // Completion → WALKING handled by setOnStateComplete callback
+            }
+            break;
+
         case PlayerState::IDLE:
         case PlayerState::SHOOTING:
         case PlayerState::DEAD:
@@ -482,6 +504,13 @@ void Player::updatePhysics(float dt, Scene* scene)
     // Don't apply gravity while climbing or dead
     // Check both state AND currentLadder for safety (prevents falling if state desyncs)
     if (isClimbing() || currentLadder != nullptr || isDead()) return;
+
+    // During step-up animation, freeze physics at current position
+    if (currentState == PlayerState::STEP_UP) {
+        grounded = true;
+        yVelocity = 0.0f;
+        return;
+    }
 
     // Find what's below us
     float groundY = scene->findGroundLevel(this);
@@ -750,6 +779,14 @@ void Player::setState(PlayerState newState)
         case PlayerState::WALKING:
             if (walkAnim) {
                 walkAnim->reset();
+                if (walkAnim->hasStates()) walkAnim->setState("walk");
+                sprite.setActiveAnimation("walk");
+            }
+            break;
+
+        case PlayerState::STEP_UP:
+            if (walkAnim && walkAnim->hasStates()) {
+                walkAnim->setState("step");
                 sprite.setActiveAnimation("walk");
             }
             break;

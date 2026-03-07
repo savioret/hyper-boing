@@ -436,6 +436,13 @@ public:
     float findGroundLevel(Player* player) const;
 
     /**
+     * @brief Finds a short (≤16 px tall) floor platform the player is walking into from the side
+     * @param player The player to check (must be grounded)
+     * @return Pointer to steppable platform if found, nullptr otherwise
+     */
+    Platform* findSteppablePlatformInPath(Player* player) const;
+
+    /**
      * @brief Spawns a one-shot animation effect centered at (x, y)
      * @param tmpl Template AnimSpriteSheet to clone (must not be null)
      * @param x Center X in screen coordinates

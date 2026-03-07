@@ -1,9 +1,9 @@
 { "frames": {
    "floor_bricks 0.aseprite": {
-    "frame": { "x": 0, "y": 0, "w": 64, "h": 64 },
+    "frame": { "x": 0, "y": 0, "w": 64, "h": 16 },
     "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 64 },
+    "trimmed": true,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 16 },
     "sourceSize": { "w": 64, "h": 64 },
     "duration": 100
    },

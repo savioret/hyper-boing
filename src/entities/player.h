@@ -35,7 +35,8 @@ enum class PlayerState
     WAKING_UP,  // Just reached ladder top, transitioning to platform
     SHOOTING,   // Shooting pose
     VICTORY,    // Victory celebration (from Aseprite JSON)
-    DEAD        // Death animation (uses Action system)
+    DEAD,       // Death animation (uses Action system)
+    STEP_UP     // Stepping up onto a short (≤16 px) platform
 };
 
 /**
@@ -103,6 +104,9 @@ private:
     Ladder* currentLadder;   // Ladder player is currently climbing (nullptr if not climbing)
     float climbSpeed;        // Climb speed in pixels per frame
     bool climbingMoving;     // True when player is actively moving up/down on ladder
+
+    // Step-up state
+    float stepUpTargetY = 0.0f;  // Platform top Y to lock to during STEP_UP
 
     // Physics/gravity state
     float yVelocity;         // Current vertical velocity (positive = falling)
@@ -172,6 +176,8 @@ public:
     void climbUp();
     void climbDown();
     bool isClimbing() const { return currentState == PlayerState::CLIMBING; }
+    bool isSteppingUp() const { return currentState == PlayerState::STEP_UP; }
+    void startStepUp(float targetY);
     bool canEnterLadder(Ladder* ladder) const;
     Ladder* getCurrentLadder() const { return currentLadder; }
     float getClimbSpeed() const { return climbSpeed; }

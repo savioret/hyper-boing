@@ -545,6 +545,38 @@ float Scene::findGroundLevel(Player* player) const
     return groundY;
 }
 
+Platform* Scene::findSteppablePlatformInPath(Player* player) const
+{
+    if (!player || !player->isGrounded()) return nullptr;
+
+    static constexpr int MAX_STEP_HEIGHT = 16;
+
+    float playerFeetY = player->getY();
+    // Use same narrow check as findFloorUnderPlayer so physics grounding also detects the platform
+    int playerLeft  = (int)(player->getX() - SURFACE_CHECK_WIDTH / 2);
+    int playerRight = (int)(player->getX() + SURFACE_CHECK_WIDTH / 2);
+
+    for (const auto& floor : lsFloor)
+    {
+        if (floor->isDead()) continue;
+        CollisionBox floorBox = floor->getCollisionBox();
+
+        // Step height: distance from player's feet to platform top
+        int floorTopY = floorBox.y;
+        float stepHeight = playerFeetY - (float)floorTopY;
+        if (stepHeight <= 0.0f || stepHeight > (float)MAX_STEP_HEIGHT) continue;
+
+        // Player center must overlap the platform horizontally (same as findFloorUnderPlayer)
+        int overlap = calculateHorizontalOverlap(
+            playerLeft, playerRight,
+            floorBox.x, floorBox.x + floorBox.w);
+        if (overlap < 1) continue;
+
+        return floor.get();
+    }
+    return nullptr;
+}
+
 /**
  * Factory method to create appropriate Shot subclass based on weapon type
  * @param pl Player firing the shot
@@ -1116,6 +1148,11 @@ GameState* Scene::handlePlayingState(float dt)
                 // Frozen during waking up animation (300ms) - no input processed
                 // Animation will auto-transition to IDLE via callback
             }
+            else if (player->isSteppingUp())
+            {
+                // Frozen during step-up animation (~100ms) - no input processed
+                // Animation will auto-transition to WALKING via setOnStateComplete callback
+            }
             else
             {
                 // Not climbing - normal movement + ladder entry
@@ -1156,10 +1193,16 @@ GameState* Scene::handlePlayingState(float dt)
                 else if (appInput.key(gameinf.getKeys(i).getLeft()))
                 {
                     player->moveLeft();
+                    Platform* steppable = findSteppablePlatformInPath(player);
+                    if (steppable)
+                        player->startStepUp((float)steppable->getCollisionBox().y);
                 }
                 else if (appInput.key(gameinf.getKeys(i).getRight()))
                 {
                     player->moveRight();
+                    Platform* steppable = findSteppablePlatformInPath(player);
+                    if (steppable)
+                        player->startStepUp((float)steppable->getCollisionBox().y);
                 }
                 else if ( player->getState() != PlayerState::IDLE )
                 {
