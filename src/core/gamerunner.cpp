@@ -2,6 +2,7 @@
 #include "main.h"
 #include "menu.h"
 #include "configscreen.h"
+#include "scene.h"
 #include "logger.h"
 #include "appconsole.h"
 #include "eventmanager.h"
@@ -145,6 +146,19 @@ void GameRunner::processEvents()
                         // TAB key - toggle debug mode
                         appData.debugMode = !appData.debugMode;
                         LOG_DEBUG("Debug mode: %s", appData.debugMode ? "ON" : "OFF");
+                        break;
+
+                    case SDLK_F11:
+                    case SDLK_F12:
+                        // Ctrl+F11/F12 - ultra-fast stage switch (prev/next)
+                        if (e.key.keysym.mod & KMOD_CTRL)
+                        {
+                            if (Scene* scene = dynamic_cast<Scene*>(appData.currentScreen.get()))
+                            {
+                                int offset = (e.key.keysym.sym == SDLK_F12) ? 1 : -1;
+                                scene->queueQuickStageSwitch(appData.currentStage + offset);
+                            }
+                        }
                         break;
                 }
             }

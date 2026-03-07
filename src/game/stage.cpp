@@ -89,8 +89,8 @@ StageObject Stage::pop(int time)
         
         if (time >= obj->start)
         {
-            // Move ownership out of the unique_ptr
-            res = std::move(*obj);
+            // Copy the object so the sequence remains intact for stage restarts
+            res = *obj;
             
             // Update itemsleft before advancing
             if (res.id == StageObjectType::Ball || res.id == StageObjectType::Hexa) itemsleft--;
@@ -107,30 +107,30 @@ StageObject Stage::pop(int time)
             }
             
             // Enhanced logging with typed params
-            if (res.params)
-            {
-                if (auto* ball = res.getParams<BallParams>())
-                {
-                    LOG_DEBUG("Pop BALL id:%d start:%d x:%d y:%d size:%d top:%d dirX:%d dirY:%d type:%d",
-                        static_cast<int>(res.id), res.start, res.x, res.y,
-                        ball->size, ball->top, ball->dirX, ball->dirY, ball->ballType);
-                }
-                else if (auto* floor = res.getParams<FloorParams>())
-                {
-                    LOG_DEBUG("Pop FLOOR id:%d start:%d x:%d y:%d floorType:%d",
-                        static_cast<int>(res.id), res.start, res.x, res.y, floor->floorType);
-                }
-                else
-                {
-                    LOG_DEBUG("Pop object id:%d start:%d x:%d y:%d (unknown params type)",
-                        static_cast<int>(res.id), res.start, res.x, res.y);
-                }
-            }
-            else
-            {
-                LOG_DEBUG("Pop object id:%d start:%d x:%d y:%d (no params)",
-                    static_cast<int>(res.id), res.start, res.x, res.y);
-            }
+            //if (res.params)
+            //{
+            //    if (auto* ball = res.getParams<BallParams>())
+            //    {
+            //        LOG_DEBUG("Pop BALL id:%d start:%d x:%d y:%d size:%d top:%d dirX:%d dirY:%d type:%d",
+            //            static_cast<int>(res.id), res.start, res.x, res.y,
+            //            ball->size, ball->top, ball->dirX, ball->dirY, ball->ballType);
+            //    }
+            //    else if (auto* floor = res.getParams<FloorParams>())
+            //    {
+            //        LOG_DEBUG("Pop FLOOR id:%d start:%d x:%d y:%d floorType:%d",
+            //            static_cast<int>(res.id), res.start, res.x, res.y, floor->floorType);
+            //    }
+            //    else
+            //    {
+            //        LOG_DEBUG("Pop object id:%d start:%d x:%d y:%d (unknown params type)",
+            //            static_cast<int>(res.id), res.start, res.x, res.y);
+            //    }
+            //}
+            //else
+            //{
+            //    LOG_DEBUG("Pop object id:%d start:%d x:%d y:%d (no params)",
+            //        static_cast<int>(res.id), res.start, res.x, res.y);
+            //}
         }
     }
     

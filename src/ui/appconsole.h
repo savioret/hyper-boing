@@ -117,6 +117,18 @@ private:
     void cmdImmune(const std::string& args);
     void cmdShield(const std::string& args);
 
+    /**
+     * @brief Validates and queues an ultra-fast stage switch by relative offset.
+     *
+     * Resolves the target stage as (currentStage + offset), validates it is
+     * within range, then calls Scene::queueQuickStageSwitch(). Used by both
+     * the /goto command and the Ctrl+F11/F12 keyboard shortcuts.
+     *
+     * @param offset Signed stage delta (+1 for next, -1 for previous)
+     * @return true if the switch was successfully queued, false otherwise
+     */
+    bool queueQuickStageSwitchByOffset(int offset);
+
 public:
     // Singleton accessor
     static AppConsole& instance();

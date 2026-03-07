@@ -158,11 +158,11 @@ void AppConsole::registerBuiltinCommands()
     registerCommand("level", "Set log level (trace/debug/info/warning/error)", 
         [this](const std::string& args) { cmdLevel(args); });
     
-    registerCommand("next", "Skip to next level (only in gameplay)", 
+    registerCommand("next", "Skip to next level (or /next <stage>) with stage-clear animation", 
         [this](const std::string& args) { cmdNext(args); });
 
-    registerCommand ( "goto", "Skip to level number (only in gameplay)",
-        [this]( const std::string& args ) { cmdGoto ( args ); } );
+    registerCommand("goto", "Ultra-fast stage switch (no stage-clear): /goto [stage]",
+        [this](const std::string& args) { cmdGoto(args); });
 
     registerCommand("weapon", "Switch weapon: /weapon <harpoon|harpoon2|gun|claw> [player_num]",
         [this](const std::string& args) { cmdWeapon(args); });
@@ -259,69 +259,91 @@ void AppConsole::cmdNext(const std::string& args)
         LOG_WARNING("/next can only be used during gameplay (Scene)");
         return;
     }
-    
-    // Check if there's a next stage
-    if (appData.currentStage >= appData.numStages)
+
+    int targetStage = appData.currentStage + 1;
+
+    if (!args.empty())
     {
-        LOG_INFO("Already on the last stage");
+        try
+        {
+            targetStage = std::stoi(args);
+        }
+        catch (const std::exception&)
+        {
+            LOG_WARNING("Invalid stage number: %s (must be 1-%d)", args.c_str(), appData.numStages);
+            return;
+        }
+    }
+
+    if (targetStage < 1 || targetStage > appData.numStages)
+    {
+        LOG_WARNING("Stage %d is out of range (valid: 1-%d)", targetStage, appData.numStages);
         return;
     }
-    
-    // Trigger level clear to advance to next stage
-    LOG_SUCCESS("Skipping to next level...");
-    currentScene->win();
+
+    if (targetStage == appData.currentStage)
+    {
+        LOG_INFO("Already on level %d", targetStage);
+        return;
+    }
+
+    LOG_SUCCESS("Skipping to level %d (with stage clear)...", targetStage);
+    currentScene->skipToStage(targetStage);
 }
 
-void AppConsole::cmdGoto ( const std::string& args )
+void AppConsole::cmdGoto(const std::string& args)
 {
-    AppData& appData = AppData::instance ();
+    AppData& appData = AppData::instance();
 
-    // Check if we're in a Scene (gameplay screen)
-    Scene* currentScene = dynamic_cast<Scene*>( appData.currentScreen.get () );
-
-    if ( !currentScene )
+    Scene* currentScene = dynamic_cast<Scene*>(appData.currentScreen.get());
+    if (!currentScene)
     {
-        LOG_WARNING ( "/goto can only be used during gameplay (Scene)" );
+        LOG_WARNING("/goto can only be used during gameplay (Scene)");
         return;
     }
 
-    // Parse level number from args
-    if ( args.empty() )
+    if (args.empty())
     {
-        LOG_WARNING ( "Usage: /goto <level_number> (1-%d)", appData.numStages );
+        // No argument: ultra-fast jump to next stage
+        queueQuickStageSwitchByOffset(1);
         return;
     }
 
-    int targetLevel = 0;
+    // Optional argument: ultra-fast jump to a specific stage number
+    int targetStage = 0;
     try
     {
-        targetLevel = std::stoi( args );
+        targetStage = std::stoi(args);
     }
-    catch ( const std::exception& )
+    catch (const std::exception&)
     {
-        LOG_WARNING ( "Invalid level number: %s (must be 1-%d)", args.c_str(), appData.numStages );
+        LOG_WARNING("Invalid stage number: %s (must be 1-%d)", args.c_str(), appData.numStages);
         return;
     }
 
-    // Validate level range [1..numStages]
-    if ( targetLevel < 1 || targetLevel > appData.numStages )
+    if (targetStage < 1 || targetStage > appData.numStages)
     {
-        LOG_WARNING ( "Level %d is out of range (valid: 1-%d)", targetLevel, appData.numStages );
+        LOG_WARNING("Stage %d is out of range (valid: 1-%d)", targetStage, appData.numStages);
         return;
     }
 
-    // Check if already on target level
-    if ( targetLevel == appData.currentStage )
+    if (targetStage == appData.currentStage)
     {
-        LOG_INFO ( "Already on level %d", targetLevel );
+        LOG_INFO("Already on level %d", targetStage);
         return;
     }
 
-    // Use Scene's skipToStage method for proper state management
-    LOG_SUCCESS ( "Skipping to level %d...", targetLevel );
-    currentScene->skipToStage( targetLevel );
+    currentScene->queueQuickStageSwitch(targetStage);
+    LOG_SUCCESS("Ultra-fast switch queued to level %d", targetStage);
 }
 
+/**
+ * Command: /weapon <harpoon|gun|claw>
+ *
+ * Switches the player's weapon.
+ * Optionally specify player number: /weapon <weapon> <player_num>
+ *   player_num: 1 or 2 (omit to change both players)
+ */
 void AppConsole::cmdWeapon(const std::string& args)
 {
     if (args.empty())
@@ -821,6 +843,72 @@ void AppConsole::cmdImmune(const std::string& args)
     }
 }
 
+/**
+ * Command: /shield [player_num] [0|1]
+ *
+ * Enables or disables the shield power-up for a player.
+ * If player_num is omitted, applies to all active players.
+ * If 0|1 is omitted, toggles current shield state.
+ */
+void AppConsole::cmdShield(const std::string& args)
+{
+    AppData& appData = AppData::instance();
+    Scene* scene = dynamic_cast<Scene*>(appData.currentScreen.get());
+    if (!scene)
+    {
+        LOG_WARNING("Shield command only available during gameplay");
+        return;
+    }
+
+    int playerNum = -1;  // -1 means all players
+    int enable = -1;     // -1 means toggle
+
+    if (!args.empty())
+    {
+        std::istringstream iss(args);
+        iss >> playerNum;
+        iss >> enable;
+    }
+
+    if (playerNum < -1 || playerNum > 2 || playerNum == 0)
+    {
+        LOG_ERROR("Invalid player number: %d (must be 1, 2, or omit for all)", playerNum);
+        return;
+    }
+
+    if (enable != -1 && enable != 0 && enable != 1)
+    {
+        LOG_ERROR("Invalid value: %d (must be 0, 1, or omit to toggle)", enable);
+        return;
+    }
+
+    bool changed = false;
+
+    auto applyShield = [&](Player* player, const char* playerName) {
+        if (!player) return;
+
+        bool newState = (enable == -1) ? !player->getShield() : (enable == 1);
+        player->setShield(newState);
+        LOG_SUCCESS("%s shield %s", playerName, newState ? "enabled" : "disabled");
+        changed = true;
+    };
+
+    if (playerNum == -1 || playerNum == 1)
+        applyShield(scene->getPlayer(0), "Player 1");
+    if (playerNum == -1 || playerNum == 2)
+        applyShield(scene->getPlayer(1), "Player 2");
+
+    if (!changed)
+        LOG_WARNING("No active players found");
+}
+
+void AppConsole::print(const std::string& message, LogColor color)
+{
+    // This bypasses Logger and adds directly to the display
+    // For now, just use Logger
+    LOG_INFO("%s", message.c_str());
+}
+
 void AppConsole::registerCommand(const std::string& name, const std::string& desc, CommandHandler handler)
 {
     // Check if command already exists
@@ -855,7 +943,7 @@ bool AppConsole::handleEvent(const SDL_Event& event)
     // Toggle console with F9 (like Roblox) or backtick (`)
     if (event.type == SDL_KEYDOWN)
     {
-        if (event.key.keysym.sym == SDLK_F9 || 
+        if (event.key.keysym.sym == SDLK_F9 ||
             event.key.keysym.sym == SDLK_BACKQUOTE)
         {
             toggle();
@@ -1239,68 +1327,31 @@ void AppConsole::scrollToBottom()
     scrollOffset = 0;
 }
 
-/**
- * Command: /shield [player_num] [0|1]
- *
- * Enables or disables the shield power-up for a player.
- * If player_num is omitted, applies to all active players.
- * If 0|1 is omitted, toggles current shield state.
- */
-void AppConsole::cmdShield(const std::string& args)
+bool AppConsole::queueQuickStageSwitchByOffset(int offset)
 {
     AppData& appData = AppData::instance();
-    Scene* scene = dynamic_cast<Scene*>(appData.currentScreen.get());
-    if (!scene)
+
+    Scene* currentScene = dynamic_cast<Scene*>(appData.currentScreen.get());
+    if (!currentScene)
     {
-        LOG_WARNING("Shield command only available during gameplay");
-        return;
+        LOG_WARNING("Ultra-fast stage switch only available during gameplay");
+        return false;
     }
 
-    int playerNum = -1;  // -1 means all players
-    int enable = -1;     // -1 means toggle
-
-    if (!args.empty())
+    int targetStage = appData.currentStage + offset;
+    if (targetStage < 1 || targetStage > appData.numStages)
     {
-        std::istringstream iss(args);
-        iss >> playerNum;
-        iss >> enable;
+        LOG_WARNING("Stage %d is out of range (valid: 1-%d)", targetStage, appData.numStages);
+        return false;
     }
 
-    if (playerNum < -1 || playerNum > 2 || playerNum == 0)
+    if (targetStage == appData.currentStage)
     {
-        LOG_ERROR("Invalid player number: %d (must be 1, 2, or omit for all)", playerNum);
-        return;
+        LOG_INFO("Already on level %d", targetStage);
+        return false;
     }
 
-    if (enable != -1 && enable != 0 && enable != 1)
-    {
-        LOG_ERROR("Invalid value: %d (must be 0, 1, or omit to toggle)", enable);
-        return;
-    }
-
-    bool changed = false;
-
-    auto applyShield = [&](Player* player, const char* playerName) {
-        if (!player) return;
-
-        bool newState = (enable == -1) ? !player->getShield() : (enable == 1);
-        player->setShield(newState);
-        LOG_SUCCESS("%s shield %s", playerName, newState ? "enabled" : "disabled");
-        changed = true;
-    };
-
-    if (playerNum == -1 || playerNum == 1)
-        applyShield(scene->getPlayer(0), "Player 1");
-    if (playerNum == -1 || playerNum == 2)
-        applyShield(scene->getPlayer(1), "Player 2");
-
-    if (!changed)
-        LOG_WARNING("No active players found");
-}
-
-void AppConsole::print(const std::string& message, LogColor color)
-{
-    // This bypasses Logger and adds directly to the display
-    // For now, just use Logger
-    LOG_INFO("%s", message.c_str());
+    currentScene->queueQuickStageSwitch(targetStage);
+    LOG_SUCCESS("Ultra-fast switch queued to level %d", targetStage);
+    return true;
 }

@@ -114,7 +114,8 @@ private:
     Stage* stage;                           ///< Current stage definition (balls, floors, timing)
     std::unique_ptr<StageClear> pStageClear; ///< Stage clear screen manager
     int gameOverCountdown;                  ///< Countdown timer (10→0 during Continue mode)
-    
+    int pendingQuickStage;                  ///< Queued ultra-fast stage jump target (0 = none)
+
     // Time management
     int dSecond;         ///< Deciseconds counter (60 = 1 second)
     int timeRemaining;   ///< Time left on stage timer (in seconds)
@@ -281,6 +282,12 @@ private:
      * @return New GameState if transitioning, nullptr otherwise
      */
     GameState* updateStageProgression(float dt);
+
+    /**
+     * @brief Performs queued ultra-fast stage switching if requested
+     * @return New GameState if transitioning, nullptr otherwise
+     */
+    GameState* processQuickStageSwitch();
 
     // State handlers
     /**
@@ -503,6 +510,12 @@ public:
      * @return unique_ptr to created Shot object
      */
     std::unique_ptr<Shot> createShot(Player* pl, WeaponType type);
+
+    /**
+     * @brief Queues an ultra-fast switch to a specific stage (no StageClear/courtain)
+     * @param stageNumber Stage to switch to (1-indexed)
+     */
+    void queueQuickStageSwitch(int stageNumber);
 
     /**
      * @brief Triggers level win sequence

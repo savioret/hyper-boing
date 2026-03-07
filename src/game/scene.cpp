@@ -23,7 +23,7 @@ Scene::Scene(Stage* stg, std::unique_ptr<StageClear> pstgclr)
     : currentState(pstgclr ? SceneState::Playing : SceneState::Ready),
       gameOverSubState(GameOverSubState::ContinueCountdown),
       pStageClear(std::move(pstgclr)), gameOverCountdown(10),
-      stage(stg), dSecond(0), timeRemaining(0), timeLine(0),
+      stage(stg), pendingQuickStage(0), dSecond(0), timeRemaining(0), timeLine(0),
       moveTick(0), moveLastTick(0), moveCount(0),
       drawTick(0), drawLastTick(0), drawCount(0),
       boundingBoxes(false),
@@ -655,6 +655,31 @@ Player* Scene::getPlayer(int index)
         return gameinf.getPlayer(1);
     }
     return nullptr;
+}
+
+void Scene::queueQuickStageSwitch(int stageNumber)
+{
+    pendingQuickStage = stageNumber;
+}
+
+GameState* Scene::processQuickStageSwitch()
+{
+    if (pendingQuickStage <= 0)
+        return nullptr;
+
+    int targetStage = pendingQuickStage;
+    pendingQuickStage = 0;
+
+    // Safety guard: queueQuickStageSwitch() is public and can be called with any value,
+    // so validate here even if callers (e.g. AppConsole) already checked the range.
+    if (targetStage < 1 || targetStage > gameinf.getNumStages())
+    {
+        LOG_WARNING("Cannot switch stage: %d is out of range (1-%d)", targetStage, gameinf.getNumStages());
+        return nullptr;
+    }
+
+    gameinf.getCurrentStage() = targetStage;
+    return new Scene(&gameinf.getStages()[targetStage - 1]);
 }
 
 /**
@@ -1436,6 +1461,11 @@ GameState* Scene::moveAll(float dt)
         goback = false;
         gameinf.isMenu() = true;
         return new Menu;
+    }
+
+    if (GameState* quickSwitch = processQuickStageSwitch())
+    {
+        return quickSwitch;
     }
 
     // Dispatch to state handler
