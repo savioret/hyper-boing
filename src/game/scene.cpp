@@ -962,7 +962,8 @@ void Scene::updateEntities(float dt)
     // Update freeze timer and ball-blink
     freezeEffect.update(dt);
 
-    // Balls and hexas only update when NOT frozen
+    // Balls and hexas only move when NOT frozen, but flashing entities
+    // still need to update their flash timer to complete the death sequence
     if (!freezeEffect.isActive())
     {
         for (const auto& ball : lsBalls)
@@ -972,6 +973,20 @@ void Scene::updateEntities(float dt)
         for (const auto& hexa : lsHexas)
         {
             hexa->update(dt);
+        }
+    }
+    else
+    {
+        // During freeze: only update flashing entities (so they can die)
+        for (const auto& ball : lsBalls)
+        {
+            if (ball->isInFlashState())
+                ball->update(dt);
+        }
+        for (const auto& hexa : lsHexas)
+        {
+            if (hexa->isInFlashState())
+                hexa->update(dt);
         }
     }
 
@@ -1600,13 +1615,15 @@ void Scene::drawBoundingBoxes()
         }
     }
 
-    // Draw ball bounding boxes (circles represented as bounding squares)
+    // Draw ball collision circles (actual collision shape, not bounding box)
     for (const auto& b : lsBalls)
     {
-        CollisionBox box = b->getCollisionBox();
-        appGraph.rectangle(box.x, box.y, box.x + box.w, box.y + box.h);
-        snprintf(buf, sizeof(buf), "%d,%d", box.x, box.y);
-        appGraph.text(buf, box.x, box.y);
+        int cx, cy;
+        b->getCollisionCenter(cx, cy);
+        int radius = b->getCollisionRadius();
+        appGraph.circle(cx, cy, radius);
+        snprintf(buf, sizeof(buf), "%d,%d", cx, cy);
+        appGraph.text(buf, cx - radius, cy - radius);
     }
 
     // Draw hexa bounding boxes (green to distinguish from balls)

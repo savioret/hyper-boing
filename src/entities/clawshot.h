@@ -39,8 +39,17 @@ public:
     void draw(Graph* graph) override;
     CollisionBox getCollisionBox() const override;
 
+    /**
+     * @brief Get collision box for floor/ceiling collision only
+     * @return Collision box from tip down to gun position (head level)
+     *
+     * This prevents the chain from colliding with platforms that the
+     * player's head is above but feet are below (e.g., climbing through).
+     */
+    CollisionBox getFloorCollisionBox() const override;
+
     // Collision hooks
     void onBallHit(Ball* b) override;       // looseShoot() + kill()
-    void onFloorHit(Platform* f) override;  // Stick to platform top
+    void onFloorHit(Platform* f) override;  // Stick to platform bottom
     void onCeilingHit() override;           // Stick to ceiling
 };

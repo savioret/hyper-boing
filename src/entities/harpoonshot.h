@@ -35,8 +35,17 @@ public:
     void draw(Graph* graph) override;
 
     /**
-     * @brief Get collision box for the harpoon chain
-     * @return Collision box covering the entire vertical chain from head to screen bottom
+     * @brief Get collision box for the harpoon chain (ball/hexa collision)
+     * @return Collision box covering the entire vertical chain from tip to feet
      */
     CollisionBox getCollisionBox() const override;
+
+    /**
+     * @brief Get collision box for floor/ceiling collision only
+     * @return Collision box from tip down to gun position (head level)
+     *
+     * This prevents the chain from colliding with platforms that the
+     * player's head is above but feet are below (e.g., climbing through).
+     */
+    CollisionBox getFloorCollisionBox() const override;
 };

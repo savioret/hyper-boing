@@ -130,11 +130,34 @@ void ClawShot::draw(Graph* graph)
 
 /**
  * Collision box covers the full canvas width from tip/head top down to yInit.
+ * Used for ball/hexa collision - the entire chain can hit them.
  */
 CollisionBox ClawShot::getCollisionBox() const
 {
     int w = clawAnim ? clawAnim->getWidth() : 0;
     return { (int)xPos, (int)yPos, w, (int)yInit - (int)yPos };
+}
+
+/**
+ * Get collision box for floor/ceiling collision
+ *
+ * Returns only the portion from the tip down to the gun position (head level).
+ * The chain between the player's head and feet should NOT trigger floor
+ * collisions - this allows shooting while climbing through a platform
+ * when the player's head is above the platform.
+ */
+CollisionBox ClawShot::getFloorCollisionBox() const
+{
+    int w = clawAnim ? clawAnim->getWidth() : 0;
+    // Only check from tip to gun position (head level), not the full chain
+    int bottomY = (int)gunY;
+    // If tip is already below gun position, return minimal box at tip
+    if ((int)yPos >= bottomY)
+    {
+        return { (int)xPos, (int)yPos, w, 1 };
+    }
+    int height = bottomY - (int)yPos;
+    return { (int)xPos, (int)yPos, w, height };
 }
 
 /**
@@ -147,20 +170,31 @@ void ClawShot::onBallHit(Ball* b)
 }
 
 /**
- * Floor hit: stick the claw to the top of the platform.
+ * Floor hit: stick the claw to the bottom of the platform.
+ * Only sticks to non-destructible platforms (regular floors).
+ * Destructible platforms (Glass) destroy the claw (like hitting a ball).
  */
 void ClawShot::onFloorHit(Platform* f)
 {
     if (stuck) return;  // Prevent re-entry each frame while already stuck
 
+    // Destructible platforms (Glass) destroy the claw like a ball hit
+    // The platform's onHit() is called separately by collision rules
+    if (f && f->isDestructible())
+    {
+        player->looseShoot();
+        kill();
+        return;
+    }
+
     stuck = true;
     stuckTimer = STUCK_DURATION;
 
-    // Snap to the top of the platform so the claw head sits on the surface
+    // Snap to the bottom of the platform so the claw hangs from the underside
     if (f)
     {
         CollisionBox floorBox = f->getCollisionBox();
-        yPos = static_cast<float>(floorBox.y);
+        yPos = static_cast<float>(floorBox.y + floorBox.h);
     }
 
     LOG_TRACE("ClawShot stuck to platform at y=%.1f", yPos);

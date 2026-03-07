@@ -33,7 +33,7 @@ HarpoonShot::HarpoonShot(Scene* scn, Player* pl, WeaponType type)
     //
     // Initially, position the head so its bottom aligns with player's feet.
     // This means yPos = yInit - headHeight
-    yPos -= tipSpr.getHeight();
+    yPos -= tipSpr.getHeight() + 15;
 
     // When climbing, center the harpoon head on the player
     int tipWidth = tipSpr.getWidth();
@@ -145,10 +145,33 @@ void HarpoonShot::draw(Graph* graph)
  *
  * The harpoon has a chain that extends from the tip down to the bottom
  * of the screen (MAX_Y). The collision box covers this entire vertical area.
+ * Used for ball/hexa collision - the entire chain can hit them.
  */
 CollisionBox HarpoonShot::getCollisionBox() const
 {
     int width = tipSpr.getWidth();
     int height = (int)yInit - (int)yPos;
+    return { (int)xPos, (int)yPos, width, height };
+}
+
+/**
+ * Get collision box for floor/ceiling collision
+ *
+ * Returns only the portion from the tip down to the gun position (head level).
+ * The chain between the player's head and feet should NOT trigger floor
+ * collisions - this allows shooting while climbing through a platform
+ * when the player's head is above the platform.
+ */
+CollisionBox HarpoonShot::getFloorCollisionBox() const
+{
+    int width = tipSpr.getWidth();
+    // Only check from tip to gun position (head level), not the full chain
+    int bottomY = (int)gunY;
+    // If tip is already below gun position, return minimal box at tip
+    if ((int)yPos >= bottomY)
+    {
+        return { (int)xPos, (int)yPos, width, 1 };
+    }
+    int height = bottomY - (int)yPos;
     return { (int)xPos, (int)yPos, width, height };
 }

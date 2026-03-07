@@ -25,9 +25,16 @@ public:
 
     /**
      * @brief Called when a weapon shot hits this platform.
-     * Default no-op; Glass overrides to advance its damage state.
+     * Default no-op; Glass overrides to start destruction animation.
      */
     virtual void onHit() {}
+
+    /**
+     * @brief Returns true if this platform is destructible (e.g., Glass).
+     * Destructible platforms use full shot collision box (like balls),
+     * while regular floors use reduced floor collision box.
+     */
+    virtual bool isDestructible() const { return false; }
 
     /**
      * @brief Returns the sprite to render for this platform's current state.

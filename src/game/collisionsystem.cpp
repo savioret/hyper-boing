@@ -42,23 +42,30 @@ void CollisionSystem::detectBallVsShot(const Context& ctx, ContactList& contacts
         // Skip dead OR flashing balls (flash = already hit, waiting for death)
         if (b->isDead() || b->isInFlashState()) continue;
 
+        // Get ball circle collision data
+        int ballCx, ballCy;
+        b->getCollisionCenter(ballCx, ballCy);
+        int ballRadius = b->getCollisionRadius();
+
         for (const auto& sh : ctx.shots)
         {
             if (sh->isDead()) continue;
             if (sh->getPlayer()->isDead()) continue;
 
-            CollisionBox ballBox = b->getCollisionBox();
             CollisionBox shotBox = sh->getCollisionBox();
 
-            if (intersects(ballBox, shotBox))
+            // Use circle-box collision for ball vs shot
+            if (circleIntersectsBox(ballCx, ballCy, ballRadius, shotBox))
             {
+                // Store the AABB in contact for compatibility with existing code
+                CollisionBox ballBox = b->getCollisionBox();
                 contacts.push_back({
                     ContactType::BallShot,
                     b.get(),
                     sh.get(),
                     ballBox,
                     shotBox,
-                    getCollisionSide(ballBox, shotBox)
+                    getCircleBoxCollisionSide(ballCx, ballCy, ballRadius, shotBox)
                 });
 
                 break;  // Ball can only be hit once per frame
@@ -74,7 +81,12 @@ void CollisionSystem::detectBallVsFloor(const Context& ctx, ContactList& contact
         // Skip dead OR flashing balls
         if (b->isDead() || b->isInFlashState()) continue;
 
-        CollisionBox ballBox = b->getCollisionBox();
+        // Get ball circle collision data
+        int ballCx, ballCy;
+        b->getCollisionCenter(ballCx, ballCy);
+        int ballRadius = b->getCollisionRadius();
+        CollisionBox ballBox = b->getCollisionBox();  // For Contact struct compatibility
+
         int dirX = b->getDirX();
         int dirY = b->getDirY();
 
@@ -82,13 +94,14 @@ void CollisionSystem::detectBallVsFloor(const Context& ctx, ContactList& contact
         {
             CollisionBox floorBox = fl->getCollisionBox();
 
-            if (!intersects(ballBox, floorBox))
+            // Use circle-box collision for ball vs floor
+            if (!circleIntersectsBox(ballCx, ballCy, ballRadius, floorBox))
                 continue;
 
-            CollisionSide side = getCollisionSide(ballBox, floorBox);
+            CollisionSide side = getCircleBoxCollisionSide(ballCx, ballCy, ballRadius, floorBox);
 
-            // Check if ball is fully contained inside floor (emergency escape)
-            bool ballInsideFloor = containsBox(floorBox, ballBox);
+            // Check if ball center is inside floor (emergency escape)
+            bool ballInsideFloor = contains(floorBox, (float)ballCx, (float)ballCy);
 
             // Only register collision if ball is moving TOWARD that side
             // This prevents "sticking" when ball grazes a surface while moving parallel
@@ -127,24 +140,31 @@ void CollisionSystem::detectBallVsPlayer(const Context& ctx, ContactList& contac
         // Skip dead OR flashing balls (flash = already hit, waiting for death)
         if (b->isDead() || b->isInFlashState()) continue;
 
+        // Get ball circle collision data
+        int ballCx, ballCy;
+        b->getCollisionCenter(ballCx, ballCy);
+        int ballRadius = b->getCollisionRadius();
+
         for (int i = 0; i < 2; i++)
         {
             if (!ctx.players[i]) continue;
             if (ctx.players[i]->isImmune()) continue;
             if (ctx.players[i]->isDead()) continue;
 
-            CollisionBox ballBox = b->getCollisionBox();
             CollisionBox playerBox = ctx.players[i]->getCollisionBox();
 
-            if (intersects(ballBox, playerBox))
+            // Use circle-box collision for ball vs player
+            if (circleIntersectsBox(ballCx, ballCy, ballRadius, playerBox))
             {
+                // Store the AABB in contact for compatibility with existing code
+                CollisionBox ballBox = b->getCollisionBox();
                 contacts.push_back({
                     ContactType::BallPlayer,
                     b.get(),
                     ctx.players[i],
                     ballBox,
                     playerBox,
-                    getCollisionSide(ballBox, playerBox)
+                    getCircleBoxCollisionSide(ballCx, ballCy, ballRadius, playerBox)
                 });
             }
         }
@@ -159,8 +179,13 @@ void CollisionSystem::detectShotVsFloor(const Context& ctx, ContactList& contact
 
         for (const auto& fl : ctx.floors)
         {
-            CollisionBox shotBox = sh->getCollisionBox();
             CollisionBox floorBox = fl->getCollisionBox();
+
+            // Destructible platforms (Glass) use full shot collision box (like balls)
+            // Regular floors use reduced collision box (tip to gun position)
+            CollisionBox shotBox = fl->isDestructible()
+                ? sh->getCollisionBox()
+                : sh->getFloorCollisionBox();
 
             if (intersects(shotBox, floorBox))
             {

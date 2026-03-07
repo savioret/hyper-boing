@@ -183,3 +183,78 @@ inline bool has50PercentOverlap(const CollisionBox& a, const CollisionBox& b)
     int narrower = (a.w < b.w) ? a.w : b.w;
     return overlapWidth >= narrower / 2;
 }
+
+/**
+ * @brief Check if a circle intersects a collision box
+ *
+ * Uses closest-point-on-rectangle algorithm for accurate circle-rectangle
+ * collision detection. More accurate than AABB for circular objects like balls.
+ *
+ * @param cx Circle center x coordinate
+ * @param cy Circle center y coordinate
+ * @param radius Circle radius
+ * @param box The collision box to test against
+ * @return true if circle overlaps box, false otherwise
+ */
+inline bool circleIntersectsBox(int cx, int cy, int radius, const CollisionBox& box)
+{
+    // Find closest point on rectangle to circle center
+    int closestX = (cx < box.x) ? box.x :
+                   (cx > box.x + box.w) ? box.x + box.w : cx;
+    int closestY = (cy < box.y) ? box.y :
+                   (cy > box.y + box.h) ? box.y + box.h : cy;
+
+    // Calculate squared distance from circle center to closest point
+    int dx = cx - closestX;
+    int dy = cy - closestY;
+    int distSq = dx * dx + dy * dy;
+
+    return distSq <= radius * radius;
+}
+
+/**
+ * @brief Get collision side when circle hits rectangle
+ *
+ * Determines which side(s) of the rectangle the circle is colliding with
+ * based on penetration depth. Used for bounce direction determination.
+ *
+ * @param cx Circle center x coordinate
+ * @param cy Circle center y coordinate
+ * @param radius Circle radius
+ * @param box The collision box
+ * @return CollisionSide indicating which side(s) were hit
+ */
+inline CollisionSide getCircleBoxCollisionSide(int cx, int cy, int radius, const CollisionBox& box)
+{
+    CollisionSide side;
+
+    // Calculate penetration from each side
+    int penetrationLeft = (cx + radius) - box.x;
+    int penetrationRight = (box.x + box.w) - (cx - radius);
+    int penetrationTop = (cy + radius) - box.y;
+    int penetrationBottom = (box.y + box.h) - (cy - radius);
+
+    // Find minimum penetration on each axis
+    int minPenetrationX = (penetrationLeft < penetrationRight) ? penetrationLeft : penetrationRight;
+    int minPenetrationY = (penetrationTop < penetrationBottom) ? penetrationTop : penetrationBottom;
+
+    // Determine collision side based on minimum penetration
+    if (minPenetrationX < minPenetrationY)
+    {
+        // Horizontal collision (shallower penetration)
+        side.x = (penetrationLeft < penetrationRight) ? SIDE_LEFT : SIDE_RIGHT;
+    }
+    else if (minPenetrationY < minPenetrationX)
+    {
+        // Vertical collision (shallower penetration)
+        side.y = (penetrationTop < penetrationBottom) ? SIDE_TOP : SIDE_BOTTOM;
+    }
+    else
+    {
+        // Corner hit (equal penetration on both axes)
+        side.x = (penetrationLeft < penetrationRight) ? SIDE_LEFT : SIDE_RIGHT;
+        side.y = (penetrationTop < penetrationBottom) ? SIDE_TOP : SIDE_BOTTOM;
+    }
+
+    return side;
+}

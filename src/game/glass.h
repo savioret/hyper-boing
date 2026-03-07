@@ -2,6 +2,8 @@
 
 #include "platform.h"
 #include "../entities/pickup.h"
+#include "../core/animcontroller.h"
+#include <memory>
 
 class Scene;
 
@@ -25,8 +27,8 @@ enum class GlassType : int
 /**
  * Glass class
  *
- * A destructible platform that visually degrades across 5 damage states
- * each time it is hit by a weapon shot. After the fifth hit it disappears.
+ * A destructible platform that breaks on a single hit. When hit, a destruction
+ * animation plays through 5 frames and the platform is removed when complete.
  *
  * Balls bounce off Glass and players can walk on it, exactly like Floor.
  * Unlike Floor, Glass reacts to weapon hits via onHit().
@@ -35,29 +37,33 @@ class Glass : public Platform
 {
 private:
     GlassType type;
-    int damageLevel;  ///< Current damage state (0 = pristine, 4 = fully cracked)
     int sx, sy;       ///< Collision-box dimensions (fixed to undamaged first frame)
     Scene* scene = nullptr;
     bool hasDeathPickup = false;
     PickupType deathPickupType = PickupType::GUN;
 
+    bool breaking = false;  ///< True when destruction animation is playing
+    std::unique_ptr<FrameSequenceAnim> breakAnim;  ///< Destruction animation
+
 public:
     Glass(Scene* scene, int x, int y, GlassType type);
     ~Glass() = default;
 
-    void update(float dt) override {}
+    void update(float dt) override;
 
     void setDeathPickup(PickupType type) { hasDeathPickup = true; deathPickupType = type; }
 
     /**
-     * @brief Advance damage state by one step.
-     * After the fifth hit (damageLevel > 4) the platform is killed.
+     * @brief Start destruction animation on first hit.
+     * The glass will be killed when the animation completes.
      */
     void onHit() override;
     void onDeath() override;
 
     int getWidth()  const override { return sx; }
     int getHeight() const override { return sy; }
+
+    bool isDestructible() const override { return true; }
 
     Sprite* getCurrentSprite() const override;
 

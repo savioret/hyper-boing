@@ -33,6 +33,7 @@ protected:
     Scene* scene;
     Player* player;
     float xInit, yInit;
+    float gunY;  // Y position of gun (head level) - used for floor collision
 
     WeaponType weaponType;
     int weaponSpeed;
@@ -77,6 +78,7 @@ public:
     // Accessors
     float getXInit() const { return xInit; }
     float getYInit() const { return yInit; }
+    float getGunY() const { return gunY; }  // Gun/head position for floor collision
 
     Player* getPlayer() const { return player; }
     Scene* getScene() const { return scene; }
@@ -94,8 +96,22 @@ public:
      *
      * Pure virtual - each weapon type defines its own collision bounds.
      * Harpoon returns the chain area, gun returns the bullet sprite bounds.
+     * Used for ball/hexa collision - covers the entire chain.
      */
     CollisionBox getCollisionBox() const override = 0;
+
+    /**
+     * @brief Get collision box specifically for floor/ceiling collision
+     * @return Collision box from tip down to gun position (not full chain)
+     *
+     * For chain weapons (harpoon/claw), returns only the portion above the
+     * gun position. This prevents false collisions when player's head is
+     * above a platform but feet are below (e.g., climbing through a platform).
+     *
+     * Default implementation returns same as getCollisionBox().
+     * Override in chain weapons to return the gun-to-tip portion only.
+     */
+    virtual CollisionBox getFloorCollisionBox() const { return getCollisionBox(); }
 
     /**
      * Check collision with floor

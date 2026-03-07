@@ -46,6 +46,13 @@ Shot::Shot(Scene* scn, Player* pl, WeaponType type)
     // Player Y is feet (bottom-middle pivot = Y is the bottom of the sprite).
     // yInit anchors the chain bottom at feet level.
     yPos = yInit = pl->getY();
+
+    // gunY is the gun/head position - used for floor collision detection.
+    // The chain between feet and head should NOT collide with floors (allows
+    // shooting through platforms that the player's head is above).
+    //gunY = pl->getY() - pl->getHeight();
+    // Use the player's collision box top (not sprite top) for accurate threshold.
+    gunY = (float)pl->getCollisionBox().y;
 }
 
 /**

@@ -82,6 +82,22 @@ public:
     Sprite* getCurrentSprite() const;
 
     /**
+     * @brief Get collision radius for circle collision detection
+     * @return Half the ball's diameter
+     */
+    int getCollisionRadius() const { return diameter / 2; }
+
+    /**
+     * @brief Get collision center point for circle collision detection
+     * @param cx Output x coordinate of center
+     * @param cy Output y coordinate of center
+     */
+    void getCollisionCenter(int& cx, int& cy) const {
+        cx = (int)xPos + diameter / 2;
+        cy = (int)yPos + diameter / 2;
+    }
+
+    /**
      * Kill the ball - starts flash effect before actual death
      */
     void kill() override;
