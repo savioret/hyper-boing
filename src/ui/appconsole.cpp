@@ -164,7 +164,7 @@ void AppConsole::registerBuiltinCommands()
     registerCommand ( "goto", "Skip to level number (only in gameplay)",
         [this]( const std::string& args ) { cmdGoto ( args ); } );
 
-    registerCommand("weapon", "Switch weapon: /weapon <harpoon|harpoon2|gun> [player_num]",
+    registerCommand("weapon", "Switch weapon: /weapon <harpoon|harpoon2|gun|claw> [player_num]",
         [this](const std::string& args) { cmdWeapon(args); });
 
     registerCommand("boxes", "Toggle bounding boxes: /boxes <1|0>",
@@ -326,7 +326,7 @@ void AppConsole::cmdWeapon(const std::string& args)
 {
     if (args.empty())
     {
-        LOG_WARNING("Usage: /weapon <harpoon|gun> [player_number]");
+        LOG_WARNING("Usage: /weapon <harpoon|gun|claw> [player_number]");
         LOG_INFO("  player_number: 1 or 2 (omit to change both players)");
         return;
     }
@@ -359,10 +359,14 @@ void AppConsole::cmdWeapon(const std::string& args)
     {
         type = WeaponType::GUN;
     }
+    else if (weaponName == "claw")
+    {
+        type = WeaponType::CLAW;
+    }
     else
     {
         LOG_ERROR("Unknown weapon: %s", weaponName.c_str());
-        LOG_INFO("Available weapons: harpoon, harpoon2, gun");
+        LOG_INFO("Available weapons: harpoon, harpoon2, gun, claw");
         return;
     }
 

@@ -162,6 +162,10 @@ void AppData::initStageResources()
     // Load gun bullet sprite sheet with animation data
     stageRes.gunBulletAnim = AnimSpriteSheet::loadAsStateMachine(&appGraph, "assets/graph/entities/gun_bullet.json");
 
+    // Load claw weapon sprite sheets
+    stageRes.clawWeaponAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/claw_weapon.json");
+    stageRes.clawWeaponYellowAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/claw_weapon_yellow.json");
+
     // Load ball pop effect animations (size 0, 1, 2+)
     stageRes.ballPopAnim[0] = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/ball_pop1.json");
     stageRes.ballPopAnim[1] = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/ball_pop2.json");

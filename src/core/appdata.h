@@ -82,6 +82,8 @@ struct StageResources
     SpriteSheet harpoonChain;                 ///< Harpoon chain animated sprite sheet (shared texture)
     std::unique_ptr<IAnimController> harpoonAnim;  ///< Template animation for harpoon chain (cloned per shot)
     std::unique_ptr<AnimSpriteSheet> gunBulletAnim;  ///< Gun bullet sprite sheet with animation (cloned per shot)
+    std::unique_ptr<AnimSpriteSheet> clawWeaponAnim;       ///< Claw weapon sprite sheet (3 frames; cloned per shot)
+    std::unique_ptr<AnimSpriteSheet> clawWeaponYellowAnim; ///< Yellow claw skin (2 frames: head+chain; shown in last second)
 
     // Effect animation templates (cloned per instance)
     std::unique_ptr<AnimSpriteSheet> ballPopAnim[3];   ///< Ball pop effects: [0]=size0, [1]=size1, [2]=size2+

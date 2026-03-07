@@ -103,11 +103,12 @@ void HarpoonShot::draw(Graph* graph)
 {
     Sprite* tipSprite = tipSpr.getActiveSprite();
     Sprite* chainFrame = chainSpr.getActiveSprite();
+	int tipCutoff = 15;  // Pixels to cut off from the bottom of the tip sprite for better visual connection with chain
 
     // Draw tip sprite (yPos already accounts for sprite height offset)
     if (tipSprite)
     {
-        graph->draw(tipSprite, (int)xPos, (int)yPos);
+        graph->drawClipped(tipSprite, (int)xPos, (int)yPos, tipSprite->getHeight()-tipCutoff);
     }
 
     // Draw animated chain from tip bottom down to the anchor point (yInit)
@@ -115,7 +116,7 @@ void HarpoonShot::draw(Graph* graph)
     if (!chainFrame) return;  // Safety check
 
     int tileHeight = chainFrame->getHeight();
-    int chainTop = (int)yPos + tipSpr.getHeight();
+    int chainTop = (int)yPos + tipSpr.getHeight() - tipCutoff;
     int chainBottom = (int)yInit;
 
     for (int tileY = chainTop; tileY < chainBottom; tileY += tileHeight)

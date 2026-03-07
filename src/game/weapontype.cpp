@@ -16,6 +16,13 @@ const WeaponConfig& WeaponConfig::get(WeaponType type) {
             3,                   // maxShots
             8,                   // cooldown
             7                    // speed
+        },
+        // CLAW: grappling hook that sticks to surfaces for 5 seconds
+        {
+            WeaponType::CLAW,    // type
+            1,                   // maxShots
+            15,                  // cooldown
+            5                    // speed
         }
     };
     return configs[static_cast<int>(type)];

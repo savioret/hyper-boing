@@ -7,7 +7,8 @@
  */
 enum class WeaponType {
     HARPOON = 0,  // Current chain weapon,
-    GUN = 1       // New bullet weapon
+    GUN = 1,      // Bullet weapon
+    CLAW = 2      // Grappling claw that sticks to surfaces
 };
 
 /**

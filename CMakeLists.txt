@@ -75,6 +75,7 @@ set(SOURCES
     src/entities/shot.cpp
     src/entities/harpoonshot.cpp
     src/entities/gunshot.cpp
+    src/entities/clawshot.cpp
     src/core/sprite.cpp
     src/core/sprite2D.cpp
     src/core/spritesheet.cpp
@@ -129,6 +130,7 @@ set(HEADERS
     src/entities/shot.h
     src/entities/harpoonshot.h
     src/entities/gunshot.h
+    src/entities/clawshot.h
     src/core/sprite.h
     src/core/singlesprite.h
     src/core/sprite2D.h

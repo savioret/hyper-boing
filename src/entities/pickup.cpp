@@ -118,8 +118,8 @@ void Pickup::applyEffect(Player* player)
             break;
 
         case PickupType::CLAW:
-            // Placeholder - not implemented
-            LOG_INFO("Player %d collected CLAW pickup (not implemented)", player->getId() + 1);
+            player->setWeapon(WeaponType::CLAW);
+            LOG_INFO("Player %d collected CLAW pickup", player->getId() + 1);
             break;
     }
 }

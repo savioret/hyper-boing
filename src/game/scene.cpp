@@ -10,6 +10,7 @@
 #include "eventmanager.h"
 #include "harpoonshot.h"
 #include "gunshot.h"
+#include "clawshot.h"
 #include <SDL.h>
 #include <SDL_render.h>
 #include <SDL_image.h>
@@ -594,6 +595,9 @@ std::unique_ptr<Shot> Scene::createShot(Player* pl, WeaponType type)
 
     case WeaponType::GUN:
         return std::make_unique<GunShot>(this, pl, res.gunBulletAnim.get());
+
+    case WeaponType::CLAW:
+        return std::make_unique<ClawShot>(this, pl, type);
 
     default:
         // Fallback to harpoon for unknown types
