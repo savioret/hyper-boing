@@ -10,6 +10,7 @@
 // Forward declarations
 class Player;
 class Ball;
+class Hexa;
 class Shot;
 class Pickup;
 enum class WeaponType;
@@ -33,6 +34,8 @@ enum class GameEventType
     PLAYER_REVIVED,           // Player respawned after death
     BALL_HIT,                 // Ball hit by weapon
     BALL_SPLIT,               // Ball divided into smaller balls
+    HEXA_HIT,                 // Hexa hit by weapon
+    HEXA_SPLIT,               // Hexa divided into smaller hexas
     PICKUP_COLLECTED,         // Player collected a pickup
 
     // Gameplay actions
@@ -90,6 +93,19 @@ struct PlayerShootEventData
 struct BallSplitEventData
 {
     Ball* parentBall;
+    int parentSize;
+};
+
+struct HexaHitEventData
+{
+    Hexa* hexa;
+    Shot* shot;
+    Player* shooter;
+};
+
+struct HexaSplitEventData
+{
+    Hexa* parentHexa;
     int parentSize;
 };
 
@@ -170,6 +186,8 @@ struct GameEventData
         ScoreChangedEventData scoreChanged;
         PlayerShootEventData playerShoot;
         BallSplitEventData ballSplit;
+        HexaHitEventData hexaHit;
+        HexaSplitEventData hexaSplit;
         PickupCollectedEventData pickupCollected;
         TimeElapsedEventData timeElapsed;
         StageLoadedEventData stageLoaded;

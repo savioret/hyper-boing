@@ -1,5 +1,6 @@
 #include "collisionsystem.h"
 #include "../entities/ball.h"
+#include "../entities/hexa.h"
 #include "../entities/shot.h"
 #include "../entities/player.h"
 #include "../entities/pickup.h"
@@ -15,17 +16,21 @@ ContactList CollisionSystem::detectAndResolve(Context& ctx)
     // Phase 1: Detection (const - only builds contacts)
     detectBallVsFloor(ctx, contacts);
     detectBallVsShot(ctx, contacts);
+    detectHexaVsFloor(ctx, contacts);
+    detectHexaVsShot(ctx, contacts);
 
     if (ctx.checkPlayerCollisions)
     {
         detectBallVsPlayer(ctx, contacts);
+        detectHexaVsPlayer(ctx, contacts);
         detectPickupVsPlayer(ctx, contacts);
     }
 
     detectShotVsFloor(ctx, contacts);
 
-    // Phase 2: Physics resolution (modifies ball directions)
+    // Phase 2: Physics resolution (modifies ball/hexa directions)
     resolveBallFloorPhysics(ctx, contacts);
+    resolveHexaFloorPhysics(ctx, contacts);
 
     return contacts;
 }
@@ -34,7 +39,8 @@ void CollisionSystem::detectBallVsShot(const Context& ctx, ContactList& contacts
 {
     for (const auto& b : ctx.balls)
     {
-        if (b->isDead()) continue;
+        // Skip dead OR flashing balls (flash = already hit, waiting for death)
+        if (b->isDead() || b->isInFlashState()) continue;
 
         for (const auto& sh : ctx.shots)
         {
@@ -65,7 +71,8 @@ void CollisionSystem::detectBallVsFloor(const Context& ctx, ContactList& contact
 {
     for (const auto& b : ctx.balls)
     {
-        if (b->isDead()) continue;
+        // Skip dead OR flashing balls
+        if (b->isDead() || b->isInFlashState()) continue;
 
         CollisionBox ballBox = b->getCollisionBox();
         int dirX = b->getDirX();
@@ -117,7 +124,8 @@ void CollisionSystem::detectBallVsPlayer(const Context& ctx, ContactList& contac
 {
     for (const auto& b : ctx.balls)
     {
-        if (b->isDead()) continue;
+        // Skip dead OR flashing balls (flash = already hit, waiting for death)
+        if (b->isDead() || b->isInFlashState()) continue;
 
         for (int i = 0; i < 2; i++)
         {
@@ -306,5 +314,151 @@ void CollisionSystem::detectPickupVsPlayer(const Context& ctx, ContactList& cont
                 break;  // Pickup can only be collected by one player
             }
         }
+    }
+}
+
+void CollisionSystem::detectHexaVsShot(const Context& ctx, ContactList& contacts) const
+{
+    for (const auto& h : ctx.hexas)
+    {
+        // Skip dead OR flashing hexas (flash = already hit, waiting for death)
+        if (h->isDead() || h->isInFlashState()) continue;
+
+        for (const auto& sh : ctx.shots)
+        {
+            if (sh->isDead()) continue;
+            if (sh->getPlayer()->isDead()) continue;
+
+            CollisionBox hexaBox = h->getCollisionBox();
+            CollisionBox shotBox = sh->getCollisionBox();
+
+            if (intersects(hexaBox, shotBox))
+            {
+                contacts.push_back({
+                    ContactType::HexaShot,
+                    h.get(),
+                    sh.get(),
+                    hexaBox,
+                    shotBox,
+                    getCollisionSide(hexaBox, shotBox)
+                });
+
+                break;  // Hexa can only be hit once per frame
+            }
+        }
+    }
+}
+
+void CollisionSystem::detectHexaVsFloor(const Context& ctx, ContactList& contacts) const
+{
+    for (const auto& h : ctx.hexas)
+    {
+        // Skip dead OR flashing hexas
+        if (h->isDead() || h->isInFlashState()) continue;
+
+        CollisionBox hexaBox = h->getCollisionBox();
+        float velX = h->getVelX();
+        float velY = h->getVelY();
+
+        for (const auto& fl : ctx.floors)
+        {
+            CollisionBox floorBox = fl->getCollisionBox();
+
+            if (!intersects(hexaBox, floorBox))
+                continue;
+
+            CollisionSide side = getCollisionSide(hexaBox, floorBox);
+
+            // Check if hexa is fully contained inside floor (emergency escape)
+            bool hexaInsideFloor = containsBox(floorBox, hexaBox);
+
+            // Only register collision if hexa is moving TOWARD that side
+            bool validX = side.x && ((side.x == SIDE_LEFT && velX > 0) ||
+                                     (side.x == SIDE_RIGHT && velX < 0) ||
+                                     hexaInsideFloor);
+            bool validY = side.y && ((side.y == SIDE_TOP && velY > 0) ||
+                                     (side.y == SIDE_BOTTOM && velY < 0) ||
+                                     hexaInsideFloor);
+
+            if (validX || validY)
+            {
+                // Record only the valid collision sides
+                CollisionSide recordedSide;
+                if (validX) recordedSide.x = side.x;
+                if (validY) recordedSide.y = side.y;
+
+                contacts.push_back({
+                    ContactType::HexaFloor,
+                    h.get(),
+                    fl.get(),
+                    hexaBox,
+                    floorBox,
+                    recordedSide
+                });
+            }
+        }
+    }
+}
+
+void CollisionSystem::detectHexaVsPlayer(const Context& ctx, ContactList& contacts) const
+{
+    for (const auto& h : ctx.hexas)
+    {
+        // Skip dead OR flashing hexas (flash = already hit, waiting for death)
+        if (h->isDead() || h->isInFlashState()) continue;
+
+        for (int i = 0; i < 2; i++)
+        {
+            if (!ctx.players[i]) continue;
+            if (ctx.players[i]->isImmune()) continue;
+            if (ctx.players[i]->isDead()) continue;
+
+            CollisionBox hexaBox = h->getCollisionBox();
+            CollisionBox playerBox = ctx.players[i]->getCollisionBox();
+
+            if (intersects(hexaBox, playerBox))
+            {
+                contacts.push_back({
+                    ContactType::HexaPlayer,
+                    h.get(),
+                    ctx.players[i],
+                    hexaBox,
+                    playerBox,
+                    getCollisionSide(hexaBox, playerBox)
+                });
+            }
+        }
+    }
+}
+
+void CollisionSystem::resolveHexaFloorPhysics(const Context& ctx, ContactList& contacts)
+{
+    // Group HexaFloor contacts by hexa pointer
+    std::unordered_map<Hexa*, std::vector<Contact*>> hexaContacts;
+
+    for (auto& c : contacts)
+    {
+        if (c.type == ContactType::HexaFloor)
+        {
+            hexaContacts[c.getHexa()].push_back(&c);
+        }
+    }
+
+    // Resolve physics for each hexa
+    for (auto& pair : hexaContacts)
+    {
+        Hexa* hexa = pair.first;
+        std::vector<Contact*>& floorHits = pair.second;
+
+        // Merge collision sides from all floor contacts
+        CollisionSide mergedSide;
+        for (const auto* contact : floorHits)
+        {
+            if (contact->side.hasHorizontal()) mergedSide.x = contact->side.x;
+            if (contact->side.hasVertical()) mergedSide.y = contact->side.y;
+        }
+
+        // Apply bounce via hexa's handlePlatformBounce
+        hexa->handlePlatformBounce(mergedSide);
     }
 }

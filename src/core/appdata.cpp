@@ -134,13 +134,9 @@ void AppData::initStageResources()
 
     int i;
 
-    // Load ball sprites
-    stageRes.redball[0].init(&appGraph, "assets/graph/entities/ball-rd1.png");
-    stageRes.redball[1].init(&appGraph, "assets/graph/entities/ball-rd2.png");
-    stageRes.redball[2].init(&appGraph, "assets/graph/entities/ball-rd3.png");
-    stageRes.redball[3].init(&appGraph, "assets/graph/entities/ball-rd4.png");
-    //for (i = 0; i < 4; i++)
-    //    appGraph.setColorKey(stageRes.redball[i].getBmp(), 0x00FF00);
+    // Load ball sprites (single spritesheet with 4 size frames, like Hexa)
+    stageRes.ballAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/ball_red.json");
+    stageRes.ballSplashAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/ball_splash_red.json");
 
     // Load mini player icons
     stageRes.miniplayer[PLAYER1].init(&appGraph, "assets/graph/players/miniplayer1.png");
@@ -165,11 +161,6 @@ void AppData::initStageResources()
     // Load claw weapon sprite sheets
     stageRes.clawWeaponAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/claw_weapon.json");
     stageRes.clawWeaponYellowAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/claw_weapon_yellow.json");
-
-    // Load ball pop effect animations (size 0, 1, 2+)
-    stageRes.ballPopAnim[0] = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/ball_pop1.json");
-    stageRes.ballPopAnim[1] = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/ball_pop2.json");
-    stageRes.ballPopAnim[2] = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/ball_pop3.json");
 
     // Load gun muzzle flash effect
     stageRes.gunSparkAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/gun_spark.json");
@@ -254,6 +245,10 @@ void AppData::initStageResources()
 
     // Load glass bricks sprite sheet (damage frames accessed by index)
     stageRes.glassBricksAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/glass_bricks.json");
+
+    // Load hexa enemy sprites (3 sizes as frames)
+    stageRes.hexaAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/hexagon_green.json");
+    stageRes.hexaSplashAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/hexagon_splash_green.json");
 
     stageRes.initialized = true;
 }
@@ -500,8 +495,10 @@ void AppData::release()
     // Release shared stage resources
     if (stageRes.initialized)
     {
-        for (int i = 0; i < 4; i++)
-            stageRes.redball[i].release();
+        // Ball and splash anims are unique_ptrs, auto-released
+        stageRes.ballAnim.reset();
+        stageRes.ballSplashAnim.reset();
+
         for (int i = 0; i < 2; i++)
         {
             stageRes.miniplayer[i].release();

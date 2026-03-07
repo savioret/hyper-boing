@@ -68,9 +68,10 @@ struct GameBitmaps
  */
 struct StageResources
 {
-    // Ball sprites
-    Sprite redball[4];  ///< Ball sprites (4 sizes)
-    
+    // Ball sprites (single spritesheet with 4 size frames)
+    std::unique_ptr<AnimSpriteSheet> ballAnim;  ///< Ball sprite sheet (4 sizes as frames)
+    std::unique_ptr<AnimSpriteSheet> ballSplashAnim;  ///< Ball splash animation (single shared)
+
     // Floor sprite sheet (shared; instances index frames directly)
     std::unique_ptr<AnimSpriteSheet> floorBricksAnim;  ///< Floor bricks sprite sheet (5 variants)
 
@@ -86,7 +87,6 @@ struct StageResources
     std::unique_ptr<AnimSpriteSheet> clawWeaponYellowAnim; ///< Yellow claw skin (2 frames: head+chain; shown in last second)
 
     // Effect animation templates (cloned per instance)
-    std::unique_ptr<AnimSpriteSheet> ballPopAnim[3];   ///< Ball pop effects: [0]=size0, [1]=size1, [2]=size2+
     std::unique_ptr<AnimSpriteSheet> gunSparkAnim;     ///< Gun muzzle flash effect
     std::unique_ptr<AnimSpriteSheet> harpoonSparkAnim; ///< Harpoon muzzle flash effect
     
@@ -113,6 +113,10 @@ struct StageResources
 
     // Glass platform sprite sheet (shared; instances index frames directly)
     std::unique_ptr<AnimSpriteSheet> glassBricksAnim;  ///< Glass bricks sprite sheet
+
+    // Hexa enemy sprites
+    std::unique_ptr<AnimSpriteSheet> hexaAnim;         ///< Hexa sprite sheet (3 sizes as frames)
+    std::unique_ptr<AnimSpriteSheet> hexaSplashAnim;   ///< Hexa death splash animation
 
     bool initialized;      ///< True if resources have been loaded
     

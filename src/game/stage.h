@@ -218,6 +218,41 @@ struct GlassParams : public StageObjectParams
 };
 
 /**
+ * HexaParams struct
+ *
+ * Type-safe parameters for hexa (hexagon) enemy objects.
+ *
+ * Fields:
+ * - size: Hexa size (0=largest, 2=smallest) - only 3 sizes unlike Ball's 4
+ * - velX: Horizontal velocity (constant, not direction-based)
+ * - velY: Vertical velocity (constant, not direction-based)
+ */
+struct HexaParams : public StageObjectParams
+{
+    int size = 0;           // 0-2 (smaller range than Ball's 0-3)
+    float velX = 1.5f;      // Horizontal velocity
+    float velY = 1.0f;      // Vertical velocity
+    bool hasDeathPickup = false;
+    PickupType deathPickupType = PickupType::GUN;
+
+    HexaParams() = default;
+
+    std::unique_ptr<StageObjectParams> clone() const override
+    {
+        return std::make_unique<HexaParams>(*this);
+    }
+
+    /**
+     * Validate hexa parameters
+     * @return true if all parameters are within valid ranges
+     */
+    bool validate() const
+    {
+        return size >= 0 && size <= 2;
+    }
+};
+
+/**
  * Identifies the type of a stage spawn object.
  * Used in StageObject::id and the Scene spawn switch.
  */
@@ -231,7 +266,8 @@ enum class StageObjectType : int
     Player = 5,
     Action = 6,
     Ladder = 7,
-    Glass  = 8
+    Glass  = 8,
+    Hexa   = 9
 };
 
 /**
@@ -512,6 +548,14 @@ public:
     }
 
     /**
+     * Create a hexa (hexagon enemy) object builder
+     */
+    static StageObjectBuilder hexa()
+    {
+        return StageObjectBuilder(StageObjectType::Hexa, std::make_unique<HexaParams>());
+    }
+
+    /**
      * Set exact position (both X and Y)
      * @param x X coordinate
      * @param y Y coordinate
@@ -566,14 +610,33 @@ public:
     // Ball-specific methods
     
     /**
-     * Set ball size (ball objects only)
-     * @param size Ball size (0=largest, 3=smallest)
+     * Set ball/hexa size
+     * @param size Ball size (0=largest, 3=smallest) or Hexa size (0=largest, 2=smallest)
      */
     StageObjectBuilder& size(int size)
     {
         if (auto* ball = dynamic_cast<BallParams*>(objectParams.get()))
         {
             ball->size = size;
+        }
+        else if (auto* hexa = dynamic_cast<HexaParams*>(objectParams.get()))
+        {
+            hexa->size = size;
+        }
+        return *this;
+    }
+
+    /**
+     * Set hexa velocity (hexa objects only)
+     * @param vx Horizontal velocity
+     * @param vy Vertical velocity
+     */
+    StageObjectBuilder& velocity(float vx, float vy)
+    {
+        if (auto* hexa = dynamic_cast<HexaParams*>(objectParams.get()))
+        {
+            hexa->velX = vx;
+            hexa->velY = vy;
         }
         return *this;
     }
@@ -634,7 +697,7 @@ public:
 
     /**
      * Set a pickup to spawn at this object's center when it dies.
-     * Supported for ball and glass objects.
+     * Supported for ball, hexa, and glass objects.
      */
     StageObjectBuilder& withDeathPickup(PickupType type)
     {
@@ -642,6 +705,11 @@ public:
         {
             ball->hasDeathPickup = true;
             ball->deathPickupType = type;
+        }
+        else if (auto* hexa = dynamic_cast<HexaParams*>(objectParams.get()))
+        {
+            hexa->hasDeathPickup = true;
+            hexa->deathPickupType = type;
         }
         else if (auto* glass = dynamic_cast<GlassParams*>(objectParams.get()))
         {

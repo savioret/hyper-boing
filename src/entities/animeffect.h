@@ -19,11 +19,12 @@ class AnimEffect : public IGameObject
 {
 public:
     /**
-	 * @param x Center X in world/screen coordinates (logical bottom-middle coordinate)
+     * @param x Center X in world/screen coordinates (logical bottom-middle coordinate)
      * @param y Center Y in world/screen coordinates (logical bottom-middle coordinate)
      * @param tmpl Template AnimSpriteSheet to clone (must not be null)
+     * @param scale Scale factor (1.0 = full size, smaller = scaled down)
      */
-    AnimEffect(int x, int y, AnimSpriteSheet* tmpl);
+    AnimEffect(int x, int y, AnimSpriteSheet* tmpl, float scale = 1.0f);
 
     void update(float dt);
     void draw(Graph* graph);
@@ -32,4 +33,5 @@ public:
 
 private:
     std::unique_ptr<AnimSpriteSheet> anim;
+    float scale = 1.0f;  ///< Scale factor for rendering
 };

@@ -5,6 +5,7 @@
 // Forward declarations
 class Scene;
 class Ball;
+class Hexa;
 class Shot;
 class Platform;
 class Player;
@@ -72,9 +73,35 @@ private:
     void handlePickupPlayer(Pickup* pickup, Player* player);
 
     /**
+     * @brief Handle hexa-shot collision
+     *
+     * - Calls shot->onBallHit() for weapon-specific behavior
+     * - Awards score to shooting player
+     * - Fires HEXA_HIT event
+     * - Marks hexa for death (will split in cleanup)
+     */
+    void handleHexaShot(Hexa* hexa, Shot* shot);
+
+    /**
+     * @brief Handle hexa-player collision
+     *
+     * - Skips if time is frozen (TIME_FREEZE pickup is active)
+     * - Fires PLAYER_HIT event
+     * - Marks player for death
+     */
+    void handleHexaPlayer(Hexa* hexa, Player* player, Scene* scene);
+
+    /**
      * @brief Calculate score for destroying a ball
      * @param diameter Ball diameter
      * @return Score value (larger balls = lower score)
      */
     static int calculateBallScore(int diameter);
+
+    /**
+     * @brief Calculate score for destroying a hexa
+     * @param width Hexa width
+     * @return Score value (larger hexas = lower score)
+     */
+    static int calculateHexaScore(int width);
 };

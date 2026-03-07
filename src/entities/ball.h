@@ -3,7 +3,6 @@
 #include <SDL.h>
 #include <memory>
 #include "gameobject.h"
-#include "singlesprite.h"
 #include "../game/collisionsystem.h"
 #include "pickup.h"
 
@@ -11,6 +10,7 @@ class Scene;
 class Shot;
 class Player;
 class Platform;
+class Sprite;
 
 /**
  * Ball class
@@ -20,7 +20,6 @@ class Platform;
 class Ball : public IGameObject
 {
 private:
-    SingleSprite sprite;
     int top; // maximum height from the floor
     int diameter;
     int size;
@@ -33,6 +32,11 @@ private:
     Scene* scene;
     bool hasDeathPickup = false;
     PickupType deathPickupType = PickupType::GUN;
+
+    // Hit flash state (like Hexa)
+    bool flashing = false;
+    float flashTimer = 0.0f;
+    static constexpr float FLASH_DURATION = 0.04f;  // 40ms
 
 public:
     Ball(Scene* scene, Ball* oldBall, int dir);
@@ -74,7 +78,13 @@ public:
     int getSize() const { return size; }
     float getTime() const { return time; }
     int getDiameter() const { return diameter; }
-    Sprite* getSprite() const { return sprite.getActiveSprite(); }
+    bool isInFlashState() const { return flashing; }
+    Sprite* getCurrentSprite() const;
+
+    /**
+     * Kill the ball - starts flash effect before actual death
+     */
+    void kill() override;
 
     /**
      * @brief Get collision box for AABB collision detection

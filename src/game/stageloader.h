@@ -113,6 +113,7 @@ private:
     static void processLadderObject(Stage& stage, float time, const std::map<std::string, std::string>& params);
     static void processPickupObject(Stage& stage, float time, const std::map<std::string, std::string>& params);
     static void processGlassObject(Stage& stage, float time, const std::map<std::string, std::string>& params);
+    static void processHexaObject(Stage& stage, float time, const std::map<std::string, std::string>& params);
     static void processActionObject(Stage& stage, float time, const std::string& command);
 
     // Parse pickup type string ("gun", "shield", etc.) into PickupType

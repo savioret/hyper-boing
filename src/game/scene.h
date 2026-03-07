@@ -7,6 +7,7 @@
 #include "bmfont.h"
 #include "player.h"
 #include "ball.h"
+#include "hexa.h"
 #include "animeffect.h"
 #include "hitscore.h"
 #include "shot.h"
@@ -161,6 +162,9 @@ private:
     // Ball management
     std::vector<std::unique_ptr<Ball>> pendingBalls;  ///< Buffer for balls created from splits
 
+    // Hexa management
+    std::vector<std::unique_ptr<Hexa>> pendingHexas;  ///< Buffer for hexas created from splits
+
     // Collision pipeline
     CollisionSystem collisionSystem;  ///< Detects collisions and resolves physics
     CollisionRules gameRules;              ///< Processes contacts and applies game logic
@@ -197,6 +201,14 @@ private:
      * a parent ball is destroyed. Also checks win condition.
      */
     void cleanupBalls();
+
+    /**
+     * @brief Clean up dead hexas and handle hexa splitting
+     *
+     * Special cleanup for hexas that creates child hexas when
+     * a parent hexa is destroyed. Also checks win condition.
+     */
+    void cleanupHexas();
 
     /**
      * @brief Subscribe to gameplay events
@@ -329,6 +341,7 @@ public:
 
     // Entity lists
     std::list<std::unique_ptr<Ball>> lsBalls;       ///< Active balls in scene
+    std::list<std::unique_ptr<Hexa>> lsHexas;       ///< Active hexas in scene
     std::list<std::unique_ptr<Pickup>> lsPickups;   ///< Active pickups in scene
     std::list<std::unique_ptr<Platform>> lsFloor;   ///< Active platforms (Floor and Glass)
     std::list<std::unique_ptr<Ladder>> lsLadders;   ///< Active ladders (climbable)
@@ -369,6 +382,16 @@ public:
      * @param type Pickup type
      */
     void addPickup(int x, int y, PickupType type);
+
+    /**
+     * @brief Adds a hexa to the scene
+     * @param x X position (top-left)
+     * @param y Y position (top-left)
+     * @param size Hexa size (0=large, 1=medium, 2=small)
+     * @param velX Horizontal velocity
+     * @param velY Vertical velocity
+     */
+    void addHexa(int x, int y, int size, float velX, float velY);
 
     /**
      * @brief Adds a floor/platform to the scene
@@ -447,8 +470,9 @@ public:
      * @param tmpl Template AnimSpriteSheet to clone (must not be null)
      * @param x Center X in screen coordinates
      * @param y Center Y in screen coordinates
+     * @param scale Scale factor (1.0 = full size, 0.5 = half size, etc.)
      */
-    void spawnEffect(AnimSpriteSheet* tmpl, int x, int y);
+    void spawnEffect(AnimSpriteSheet* tmpl, int x, int y, float scale = 1.0f);
 
     /**
      * @brief Fires a shot from the player
@@ -531,6 +555,12 @@ public:
      * @param b Ball to draw
      */
     void draw(Ball* b);
+
+    /**
+     * @brief Draws a hexa sprite
+     * @param h Hexa to draw
+     */
+    void draw(Hexa* h);
     
     /**
      * @brief Draws a player sprite

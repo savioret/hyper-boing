@@ -33,7 +33,18 @@ Ball::Ball(Scene* scn, int x, int y, int size, int dx, int dy, int topVal, int i
 
     dirX = dx;
     dirY = dy;
-    diameter = gameinf.getStageRes().redball[size].getWidth();
+
+    // Get diameter from the ball spritesheet
+    StageResources& res = gameinf.getStageRes();
+    if (res.ballAnim)
+    {
+        Sprite* spr = res.ballAnim->getFrame(size);
+        diameter = spr ? spr->getWidth() : 64;  // Fallback to 64 if sprite not found
+    }
+    else
+    {
+        diameter = 64;  // Fallback
+    }
 
     time = 0;
 
@@ -74,7 +85,17 @@ Ball::Ball(Scene* scn, Ball* oldball, int dir)
 
     size = oldball->size + 1;
 
-    diameter = gameinf.getStageRes().redball[size].getWidth();
+    // Get diameter from the ball spritesheet
+    StageResources& res = gameinf.getStageRes();
+    if (res.ballAnim)
+    {
+        Sprite* spr = res.ballAnim->getFrame(size);
+        diameter = spr ? spr->getWidth() : 40;  // Fallback
+    }
+    else
+    {
+        diameter = 40;  // Fallback
+    }
 
     // Calculate center of parent ball
     float parentCenterX = oldball->xPos + (oldball->diameter / 2.0f);
@@ -111,8 +132,26 @@ void Ball::init()
 {
     gravity = 8 / ((float)(top - diameter) * (400.0f / top));
     maxTime = std::sqrt((float)(2 * (top - diameter)) / (gravity));
+}
 
-    sprite.setSprite(&gameinf.getStageRes().redball[size]);
+Sprite* Ball::getCurrentSprite() const
+{
+    StageResources& res = gameinf.getStageRes();
+    if (res.ballAnim)
+    {
+        return res.ballAnim->getFrame(size);
+    }
+    return nullptr;
+}
+
+void Ball::kill()
+{
+    if (!flashing && !dead)
+    {
+        flashing = true;
+        flashTimer = FLASH_DURATION;
+        onDeath();  // Spawn splash effect, fire events
+    }
 }
 
 /**
@@ -191,6 +230,18 @@ bool Ball::collision(Player* pl)
  */
 void Ball::update(float dt)
 {
+    // Handle flash state (countdown before actual death)
+    if (flashing)
+    {
+        flashTimer -= dt;
+        if (flashTimer <= 0.0f)
+        {
+            // Flash complete - now actually die
+            IGameObject::kill();  // Call parent to set dead=true
+        }
+        return;  // Don't move during flash
+    }
+
     float incx = dirX * 0.80f;
 
     // Calculate new Y position using physics equation
@@ -249,12 +300,19 @@ void Ball::update(float dt)
 
 void Ball::onDeath()
 {
-    // Spawn pop animation centered on this ball
+    // Spawn pop animation centered on this ball with size-based scaling
+    // Size 0 = 100%, Size 1 = 50%, Size 2 = 33%, Size 3 = 25%
+    static const float sizeScales[] = { 1.0f, 0.5f, 0.33f, 0.25f };
+    float scale = (size >= 0 && size <= 3) ? sizeScales[size] : 0.25f;
+
     StageResources& res = gameinf.getStageRes();
-    int popIndex = (size == 0) ? 0 : (size == 1) ? 1 : 2;
-    AnimSpriteSheet* tmpl = res.ballPopAnim[popIndex].get();
+    AnimSpriteSheet* tmpl = res.ballSplashAnim.get();
     if (tmpl)
-        scene->spawnEffect(tmpl, (int)xPos + diameter / 2, (int)yPos + diameter / 2 + tmpl->getHeight());
+    {
+        int cx = (int)xPos + diameter / 2;
+        int cy = (int)yPos + diameter / 2 + (int)(tmpl->getHeight() * scale);
+        scene->spawnEffect(tmpl, cx, cy, scale);
+    }
 
     // Fire BALL_SPLIT event if ball will split into smaller balls
     if (size < 3)

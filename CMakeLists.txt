@@ -49,6 +49,7 @@ set(SOURCES
     src/entities/animeffect.cpp
     src/entities/hitscore.cpp
     src/entities/ball.cpp
+    src/entities/hexa.cpp
     src/ui/bmfont.cpp
     src/core/configdata.cpp
     src/ui/configscreen.cpp
@@ -105,6 +106,7 @@ set(HEADERS
     src/core/oncehelper.h
     src/entities/animeffect.h
     src/entities/ball.h
+    src/entities/hexa.h
     src/ui/bmfont.h
     src/ui/configscreen.h
     src/game/collisionsystem.h

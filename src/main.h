@@ -14,6 +14,7 @@
 #include "stageclear.h"
 #include "configscreen.h"
 #include "ball.h"
+#include "hexa.h"
 #include "player.h"
 #include "item.h"
 #include "floor.h"

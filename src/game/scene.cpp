@@ -359,6 +359,11 @@ void Scene::addLadder(int x, int y, int numTiles)
     lsLadders.push_back(std::make_unique<Ladder>(this, x, y, numTiles));
 }
 
+void Scene::addHexa(int x, int y, int size, float velX, float velY)
+{
+    lsHexas.push_back(std::make_unique<Hexa>(this, x, y, size, velX, velY));
+}
+
 Ladder* Scene::findLadderAtPlayer(Player* player) const
 {
     if (!player) return nullptr;
@@ -806,6 +811,25 @@ void Scene::checkSequence()
                 }
             }
             break;
+
+        case StageObjectType::Hexa:
+            if (obj.params)
+            {
+                if (auto* hexa = obj.getParams<HexaParams>())
+                {
+                    addHexa(obj.x, obj.y, hexa->size, hexa->velX, hexa->velY);
+                    if (hexa->hasDeathPickup && !lsHexas.empty())
+                        lsHexas.back()->setDeathPickup(hexa->deathPickupType);
+
+                    // Fire STAGE_OBJECT_SPAWNED event
+                    GameEventData event(GameEventType::STAGE_OBJECT_SPAWNED);
+                    event.objectSpawned.id = static_cast<int>(obj.id);
+                    event.objectSpawned.x = obj.x;
+                    event.objectSpawned.y = obj.y;
+                    EVENT_MGR.trigger(event);
+                }
+            }
+            break;
         }
     } while (obj.id != StageObjectType::Null);
 }
@@ -819,10 +843,10 @@ void Scene::cleanupBalls()
         {
             // Ask ball to create its children
             auto children = (*it)->createChildren();
-            
-            if (children.first) 
+
+            if (children.first)
                 pendingBalls.push_back(std::move(children.first));
-            if (children.second) 
+            if (children.second)
                 pendingBalls.push_back(std::move(children.second));
 
             it = lsBalls.erase(it);  // unique_ptr automatically deletes
@@ -833,8 +857,43 @@ void Scene::cleanupBalls()
         }
     }
 
-    // Check win condition after all removals
-    if (lsBalls.empty() && pendingBalls.empty() && !stage->getItemsLeft())
+    // Add children to active list
+    for (auto& b : pendingBalls)
+        lsBalls.push_back(std::move(b));
+    pendingBalls.clear();
+}
+
+void Scene::cleanupHexas()
+{
+    // Clean up dead hexas and create children
+    for (auto it = lsHexas.begin(); it != lsHexas.end(); )
+    {
+        if ((*it)->isDead())
+        {
+            // Ask hexa to create its children
+            auto children = (*it)->createChildren();
+
+            if (children.first)
+                pendingHexas.push_back(std::move(children.first));
+            if (children.second)
+                pendingHexas.push_back(std::move(children.second));
+
+            it = lsHexas.erase(it);  // unique_ptr automatically deletes
+        }
+        else
+        {
+            ++it;
+        }
+    }
+
+    // Add children to active list
+    for (auto& h : pendingHexas)
+        lsHexas.push_back(std::move(h));
+    pendingHexas.clear();
+
+    // Check win condition after all ball AND hexa removals
+    if (lsBalls.empty() && pendingBalls.empty() &&
+        lsHexas.empty() && pendingHexas.empty() && !stage->getItemsLeft())
     {
         // Only trigger win once - prevent calling every frame
         if (currentState != SceneState::LevelClear)
@@ -842,11 +901,6 @@ void Scene::cleanupBalls()
             win();
         }
     }
-
-    // Add children to active list
-    for (auto& b : pendingBalls)
-        lsBalls.push_back(std::move(b));
-    pendingBalls.clear();
 }
 
 void Scene::setState(SceneState newState)
@@ -908,12 +962,16 @@ void Scene::updateEntities(float dt)
     // Update freeze timer and ball-blink
     freezeEffect.update(dt);
 
-    // Balls only update when NOT frozen
+    // Balls and hexas only update when NOT frozen
     if (!freezeEffect.isActive())
     {
         for (const auto& ball : lsBalls)
         {
             ball->update(dt);
+        }
+        for (const auto& hexa : lsHexas)
+        {
+            hexa->update(dt);
         }
     }
 
@@ -949,10 +1007,10 @@ void Scene::updateEntities(float dt)
     }
 }
 
-void Scene::spawnEffect(AnimSpriteSheet* tmpl, int x, int y)
+void Scene::spawnEffect(AnimSpriteSheet* tmpl, int x, int y, float scale)
 {
     if (tmpl)
-        lsEffects.push_back(std::make_unique<AnimEffect>(x, y, tmpl));
+        lsEffects.push_back(std::make_unique<AnimEffect>(x, y, tmpl, scale));
 }
 
 void Scene::cleanupPhase()
@@ -960,6 +1018,9 @@ void Scene::cleanupPhase()
     // === PHASE 2: Cleanup ===
     // Ball cleanup is special - creates children during cleanup
     cleanupBalls();
+
+    // Hexa cleanup also creates children during cleanup
+    cleanupHexas();
 
     // Standard cleanup for shots, floors, ladders, pickups, and effects (unique_ptr)
     cleanupDeadObjects(lsShoots);
@@ -1263,6 +1324,7 @@ GameState* Scene::handlePlayingState(float dt)
     // Phase 1: Detect collisions and resolve physics
     CollisionSystem::Context ctx = {
         lsBalls,
+        lsHexas,
         lsShoots,
         lsFloor,
         lsPickups,
@@ -1388,6 +1450,7 @@ int Scene::release()
 
     // Clean up entities - unique_ptr automatically deletes
     lsBalls.clear();
+    lsHexas.clear();
     lsShoots.clear();
     lsFloor.clear();
     lsLadders.clear();
@@ -1413,8 +1476,33 @@ void Scene::drawBackground()
 void Scene::draw(Ball* b)
 {
     if (!freezeEffect.areBallsVisible()) return;  // Hidden during freeze-warning blink
-    StageResources& res = gameinf.getStageRes();
-    appGraph.draw(&res.redball[b->getSize()], (int)b->getX(), (int)b->getY());
+
+    Sprite* spr = b->getCurrentSprite();
+    if (!spr) return;
+
+    RenderProps props;
+    props.x = (int)b->getX();
+    props.y = (int)b->getY();
+
+    appGraph.drawExFlash(spr, props, b->isInFlashState());
+}
+
+void Scene::draw(Hexa* h)
+{
+    if (!freezeEffect.areBallsVisible()) return;  // Hidden during freeze-warning blink
+
+    Sprite* spr = h->getCurrentSprite();
+    if (!spr) return;
+
+    RenderProps props;
+    props.x = (int)h->getX();
+    props.y = (int)h->getY();
+    props.rotation = h->getRotation();
+    // Pivot at center for rotation
+    props.pivotX = 0.5f;
+    props.pivotY = 0.5f;
+
+    appGraph.drawExFlash(spr, props, h->isInFlashState());
 }
 
 void Scene::draw(Player* pl)
@@ -1519,9 +1607,18 @@ void Scene::drawBoundingBoxes()
         appGraph.rectangle(box.x, box.y, box.x + box.w, box.y + box.h);
         snprintf(buf, sizeof(buf), "%d,%d", box.x, box.y);
         appGraph.text(buf, box.x, box.y);
-        //snprintf(buf, sizeof(buf), "%d,%d", d, d);
-        //appGraph.text(buf, x, y + 8);
     }
+
+    // Draw hexa bounding boxes (green to distinguish from balls)
+    appGraph.setDrawColor(0, 200, 0, 255);
+    for (const auto& h : lsHexas)
+    {
+        CollisionBox box = h->getCollisionBox();
+        appGraph.rectangle(box.x, box.y, box.x + box.w, box.y + box.h);
+        snprintf(buf, sizeof(buf), "%d,%d", box.x, box.y);
+        appGraph.text(buf, box.x, box.y);
+    }
+    appGraph.setDrawColor(0, 0, 0, 255);  // Reset to black
 
     // Draw shot collision areas
     // Different visualization for Harpoon vs Gun
@@ -1647,8 +1744,9 @@ void Scene::drawDebugOverlay()
     }
 
     // Add game state info to default section
-    textOverlay.addTextF("Objects: Balls=%d Shoots=%d Floors=%d Ladders=%d Pickups=%d",
+    textOverlay.addTextF("Objects: Balls=%d Hexas=%d Shoots=%d Floors=%d Ladders=%d Pickups=%d",
             (int)lsBalls.size(),
+            (int)lsHexas.size(),
             (int)lsShoots.size(),
             (int)lsFloor.size(),
             (int)lsLadders.size(),
@@ -1688,6 +1786,12 @@ void Scene::drawEntities()
     for (const auto& ball : lsBalls)
     {
         draw(ball.get());
+    }
+
+    // Draw hexas
+    for (const auto& hexa : lsHexas)
+    {
+        draw(hexa.get());
     }
 
     // Draw pickups (above balls, below effects)

@@ -250,6 +250,34 @@ void Graph::drawEx(Sprite* spr, const RenderProps& props) {
     }
 }
 
+// Extended draw with flash effect (additive blend for white silhouette)
+void Graph::drawExFlash(Sprite* spr, const RenderProps& props, bool flashWhite) {
+    if (!spr || !spr->getBmp()) return;
+
+    SDL_Texture* tex = spr->getBmp();
+
+    // Save original blend mode
+    SDL_BlendMode originalBlend;
+    SDL_GetTextureBlendMode(tex, &originalBlend);
+
+    if (flashWhite)
+    {
+        // Additive blend with white = solid white silhouette
+        SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_ADD);
+        SDL_SetTextureColorMod(tex, 255, 255, 255);
+    }
+
+    // Draw using existing drawEx logic
+    drawEx(spr, props);
+
+    if (flashWhite)
+    {
+        // Restore original state
+        SDL_SetTextureBlendMode(tex, originalBlend);
+        SDL_SetTextureColorMod(tex, 255, 255, 255);  // Reset to neutral
+    }
+}
+
 // New methods using Sprite2D's internal properties
 
 void Graph::draw(Sprite2D* spr) {

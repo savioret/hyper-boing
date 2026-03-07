@@ -10,6 +10,7 @@
 
 // Forward declarations
 class Ball;
+class Hexa;
 class Shot;
 class Platform;
 class Player;
@@ -117,11 +118,12 @@ public:
     struct Context
     {
         std::list<std::unique_ptr<Ball>>& balls;    ///< Active balls
+        std::list<std::unique_ptr<Hexa>>& hexas;    ///< Active hexas
         std::list<std::unique_ptr<Shot>>& shots;    ///< Active shots
         std::list<std::unique_ptr<Platform>>& floors;  ///< Active platforms (Floor + Glass)
         std::list<std::unique_ptr<Pickup>>& pickups; ///< Active pickups
         Player* players[2];                         ///< Players (may be nullptr)
-        bool checkPlayerCollisions;                 ///< Whether to check ball-player collisions
+        bool checkPlayerCollisions;                 ///< Whether to check ball/hexa-player collisions
     };
 
     CollisionSystem() = default;
@@ -172,6 +174,25 @@ private:
      */
     void detectPickupVsPlayer(const Context& ctx, ContactList& contacts) const;
 
+    /**
+     * @brief Detect hexa vs shot collisions
+     * Records contacts. Does NOT modify any entities.
+     */
+    void detectHexaVsShot(const Context& ctx, ContactList& contacts) const;
+
+    /**
+     * @brief Detect hexa vs floor collisions
+     * Records contacts with collision sides for later physics resolution.
+     * Does NOT modify any entities.
+     */
+    void detectHexaVsFloor(const Context& ctx, ContactList& contacts) const;
+
+    /**
+     * @brief Detect hexa vs player collisions
+     * Records contacts. Does NOT modify any entities.
+     */
+    void detectHexaVsPlayer(const Context& ctx, ContactList& contacts) const;
+
     // ========== Phase 2: Physics Resolution (modifies ball directions) ==========
 
     /**
@@ -191,4 +212,12 @@ private:
      * @param floorHits Vector of contacts with floors
      */
     void resolveMultiFloorCollision(Ball* ball, std::vector<Contact*>& floorHits);
+
+    /**
+     * @brief Resolve hexa-floor physics based on detected contacts
+     *
+     * Calls hexa->handlePlatformBounce() for each floor hit.
+     * Groups contacts by hexa and determines bounce direction.
+     */
+    void resolveHexaFloorPhysics(const Context& ctx, ContactList& contacts);
 };

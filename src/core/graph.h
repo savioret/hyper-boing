@@ -174,11 +174,23 @@ public:
 
     /**
      * @brief Draw a sprite with extended rendering properties
-     * 
+     *
      * @param spr Pointer to the sprite to draw
      * @param props Rendering properties (position, flip, rotation, scale, etc.)
      */
     void drawEx(Sprite* spr, const RenderProps& props);
+
+    /**
+     * @brief Draw a sprite with optional flash/tint effect
+     *
+     * Uses additive blending when flashWhite is true to create a solid
+     * white silhouette effect (useful for hit feedback).
+     *
+     * @param spr Pointer to the sprite to draw
+     * @param props Rendering properties (position, flip, rotation, scale, etc.)
+     * @param flashWhite If true, render as solid white silhouette
+     */
+    void drawExFlash(Sprite* spr, const RenderProps& props, bool flashWhite);
 
     /**
      * @brief Draw a sprite scaled to specified dimensions

@@ -5,7 +5,8 @@
 #include "../core/sprite.h"
 #include "../core/coordhelper.h"
 
-AnimEffect::AnimEffect(int x, int y, AnimSpriteSheet* tmpl)
+AnimEffect::AnimEffect(int x, int y, AnimSpriteSheet* tmpl, float scaleVal)
+    : scale(scaleVal)
 {
     xPos = (float)x;
     yPos = (float)y;
@@ -32,7 +33,25 @@ void AnimEffect::draw(Graph* graph)
     if (!spr)
         return;
 
-    int renderX = toRenderX(xPos, anim->getWidth());
-	int renderY = toRenderY(yPos, anim->getHeight());
-    graph->draw(spr, renderX, renderY);
+    // Apply scale to get render position (centered)
+    int scaledW = (int)(anim->getWidth() * scale);
+    int scaledH = (int)(anim->getHeight() * scale);
+    int renderX = toRenderX(xPos, scaledW);
+    int renderY = toRenderY(yPos, scaledH);
+
+    if (scale != 1.0f)
+    {
+        // Use extended draw with scale
+        RenderProps props;
+        props.x = renderX;
+        props.y = renderY;
+        props.scale = scale;
+        props.pivotX = 0.0f;  // Top-left pivot since we already calculated render position
+        props.pivotY = 0.0f;
+        graph->drawEx(spr, props);
+    }
+    else
+    {
+        graph->draw(spr, renderX, renderY);
+    }
 }

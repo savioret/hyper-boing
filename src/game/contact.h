@@ -6,6 +6,7 @@
 
 // Forward declarations
 class Ball;
+class Hexa;
 class Shot;
 class Platform;
 class Player;
@@ -20,6 +21,9 @@ enum class ContactType
     BallFloor,    ///< Ball bounced off a floor/wall (physics already resolved)
     BallShot,     ///< Ball was hit by a shot (needs gameplay handling)
     BallPlayer,   ///< Ball hit a player (needs gameplay handling)
+    HexaFloor,    ///< Hexa bounced off a floor/wall (needs physics resolution)
+    HexaShot,     ///< Hexa was hit by a shot (needs gameplay handling)
+    HexaPlayer,   ///< Hexa hit a player (needs gameplay handling)
     ShotFloor,    ///< Shot hit a floor/ceiling (needs gameplay handling)
     PickupPlayer  ///< Pickup collected by player (needs gameplay handling)
 };
@@ -55,8 +59,9 @@ struct Contact
     // Convenience accessors with type safety
     // Note: Using reinterpret_cast because forward declarations prevent static_cast
     Ball* getBall() const { return reinterpret_cast<Ball*>(entityA); }
+    Hexa* getHexa() const { return reinterpret_cast<Hexa*>(entityA); }
     Shot* getShot() const {
-        // For BallShot: shot is in entityB
+        // For BallShot/HexaShot: shot is in entityB
         // For ShotFloor: shot is in entityA
         return type == ContactType::ShotFloor
             ? reinterpret_cast<Shot*>(entityA)
@@ -65,7 +70,7 @@ struct Contact
     Platform* getPlatform() const { return reinterpret_cast<Platform*>(entityB); }
     Player* getPlayer() const {
         // For PickupPlayer: player is in entityB
-        // For BallPlayer: player is in entityB
+        // For BallPlayer/HexaPlayer: player is in entityB
         return reinterpret_cast<Player*>(entityB);
     }
     Pickup* getPickup() const {

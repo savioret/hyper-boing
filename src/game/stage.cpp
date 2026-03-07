@@ -22,17 +22,17 @@ void Stage::restart()
 void Stage::countItemsLeft()
 {
     itemsleft = 0;
-    
-    // Count all Ball objects in the sequence
+
+    // Count all Ball and Hexa objects in the sequence
     for (const auto& obj : sequence)
     {
-        if (obj && obj->id == StageObjectType::Ball)
+        if (obj && (obj->id == StageObjectType::Ball || obj->id == StageObjectType::Hexa))
         {
             itemsleft++;
         }
     }
-    
-    LOG_DEBUG("Stage %d: Counted %d balls in sequence", id, itemsleft);
+
+    LOG_DEBUG("Stage %d: Counted %d balls/hexas in sequence", id, itemsleft);
 }
 
 void Stage::setBack(const char* backFile)
@@ -62,7 +62,7 @@ void Stage::spawn(StageObject&& obj)
         newObj->y = newObj->params->y;
     }
     
-    if (newObj->id == StageObjectType::Ball)
+    if (newObj->id == StageObjectType::Ball || newObj->id == StageObjectType::Hexa)
         itemsleft++;
 }
 
@@ -93,7 +93,7 @@ StageObject Stage::pop(int time)
             res = std::move(*obj);
             
             // Update itemsleft before advancing
-            if (res.id == StageObjectType::Ball) itemsleft--;
+            if (res.id == StageObjectType::Ball || res.id == StageObjectType::Hexa) itemsleft--;
             
             // Advance to next object
             sequenceIndex++;

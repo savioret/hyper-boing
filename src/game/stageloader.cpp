@@ -143,6 +143,10 @@ bool StageLoader::parseObjectLine(Stage& stage, float currentTime, const std::st
     {
         processGlassObject(stage, currentTime, params);
     }
+    else if (objectType == "hexa")
+    {
+        processHexaObject(stage, currentTime, params);
+    }
     else
     {
         LOG_WARNING("Unknown object type: %s", objectType.c_str());
@@ -344,6 +348,39 @@ void StageLoader::processGlassObject(Stage& stage, float time, const std::map<st
 
     if (params.count("x") && params.count("y"))
         builder.at(std::stoi(params.at("x")), std::stoi(params.at("y")));
+    if (params.count("pickup"))
+    {
+        PickupType pt;
+        if (parsePickupTypeString(params.at("pickup"), pt))
+            builder.withDeathPickup(pt);
+    }
+
+    stage.spawn(builder);
+}
+
+void StageLoader::processHexaObject(Stage& stage, float time, const std::map<std::string, std::string>& params)
+{
+    auto builder = StageObjectBuilder::hexa();
+    builder.time(static_cast<int>(time));
+
+    // Position
+    if (params.count("x") && params.count("y"))
+        builder.at(std::stoi(params.at("x")), std::stoi(params.at("y")));
+
+    // Size (0-2 for hexa, unlike ball's 0-3)
+    if (params.count("size"))
+        builder.size(std::stoi(params.at("size")));
+
+    // Velocity (constant velocity, not direction-based)
+    float velX = 1.5f;
+    float velY = 1.0f;
+    if (params.count("velX"))
+        velX = std::stof(params.at("velX"));
+    if (params.count("velY"))
+        velY = std::stof(params.at("velY"));
+    builder.velocity(velX, velY);
+
+    // Death pickup
     if (params.count("pickup"))
     {
         PickupType pt;
