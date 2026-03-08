@@ -3,8 +3,8 @@
 #include <SDL.h>
 #include <memory>
 #include "gameobject.h"
-#include "../game/collisionsystem.h"
-#include "pickup.h"
+#include "../core/collisionbox.h"
+#include "pickuptype.h"
 
 class Scene;
 class Shot;

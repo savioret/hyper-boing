@@ -4,9 +4,9 @@
 #include <memory>
 #include <climits>
 #include <string>
-#include "../entities/pickup.h"  // For PickupType enum
-#include "glass.h"               // For GlassType enum
-#include "floor.h"               // For FloorType enum
+#include "../entities/pickuptype.h"  // For PickupType, DeathPickupEntry (lightweight, no SDL)
+#include "glass.h"                   // For GlassType enum
+#include "floor.h"                   // For FloorType enum
 
 /**
  * StageObjectParams base class

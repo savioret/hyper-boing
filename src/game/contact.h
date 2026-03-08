@@ -1,10 +1,10 @@
 #pragma once
 
 #include <vector>
-#include "../core/gameobject.h"
 #include "../core/collisionbox.h"
 
-// Forward declarations
+// Forward declarations - Contact stores only pointers to these types
+class IGameObject;
 class Ball;
 class Hexa;
 class Shot;

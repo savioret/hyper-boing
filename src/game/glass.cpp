@@ -1,6 +1,8 @@
 #include "glass.h"
 #include "main.h"
 #include "scene.h"
+#include "animcontroller.h"
+#include "../entities/pickup.h"
 
 Glass::Glass(Scene* scn, int x, int y, GlassType type)
     : type(type), scene(scn)

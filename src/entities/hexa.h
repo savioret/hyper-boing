@@ -3,8 +3,10 @@
 #include <memory>
 #include <algorithm>
 #include "gameobject.h"
-#include "pickup.h"
-#include "animcontroller.h"
+#include "pickuptype.h"
+
+// Forward declaration - only stored as unique_ptr in header
+class FrameSequenceAnim;
 
 class Scene;
 class Shot;

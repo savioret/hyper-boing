@@ -1,11 +1,16 @@
 #pragma once
 
 #include "platform.h"
-#include "../entities/pickup.h"
-#include "../core/animcontroller.h"
+#include "../entities/pickuptype.h"
 #include <memory>
 
+// Forward declarations - only stored as unique_ptr in header
+class FrameSequenceAnim;
 class Scene;
+
+// PickupType enum — forward-declare as enum class so the compiler knows its size
+// (needed because GlassParams stores it by value)
+enum class PickupType : int;
 
 /**
  * @enum GlassType

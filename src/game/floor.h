@@ -1,7 +1,7 @@
 #pragma once
 
 #include "platform.h"
-#include "collisionsystem.h"
+#include "../core/collisionbox.h"
 
 /**
  * @enum FloorType

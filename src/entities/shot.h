@@ -2,7 +2,7 @@
 
 #include "gameobject.h"
 #include "../game/weapontype.h"
-#include "../game/collisionsystem.h"
+#include "../core/collisionbox.h"
 
 // Forward declarations
 class Scene;

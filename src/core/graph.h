@@ -1,16 +1,13 @@
 /**
  * @file graph.h
  * @brief Graphics rendering system interface
- * 
- * This file contains the Graph class which provides graphics rendering
- * functionality using SDL2. It handles window creation, rendering operations,
- * sprite drawing, and bitmap loading.
  */
 
 #pragma once
 
 #include <SDL.h>
 #include <string>
+#include "renderprops.h"
 
 // Forward declarations
 class Sprite;
@@ -56,39 +53,6 @@ constexpr int ALIGN_CENTER = 1;
 constexpr int ALIGN_RIGHT = 2;
 
 class Graph;
-
-/**
- * @brief Rendering properties for sprite drawing
- * 
- * Contains all properties needed to render a sprite, including position,
- * flipping, rotation, scale, and alpha blending.
- */
-struct RenderProps
-{
-    int x = 0, y = 0;            ///< Screen position
-    bool flipH = false;          ///< Horizontal flip
-    bool flipV = false;          ///< Vertical flip
-    float rotation = 0.0f;       ///< Rotation angle in degrees
-    float scale = 1.0f;          ///< Scale factor
-    float alpha = 1.0f;          ///< Alpha transparency (0.0-1.0)
-    float pivotX = 0.5f;         ///< Pivot X for rotation (0.0-1.0)
-    float pivotY = 0.5f;         ///< Pivot Y for rotation (0.0-1.0)
-
-    /**
-     * @brief Default constructor
-     */
-    RenderProps() = default;
-
-    /**
-     * @brief Construct from position
-     */
-    RenderProps(int x, int y) : x(x), y(y) {}
-
-    /**
-     * @brief Construct from Sprite2D properties
-     */
-    static RenderProps fromSprite2D(Sprite2D* spr);
-};
 
 /**
  * @class Graph

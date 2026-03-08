@@ -8,8 +8,9 @@
 #include "../core/gameobject.h"
 #include "../core/multianimsprite.h"
 #include "../core/animspritesheet.h"
-#include "../core/graph.h"
+#include "../core/renderprops.h"
 
+class Graph;
 class Scene;
 class Action;
 class Ladder;

@@ -120,6 +120,7 @@ set(HEADERS
     src/core/graph.h
     src/core/isprite.h
     src/entities/pickup.h
+    src/entities/pickuptype.h
     src/core/logger.h
     src/ui/menu.h
     src/ui/menutitle.h
@@ -133,10 +134,12 @@ set(HEADERS
     src/entities/harpoonshot.h
     src/entities/gunshot.h
     src/entities/clawshot.h
+    src/core/renderprops.h
     src/core/sprite.h
     src/core/singlesprite.h
     src/core/sprite2D.h
     src/core/spritesheet.h
+    src/core/stageresources.h
     src/game/stage.h
     src/game/stageclear.h
     src/game/stageloader.h
