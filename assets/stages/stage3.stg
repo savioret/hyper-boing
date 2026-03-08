@@ -5,14 +5,16 @@
 #
 # y~80                      X
 # 
-# y~200              =      X     =
+# y~200             ~=      X     =~
 #
 #
 #
 #
 # y~MAX_Y                 1   2
 #        ----------------------------------------
-
+#
+# Glass is hidden
+#
 stage_id: 3
 background: italy1.png
 music: beach1.ogg
@@ -22,10 +24,12 @@ player2_x: 350
 
 at 0:
   # Single floor platform
-  floor: x=152, y=70, type=small
-  floor: x=472, y=70, type=small
+  floor: x=152, y=150, type=small
+  floor: x=472, y=150, type=small
+  glass: x=136, y=150, type=small pickup=doubleshoot invisible=1
+  glass: x=488, y=150, type=small pickup=gun invisible=1
 
   # Random top balls (fully random X, Y at top)
-  hexa: x=294 y=80 velX=1 velY=2.0 pickup=claw
-  hexa: x=294 y=200 velX=-1 velY=-2.0 pickup=doubleshoot
+  hexa: x=294 y=80 velX=1 velY=2.0 pickup=timefreeze
+  hexa: x=294 y=200 velX=-1 velY=-2.0
 

@@ -92,6 +92,8 @@ void CollisionSystem::detectBallVsFloor(const Context& ctx, ContactList& contact
 
         for (const auto& fl : ctx.floors)
         {
+            if (fl->isInvisible()) continue;
+
             CollisionBox floorBox = fl->getCollisionBox();
 
             // Use circle-box collision for ball vs floor
@@ -392,6 +394,8 @@ void CollisionSystem::detectHexaVsFloor(const Context& ctx, ContactList& contact
 
         for (const auto& fl : ctx.floors)
         {
+            if (fl->isInvisible()) continue;
+
             CollisionBox floorBox = fl->getCollisionBox();
 
             if (!circleIntersectsBox(hexaCx, hexaCy, hexaRadius, floorBox))

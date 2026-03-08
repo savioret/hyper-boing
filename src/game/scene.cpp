@@ -465,7 +465,7 @@ Platform* Scene::findFloorUnderPlayer(Player* player) const
 
     for (const auto& floor : lsFloor)
     {
-        if (floor->isDead()) continue;
+        if (floor->isDead() || floor->isInvisible()) continue;
 
         CollisionBox floorBox = floor->getCollisionBox();
         int floorLeft = floorBox.x;
@@ -585,7 +585,7 @@ Platform* Scene::findSteppablePlatformInPath(Player* player) const
 
     for (const auto& floor : lsFloor)
     {
-        if (floor->isDead()) continue;
+        if (floor->isDead() || floor->isInvisible()) continue;
         CollisionBox floorBox = floor->getCollisionBox();
 
         // Step height: distance from player's feet to platform top
@@ -598,6 +598,34 @@ Platform* Scene::findSteppablePlatformInPath(Player* player) const
             playerLeft, playerRight,
             floorBox.x, floorBox.x + floorBox.w);
         if (overlap < 1) continue;
+
+        return floor.get();
+    }
+    return nullptr;
+}
+
+Platform* Scene::findWallBlockingPlayer(Player* player) const
+{
+    if (!player) return nullptr;
+
+    static constexpr int MAX_STEP_HEIGHT = 16;
+
+    CollisionBox playerBox = player->getCollisionBox();
+    float playerFeetY = player->getY();
+
+    for (const auto& floor : lsFloor)
+    {
+        if (floor->isDead() || floor->isInvisible() || floor->isPassthrough()) continue;
+
+        CollisionBox floorBox = floor->getCollisionBox();
+
+        // Full AABB intersection required
+        if (!intersects(playerBox, floorBox)) continue;
+
+        // Exclude step-up candidates: when grounded and floor top is within step range below feet
+        float stepHeight = playerFeetY - (float)floorBox.y;
+        if (player->isGrounded() && stepHeight >= 0.0f && stepHeight <= (float)MAX_STEP_HEIGHT)
+            continue;
 
         return floor.get();
     }
@@ -770,6 +798,11 @@ void Scene::checkSequence()
                 if (auto* floor = obj.getParams<FloorParams>())
                 {
                     addFloor(obj.x, obj.y, floor->floorType);
+                    if (!lsFloor.empty())
+                    {
+                        lsFloor.back()->setInvisible(floor->invisible);
+                        lsFloor.back()->setPassthrough(floor->passthrough);
+                    }
 
                     // Fire STAGE_OBJECT_SPAWNED event
                     GameEventData event(GameEventType::STAGE_OBJECT_SPAWNED);
@@ -792,10 +825,15 @@ void Scene::checkSequence()
                 if (auto* glass = obj.getParams<GlassParams>())
                 {
                     addGlass(obj.x, obj.y, glass->glassType);
-                    if (glass->hasDeathPickup && !lsFloor.empty())
+                    if (!lsFloor.empty())
                     {
-                        if (auto* g = dynamic_cast<Glass*>(lsFloor.back().get()))
-                            g->setDeathPickup(glass->deathPickupType);
+                        lsFloor.back()->setInvisible(glass->invisible);
+                        lsFloor.back()->setPassthrough(glass->passthrough);
+                        if (glass->hasDeathPickup)
+                        {
+                            if (auto* g = dynamic_cast<Glass*>(lsFloor.back().get()))
+                                g->setDeathPickup(glass->deathPickupType);
+                        }
                     }
 
                     // Fire STAGE_OBJECT_SPAWNED event
@@ -1318,17 +1356,23 @@ GameState* Scene::handlePlayingState(float dt)
                 }
                 else if (appInput.key(gameinf.getKeys(i).getLeft()))
                 {
+                    float savedX = player->getX();
                     player->moveLeft();
                     Platform* steppable = findSteppablePlatformInPath(player);
                     if (steppable)
                         player->startStepUp((float)steppable->getCollisionBox().y);
+                    else if (findWallBlockingPlayer(player))
+                        player->setX(savedX);
                 }
                 else if (appInput.key(gameinf.getKeys(i).getRight()))
                 {
+                    float savedX = player->getX();
                     player->moveRight();
                     Platform* steppable = findSteppablePlatformInPath(player);
                     if (steppable)
                         player->startStepUp((float)steppable->getCollisionBox().y);
+                    else if (findWallBlockingPlayer(player))
+                        player->setX(savedX);
                 }
                 else if ( player->getState() != PlayerState::IDLE )
                 {
@@ -1574,6 +1618,7 @@ void Scene::draw(Player* pl)
 
 void Scene::draw(Platform* pl)
 {
+    if (pl->isInvisible()) return;
     Sprite* spr = pl->getCurrentSprite();
     if (spr)
         appGraph.draw(spr, pl->getX(), pl->getY());

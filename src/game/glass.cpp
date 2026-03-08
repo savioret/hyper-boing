@@ -28,6 +28,8 @@ void Glass::onHit()
     if (breaking)
         return;  // Already breaking, ignore further hits
 
+    Platform::onHit();  // Reveal if invisible
+
     breaking = true;
 
     // Create destruction animation: 5 frames from type to type+4, play once

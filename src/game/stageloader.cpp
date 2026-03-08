@@ -226,7 +226,7 @@ void StageLoader::applyPickupParam(const std::string& value, StageObjectBuilder&
             std::string typeName = trim(entry.substr(colonPos + 1));
             PickupType pt;
             if (parsePickupTypeString(typeName, pt))
-                builder.withSizedDeathPickup(sz, pt);
+                builder.sizedDeathPickup(sz, pt);
         }
     }
     else
@@ -234,7 +234,7 @@ void StageLoader::applyPickupParam(const std::string& value, StageObjectBuilder&
         // Legacy single type: applies to the ball/hexa's own configured size
         PickupType pt;
         if (parsePickupTypeString(value, pt))
-            builder.withDeathPickup(pt);
+            builder.deathPickup(pt);
     }
 }
 
@@ -316,6 +316,10 @@ void StageLoader::processFloorObject(Stage& stage, float time, const std::map<st
 
     if (params.count("x") && params.count("y"))
         builder.at(std::stoi(params.at("x")), std::stoi(params.at("y")));
+    if (params.count("invisible") && params.at("invisible") == "1")
+        builder.invisible(true);
+    if (params.count("passthrough") && params.at("passthrough") == "1")
+        builder.passthrough(true);
 
     stage.spawn(builder);
 }
@@ -409,8 +413,12 @@ void StageLoader::processGlassObject(Stage& stage, float time, const std::map<st
     {
         PickupType pt;
         if (parsePickupTypeString(params.at("pickup"), pt))
-            builder.withDeathPickup(pt);
+            builder.deathPickup(pt);
     }
+    if (params.count("invisible") && params.at("invisible") == "1")
+        builder.invisible(true);
+    if (params.count("passthrough") && params.at("passthrough") == "1")
+        builder.passthrough(true);
 
     stage.spawn(builder);
 }

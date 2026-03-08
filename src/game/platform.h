@@ -15,6 +15,10 @@ class Sprite;
  */
 class Platform : public IGameObject
 {
+protected:
+    bool invisible   = false;  ///< Hidden until revealed by a weapon shot
+    bool passthrough = false;  ///< Player can walk through horizontally (default: blocking)
+
 public:
     virtual ~Platform() = default;
 
@@ -25,9 +29,10 @@ public:
 
     /**
      * @brief Called when a weapon shot hits this platform.
-     * Default no-op; Glass overrides to start destruction animation.
+     * Base implementation clears the invisible flag (reveals the platform).
+     * Subclasses should call Platform::onHit() before their own logic.
      */
-    virtual void onHit() {}
+    virtual void onHit() { invisible = false; }
 
     /**
      * @brief Returns true if this platform is destructible (e.g., Glass).
@@ -40,6 +45,12 @@ public:
      * @brief Returns the sprite to render for this platform's current state.
      */
     virtual Sprite* getCurrentSprite() const = 0;
+
+    bool isInvisible()   const { return invisible; }
+    void setInvisible(bool v)  { invisible = v; }
+
+    bool isPassthrough() const { return passthrough; }
+    void setPassthrough(bool v){ passthrough = v; }
 
     CollisionBox getCollisionBox() const override
     {

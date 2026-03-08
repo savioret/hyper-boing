@@ -85,7 +85,9 @@ struct BallParams : public StageObjectParams
  */
 struct FloorParams : public StageObjectParams
 {
-    FloorType floorType = FloorType::HORIZ_BIG;
+    FloorType floorType  = FloorType::HORIZ_BIG;
+    bool invisible   = false;  ///< Hidden until revealed by a weapon shot
+    bool passthrough = false;  ///< Player can walk through horizontally
 
     FloorParams() = default;
 
@@ -199,9 +201,11 @@ struct PickupParams : public StageObjectParams
  */
 struct GlassParams : public StageObjectParams
 {
-    GlassType glassType = GlassType::HORIZ_BIG;
-    bool hasDeathPickup = false;
+    GlassType glassType    = GlassType::HORIZ_BIG;
+    bool hasDeathPickup    = false;
     PickupType deathPickupType = PickupType::GUN;
+    bool invisible   = false;  ///< Hidden until revealed by a weapon shot
+    bool passthrough = false;  ///< Player can walk through horizontally
 
     GlassParams() = default;
 
@@ -701,7 +705,7 @@ public:
      * - For ball/hexa: adds an entry bound to the object's configured size.
      * - For glass: sets the single death pickup (no size splitting for glass).
      */
-    StageObjectBuilder& withDeathPickup(PickupType type)
+    StageObjectBuilder& deathPickup(PickupType type)
     {
         if (auto* ball = dynamic_cast<BallParams*>(objectParams.get()))
         {
@@ -722,6 +726,32 @@ public:
     }
 
     /**
+     * Set invisible flag (hidden until revealed by a weapon shot).
+     * Applies to Floor and Glass objects.
+     */
+    StageObjectBuilder& invisible(bool v = true)
+    {
+        if (auto* floor = dynamic_cast<FloorParams*>(objectParams.get()))
+            floor->invisible = v;
+        else if (auto* glass = dynamic_cast<GlassParams*>(objectParams.get()))
+            glass->invisible = v;
+        return *this;
+    }
+
+    /**
+     * Set passthrough flag (player can walk through horizontally).
+     * Applies to Floor and Glass objects.
+     */
+    StageObjectBuilder& passthrough(bool v = true)
+    {
+        if (auto* floor = dynamic_cast<FloorParams*>(objectParams.get()))
+            floor->passthrough = v;
+        else if (auto* glass = dynamic_cast<GlassParams*>(objectParams.get()))
+            glass->passthrough = v;
+        return *this;
+    }
+
+    /**
      * Set a pickup to spawn when this object (or a descendant) is killed at a
      * specific size.  When the current ball/hexa is killed at a higher size
      * (smaller number), the entry is propagated to one random child.
@@ -729,7 +759,7 @@ public:
      * @param sz   Size at which to spawn the pickup (0=largest)
      * @param type Pickup type to spawn
      */
-    StageObjectBuilder& withSizedDeathPickup(int sz, PickupType type)
+    StageObjectBuilder& sizedDeathPickup(int sz, PickupType type)
     {
         if (auto* ball = dynamic_cast<BallParams*>(objectParams.get()))
         {

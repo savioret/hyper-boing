@@ -474,6 +474,14 @@ public:
     Platform* findSteppablePlatformInPath(Player* player) const;
 
     /**
+     * @brief Returns a non-passthrough platform that overlaps the player horizontally,
+     *        blocking horizontal movement.  Step-up candidates (floor top within 16px
+     *        of player feet when grounded) are excluded since step-up handles those.
+     * @return Pointer to blocking platform if found, nullptr otherwise
+     */
+    Platform* findWallBlockingPlayer(Player* player) const;
+
+    /**
      * @brief Spawns a one-shot animation effect centered at (x, y)
      * @param tmpl Template AnimSpriteSheet to clone (must not be null)
      * @param x Center X in screen coordinates
