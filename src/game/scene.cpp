@@ -746,8 +746,8 @@ void Scene::checkSequence()
                 if (auto* ball = obj.getParams<BallParams>())
                 {
                     addBall(obj.x, obj.y, ball->size, ball->top, ball->dirX, ball->dirY, ball->ballType);
-                    if (ball->hasDeathPickup && !lsBalls.empty())
-                        lsBalls.back()->setDeathPickup(ball->deathPickupType);
+                    if (ball->deathPickupCount > 0 && !lsBalls.empty())
+                        lsBalls.back()->setDeathPickups(ball->deathPickups, ball->deathPickupCount);
 
                     // Fire STAGE_OBJECT_SPAWNED event
                     GameEventData event(GameEventType::STAGE_OBJECT_SPAWNED);
@@ -864,8 +864,8 @@ void Scene::checkSequence()
                 if (auto* hexa = obj.getParams<HexaParams>())
                 {
                     addHexa(obj.x, obj.y, hexa->size, hexa->velX, hexa->velY);
-                    if (hexa->hasDeathPickup && !lsHexas.empty())
-                        lsHexas.back()->setDeathPickup(hexa->deathPickupType);
+                    if (hexa->deathPickupCount > 0 && !lsHexas.empty())
+                        lsHexas.back()->setDeathPickups(hexa->deathPickups, hexa->deathPickupCount);
 
                     // Fire STAGE_OBJECT_SPAWNED event
                     GameEventData event(GameEventType::STAGE_OBJECT_SPAWNED);

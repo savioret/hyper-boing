@@ -50,8 +50,8 @@ struct BallParams : public StageObjectParams
     float dirX = 1.0f;
     int dirY = 1;
     int ballType = 0;
-    bool hasDeathPickup = false;
-    PickupType deathPickupType = PickupType::GUN;
+    DeathPickupEntry deathPickups[MAX_DEATH_PICKUPS] = {};
+    int deathPickupCount = 0;
 
     BallParams() = default;
     
@@ -232,8 +232,8 @@ struct HexaParams : public StageObjectParams
     int size = 0;           // 0-2 (smaller range than Ball's 0-3)
     float velX = 1.5f;      // Horizontal velocity
     float velY = 1.0f;      // Vertical velocity
-    bool hasDeathPickup = false;
-    PickupType deathPickupType = PickupType::GUN;
+    DeathPickupEntry deathPickups[MAX_DEATH_PICKUPS] = {};
+    int deathPickupCount = 0;
 
     HexaParams() = default;
 
@@ -697,25 +697,49 @@ public:
     }
 
     /**
-     * Set a pickup to spawn at this object's center when it dies.
-     * Supported for ball, hexa, and glass objects.
+     * Set a pickup to spawn when the object dies at its own (current) size.
+     * - For ball/hexa: adds an entry bound to the object's configured size.
+     * - For glass: sets the single death pickup (no size splitting for glass).
      */
     StageObjectBuilder& withDeathPickup(PickupType type)
     {
         if (auto* ball = dynamic_cast<BallParams*>(objectParams.get()))
         {
-            ball->hasDeathPickup = true;
-            ball->deathPickupType = type;
+            if (ball->deathPickupCount < MAX_DEATH_PICKUPS)
+                ball->deathPickups[ball->deathPickupCount++] = { ball->size, type };
         }
         else if (auto* hexa = dynamic_cast<HexaParams*>(objectParams.get()))
         {
-            hexa->hasDeathPickup = true;
-            hexa->deathPickupType = type;
+            if (hexa->deathPickupCount < MAX_DEATH_PICKUPS)
+                hexa->deathPickups[hexa->deathPickupCount++] = { hexa->size, type };
         }
         else if (auto* glass = dynamic_cast<GlassParams*>(objectParams.get()))
         {
             glass->hasDeathPickup = true;
             glass->deathPickupType = type;
+        }
+        return *this;
+    }
+
+    /**
+     * Set a pickup to spawn when this object (or a descendant) is killed at a
+     * specific size.  When the current ball/hexa is killed at a higher size
+     * (smaller number), the entry is propagated to one random child.
+     *
+     * @param sz   Size at which to spawn the pickup (0=largest)
+     * @param type Pickup type to spawn
+     */
+    StageObjectBuilder& withSizedDeathPickup(int sz, PickupType type)
+    {
+        if (auto* ball = dynamic_cast<BallParams*>(objectParams.get()))
+        {
+            if (ball->deathPickupCount < MAX_DEATH_PICKUPS)
+                ball->deathPickups[ball->deathPickupCount++] = { sz, type };
+        }
+        else if (auto* hexa = dynamic_cast<HexaParams*>(objectParams.get()))
+        {
+            if (hexa->deathPickupCount < MAX_DEATH_PICKUPS)
+                hexa->deathPickups[hexa->deathPickupCount++] = { sz, type };
         }
         return *this;
     }

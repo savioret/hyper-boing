@@ -20,7 +20,7 @@ player1_x: 270
 player2_x: 350
 
 at 0:
-  ball: x=280, y=80, size=0, dirX=1, dirY=1, pickup=doubleshoot
+  ball: x=280, y=80, size=0, dirX=1, dirY=1, pickup=[0:doubleshoot,1:shield,2:gun]
 
   glass: x=128, y=80, type=horiz_big, pickup=extratime
   glass: x=448, y=80, type=horiz_big, pickup=timefreeze

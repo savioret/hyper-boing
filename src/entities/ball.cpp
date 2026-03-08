@@ -324,11 +324,16 @@ void Ball::onDeath()
         EVENT_MGR.trigger(event);
     }
 
-    if (hasDeathPickup)
+    // Spawn only the death pickup whose size matches this ball's current size.
+    for (int i = 0; i < deathPickupCount; i++)
     {
-        int cx = (int)xPos + diameter / 2;
-        int cy = (int)yPos + diameter / 2;
-        scene->addPickup(cx, cy, deathPickupType);
+        if (deathPickups[i].size == size)
+        {
+            int cx = (int)xPos + diameter / 2;
+            int cy = (int)yPos + diameter / 2;
+            scene->addPickup(cx, cy, deathPickups[i].type);
+            break;  // At most one pickup per size level
+        }
     }
 }
 
@@ -342,6 +347,16 @@ std::pair<std::unique_ptr<Ball>, std::unique_ptr<Ball>> Ball::createChildren()
 
     auto child1 = std::make_unique<Ball>(scene, this, -1);  // Left
     auto child2 = std::make_unique<Ball>(scene, this, 1);   // Right
-    
+
+    // Propagate pickups bound to sizes beyond this ball to one random child.
+    // Both children are size+1; only one (chosen randomly) inherits the entries
+    // so each pickup item can only appear once across the whole split tree.
+    Ball* lucky = (rand() % 2 == 0) ? child1.get() : child2.get();
+    for (int i = 0; i < deathPickupCount; i++)
+    {
+        if (deathPickups[i].size > size)
+            lucky->addDeathPickup(deathPickups[i]);
+    }
+
     return { std::move(child1), std::move(child2) };
 }

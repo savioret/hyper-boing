@@ -30,8 +30,8 @@ private:
     int size;                   // 0=large(57x45), 1=medium(31x24), 2=small(16x12)
     int width, height;          // Current sprite dimensions
     Scene* scene;
-    bool hasDeathPickup = false;
-    PickupType deathPickupType = PickupType::GUN;
+    DeathPickupEntry deathPickups[MAX_DEATH_PICKUPS] = {};
+    int deathPickupCount = 0;
 
     // Per-instance animation controller (cycles through 4 frames for current size)
     std::unique_ptr<FrameSequenceAnim> animCtrl;
@@ -100,7 +100,28 @@ public:
     bool collision(Player* player);
 
     // Setters
-    void setDeathPickup(PickupType type) { hasDeathPickup = true; deathPickupType = type; }
+    /// Legacy: add a pickup entry bound to this hexa's current size.
+    void setDeathPickup(PickupType type)
+    {
+        if (deathPickupCount < MAX_DEATH_PICKUPS)
+            deathPickups[deathPickupCount++] = { size, type };
+    }
+
+    /// Copy all pickup entries from a params array (used when spawning from stage).
+    void setDeathPickups(const DeathPickupEntry* entries, int count)
+    {
+        deathPickupCount = (count < MAX_DEATH_PICKUPS) ? count : MAX_DEATH_PICKUPS;
+        for (int i = 0; i < deathPickupCount; i++)
+            deathPickups[i] = entries[i];
+    }
+
+    /// Add a single sized pickup entry (used when propagating from a parent hexa).
+    void addDeathPickup(const DeathPickupEntry& entry)
+    {
+        if (deathPickupCount < MAX_DEATH_PICKUPS)
+            deathPickups[deathPickupCount++] = entry;
+    }
+
     void setVelX(float vx) { velX = vx; }
     void setVelY(float vy) { velY = vy; }
 

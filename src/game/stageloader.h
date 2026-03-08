@@ -6,6 +6,7 @@
 #include "../entities/pickup.h"
 
 class Stage;
+class StageObjectBuilder;
 
 /**
  * StageLoader utility class
@@ -119,4 +120,8 @@ private:
     // Parse pickup type string ("gun", "shield", etc.) into PickupType
     // Returns false if the string is unrecognized
     static bool parsePickupTypeString(const std::string& str, PickupType& out);
+
+    // Apply a pickup parameter value to a builder.
+    // Handles both single types ("gun") and size-keyed tables ("[0:gun,1:doubleshoot]").
+    static void applyPickupParam(const std::string& value, StageObjectBuilder& builder);
 };

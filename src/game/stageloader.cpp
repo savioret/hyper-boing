@@ -84,10 +84,18 @@ std::map<std::string, std::string> StageLoader::parseParams(const std::string& p
     std::map<std::string, std::string> result;
 
     // Support both comma-separated and space-separated: "x=100, y=200" or "x=100 y=200"
+    // Commas inside [...] (e.g. pickup tables) are preserved.
     std::string normalized = paramString;
-
-    // Replace commas with spaces for uniform parsing
-    std::replace(normalized.begin(), normalized.end(), ',', ' ');
+    int depth = 0;
+    for (char& c : normalized)
+    {
+        if (c == '[')
+            depth++;
+        else if (c == ']')
+            depth--;
+        else if (c == ',' && depth == 0)
+            c = ' ';
+    }
 
     std::istringstream iss(normalized);
     std::string token;
@@ -181,6 +189,55 @@ bool StageLoader::parsePickupTypeString(const std::string& str, PickupType& out)
     return false;
 }
 
+void StageLoader::applyPickupParam(const std::string& value, StageObjectBuilder& builder)
+{
+    if (value.empty())
+        return;
+
+    if (value.front() == '[')
+    {
+        // Size-keyed pickup table: [0:gun,1:doubleshoot,2:extratime]
+        // Strip surrounding brackets
+        size_t closePos = value.rfind(']');
+        std::string inner = (closePos != std::string::npos)
+                            ? value.substr(1, closePos - 1)
+                            : value.substr(1);
+
+        // Split by comma
+        std::istringstream ss(inner);
+        std::string entry;
+        while (std::getline(ss, entry, ','))
+        {
+            entry = trim(entry);
+            if (entry.empty())
+                continue;
+
+            size_t colonPos = entry.find(':');
+            if (colonPos == std::string::npos)
+            {
+                LOG_WARNING("Pickup table entry missing ':': %s", entry.c_str());
+                continue;
+            }
+
+            int sz = 0;
+            try { sz = std::stoi(entry.substr(0, colonPos)); }
+            catch (...) { LOG_WARNING("Invalid pickup size in entry: %s", entry.c_str()); continue; }
+
+            std::string typeName = trim(entry.substr(colonPos + 1));
+            PickupType pt;
+            if (parsePickupTypeString(typeName, pt))
+                builder.withSizedDeathPickup(sz, pt);
+        }
+    }
+    else
+    {
+        // Legacy single type: applies to the ball/hexa's own configured size
+        PickupType pt;
+        if (parsePickupTypeString(value, pt))
+            builder.withDeathPickup(pt);
+    }
+}
+
 void StageLoader::processBallObject(Stage& stage, float time, const std::map<std::string, std::string>& params)
 {
     // Use StageObjectBuilder for consistency
@@ -227,11 +284,7 @@ void StageLoader::processBallObject(Stage& stage, float time, const std::map<std
     if (params.count("type"))
         builder.type(std::stoi(params.at("type")));
     if (params.count("pickup"))
-    {
-        PickupType pt;
-        if (parsePickupTypeString(params.at("pickup"), pt))
-            builder.withDeathPickup(pt);
-    }
+        applyPickupParam(params.at("pickup"), builder);
 
     stage.spawn(builder);
 }
@@ -386,11 +439,7 @@ void StageLoader::processHexaObject(Stage& stage, float time, const std::map<std
 
     // Death pickup
     if (params.count("pickup"))
-    {
-        PickupType pt;
-        if (parsePickupTypeString(params.at("pickup"), pt))
-            builder.withDeathPickup(pt);
-    }
+        applyPickupParam(params.at("pickup"), builder);
 
     stage.spawn(builder);
 }

@@ -26,6 +26,22 @@ enum class PickupType : int
     CLAW = 6           // Placeholder (not implemented)
 };
 
+/// Maximum number of per-size death pickups stored on a single ball/hexa.
+static constexpr int MAX_DEATH_PICKUPS = 4;
+
+/**
+ * DeathPickupEntry
+ *
+ * Associates a pickup type with the ball/hexa size at which it is spawned.
+ * When a ball of size N is killed, only the entry whose size == N is spawned.
+ * Entries with size > N are propagated to one randomly-chosen child ball/hexa.
+ */
+struct DeathPickupEntry
+{
+    int       size = 0;
+    PickupType type = PickupType::GUN;
+};
+
 /**
  * Pickup class
  *

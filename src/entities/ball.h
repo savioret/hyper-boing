@@ -31,8 +31,8 @@ private:
     float y0; // initial space
     float gravity; // acceleration (acc)
     Scene* scene;
-    bool hasDeathPickup = false;
-    PickupType deathPickupType = PickupType::GUN;
+    DeathPickupEntry deathPickups[MAX_DEATH_PICKUPS] = {};
+    int deathPickupCount = 0;
 
     // Hit flash state (like Hexa)
     bool flashing = false;
@@ -71,7 +71,28 @@ public:
     void setDirX(float dx);
     void setDirY(int dy);
     void setPos(int x, int y);
-    void setDeathPickup(PickupType type) { hasDeathPickup = true; deathPickupType = type; }
+
+    /// Legacy: add a pickup entry bound to this ball's current size.
+    void setDeathPickup(PickupType type)
+    {
+        if (deathPickupCount < MAX_DEATH_PICKUPS)
+            deathPickups[deathPickupCount++] = { size, type };
+    }
+
+    /// Copy all pickup entries from a params array (used when spawning from stage).
+    void setDeathPickups(const DeathPickupEntry* entries, int count)
+    {
+        deathPickupCount = (count < MAX_DEATH_PICKUPS) ? count : MAX_DEATH_PICKUPS;
+        for (int i = 0; i < deathPickupCount; i++)
+            deathPickups[i] = entries[i];
+    }
+
+    /// Add a single sized pickup entry (used when propagating from a parent ball).
+    void addDeathPickup(const DeathPickupEntry& entry)
+    {
+        if (deathPickupCount < MAX_DEATH_PICKUPS)
+            deathPickups[deathPickupCount++] = entry;
+    }
 
     // Getters
     float getDirX() const { return dirX; }

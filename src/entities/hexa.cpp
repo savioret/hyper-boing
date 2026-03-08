@@ -139,12 +139,16 @@ void Hexa::onDeath()
         EVENT_MGR.trigger(event);
     }
 
-    // Spawn death pickup if configured
-    if (hasDeathPickup)
+    // Spawn only the death pickup whose size matches this hexa's current size.
+    for (int i = 0; i < deathPickupCount; i++)
     {
-        int cx = (int)xPos + width / 2;
-        int cy = (int)yPos + height / 2;
-        scene->addPickup(cx, cy, deathPickupType);
+        if (deathPickups[i].size == size)
+        {
+            int cx = (int)xPos + width / 2;
+            int cy = (int)yPos + height / 2;
+            scene->addPickup(cx, cy, deathPickups[i].type);
+            break;  // At most one pickup per size level
+        }
     }
 }
 
@@ -176,6 +180,14 @@ std::pair<std::unique_ptr<Hexa>, std::unique_ptr<Hexa>> Hexa::createChildren()
 
     auto child1 = std::make_unique<Hexa>(scene, this, -1, childDirY);  // Left
     auto child2 = std::make_unique<Hexa>(scene, this,  1, childDirY);  // Right
+
+    // Propagate pickups bound to sizes beyond this hexa to one random child.
+    Hexa* lucky = (rand() % 2 == 0) ? child1.get() : child2.get();
+    for (int i = 0; i < deathPickupCount; i++)
+    {
+        if (deathPickups[i].size > size)
+            lucky->addDeathPickup(deathPickups[i]);
+    }
 
     return { std::move(child1), std::move(child2) };
 }
