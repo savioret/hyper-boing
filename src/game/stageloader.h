@@ -22,6 +22,8 @@ class StageObjectBuilder;
  * time_limit: 100
  * player1_x: 250
  * player2_x: 350
+ * player1_y: 415
+ * player2_y: 415
  *
  * # Objects grouped by spawn time (in seconds)
  * at 0:
@@ -116,6 +118,18 @@ private:
     static void processGlassObject(Stage& stage, float time, const std::map<std::string, std::string>& params);
     static void processHexaObject(Stage& stage, float time, const std::map<std::string, std::string>& params);
     static void processActionObject(Stage& stage, float time, const std::string& command);
+
+    // Parse ball color name ("red", "green", "blue") or integer index to int (0-2)
+    static int parseBallColor(const std::string& str);
+
+    // Parse hexa color name ("green", "cyan", "orange", "purple") or integer index to int (0-3)
+    static int parseHexaColor(const std::string& str);
+
+    // Parse floor color name ("red", "blue", "green", "yellow") or integer index to int (0-3)
+    static int parseFloorColor(const std::string& str);
+
+    // Parse glass color name ("red", "blue", "green", "yellow") or integer index to int (0-3)
+    static int parseGlassColor(const std::string& str);
 
     // Parse pickup type string ("gun", "shield", etc.) into PickupType
     // Returns false if the string is unrecognized

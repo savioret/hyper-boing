@@ -78,6 +78,18 @@ public:
     static std::unique_ptr<AnimSpriteSheet> load(Graph* graph, const std::string& jsonPath);
 
     /**
+     * Load from Aseprite JSON but use a different PNG than the one embedded in the JSON.
+     * Useful for loading the same frame layout with multiple color variants.
+     *
+     * @param graph    Graphics context for texture loading
+     * @param jsonPath Path to Aseprite JSON file (defines frame layout)
+     * @param pngPath  Override PNG path to use instead of the one in the JSON
+     * @return Loaded AnimSpriteSheet, or nullptr on failure
+     */
+    static std::unique_ptr<AnimSpriteSheet> load(Graph* graph, const std::string& jsonPath,
+                                                  const std::string& pngPath);
+
+    /**
      * Load as StateMachineAnim (typed factory method)
      * Guarantees StateMachineAnim animation type, creates default state if no frameTags
      *

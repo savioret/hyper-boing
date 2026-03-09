@@ -57,12 +57,14 @@ int Scene::init()
         setState(SceneState::Ready);
     }
 
-    gameinf.getPlayer(AppData::PLAYER1)->setX((float)stage->xpos[AppData::PLAYER1]);
     gameinf.getPlayer(AppData::PLAYER1)->setSpawnX((float)stage->xpos[AppData::PLAYER1]);
+    gameinf.getPlayer(AppData::PLAYER1)->setSpawnY((float)stage->ypos[AppData::PLAYER1]);
+    gameinf.getPlayer(AppData::PLAYER1)->setPos((float)stage->xpos[AppData::PLAYER1], (float)stage->ypos[AppData::PLAYER1]);
     if (gameinf.getPlayer(AppData::PLAYER2))
     {
-        gameinf.getPlayer(AppData::PLAYER2)->setX((float)stage->xpos[AppData::PLAYER2]);
         gameinf.getPlayer(AppData::PLAYER2)->setSpawnX((float)stage->xpos[AppData::PLAYER2]);
+        gameinf.getPlayer(AppData::PLAYER2)->setSpawnY((float)stage->ypos[AppData::PLAYER2]);
+        gameinf.getPlayer(AppData::PLAYER2)->setPos((float)stage->xpos[AppData::PLAYER2], (float)stage->ypos[AppData::PLAYER2]);
     }
 
     CloseMusic();
@@ -132,6 +134,7 @@ void Scene::subscribeToEvents()
 
             switch (data.playerShoot.weapon) {
                 case WeaponType::HARPOON:
+                case WeaponType::CLAW:
                     soundId = "harpoon";
                     isHarpoon = true;
                     break;
@@ -365,14 +368,14 @@ void Scene::addPickup(int x, int y, PickupType type)
     lsPickups.push_back(std::make_unique<Pickup>(this, x, y, type));
 }
 
-void Scene::addFloor(int x, int y, FloorType type)
+void Scene::addFloor(int x, int y, FloorType type, int color)
 {
-    lsFloor.push_back(std::make_unique<Floor>(this, x, y, type));
+    lsFloor.push_back(std::make_unique<Floor>(this, x, y, type, color));
 }
 
-void Scene::addGlass(int x, int y, GlassType type)
+void Scene::addGlass(int x, int y, GlassType type, int color)
 {
-    lsFloor.push_back(std::make_unique<Glass>(this, x, y, type));
+    lsFloor.push_back(std::make_unique<Glass>(this, x, y, type, color));
 }
 
 void Scene::addLadder(int x, int y, int numTiles)
@@ -380,9 +383,9 @@ void Scene::addLadder(int x, int y, int numTiles)
     lsLadders.push_back(std::make_unique<Ladder>(this, x, y, numTiles));
 }
 
-void Scene::addHexa(int x, int y, int size, float velX, float velY)
+void Scene::addHexa(int x, int y, int size, float velX, float velY, int color)
 {
-    lsHexas.push_back(std::make_unique<Hexa>(this, x, y, size, velX, velY));
+    lsHexas.push_back(std::make_unique<Hexa>(this, x, y, size, velX, velY, color));
 }
 
 Ladder* Scene::findLadderAtPlayer(Player* player) const
@@ -797,7 +800,7 @@ void Scene::checkSequence()
             {
                 if (auto* floor = obj.getParams<FloorParams>())
                 {
-                    addFloor(obj.x, obj.y, floor->floorType);
+                    addFloor(obj.x, obj.y, floor->floorType, floor->floorColor);
                     if (!lsFloor.empty())
                     {
                         lsFloor.back()->setInvisible(floor->invisible);
@@ -824,7 +827,7 @@ void Scene::checkSequence()
             {
                 if (auto* glass = obj.getParams<GlassParams>())
                 {
-                    addGlass(obj.x, obj.y, glass->glassType);
+                    addGlass(obj.x, obj.y, glass->glassType, glass->glassColor);
                     if (!lsFloor.empty())
                     {
                         lsFloor.back()->setInvisible(glass->invisible);
@@ -901,7 +904,7 @@ void Scene::checkSequence()
             {
                 if (auto* hexa = obj.getParams<HexaParams>())
                 {
-                    addHexa(obj.x, obj.y, hexa->size, hexa->velX, hexa->velY);
+                    addHexa(obj.x, obj.y, hexa->size, hexa->velX, hexa->velY, hexa->hexaColor);
                     if (hexa->deathPickupCount > 0 && !lsHexas.empty())
                         lsHexas.back()->setDeathPickups(hexa->deathPickups, hexa->deathPickupCount);
 

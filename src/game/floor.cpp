@@ -1,7 +1,7 @@
 #include "main.h"
 
-Floor::Floor(Scene* scene, int x, int y, FloorType type)
-    : scene(scene), type(type)
+Floor::Floor(Scene* scene, int x, int y, FloorType type, int colorVal)
+    : scene(scene), type(type), color(static_cast<Color>(colorVal))
 {
     this->xPos = (float)x;
     this->yPos = (float)y;
@@ -21,5 +21,6 @@ void Floor::update(float dt)
 
 Sprite* Floor::getCurrentSprite() const
 {
-    return gameinf.getStageRes().floorBricksAnim->getFrame(static_cast<int>(type));
+    AnimSpriteSheet* anim = gameinf.getStageRes().getFloorAnim(static_cast<int>(color));
+    return anim ? anim->getFrame(static_cast<int>(type)) : nullptr;
 }

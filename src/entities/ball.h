@@ -19,11 +19,14 @@ class Sprite;
  */
 class Ball : public IGameObject
 {
+public:
+    enum class Color { Red = 0, Green = 1, Blue = 2 };
+
 private:
     int top; // maximum height from the floor
     int diameter;
     int size;
-    int id;
+    Color color = Color::Red;
 
     float dirX; // horizontal direction (float: 1.0=right, -1.0=left; magnitude acts as speed multiplier)
     int dirY;   // vertical direction (-1=up, 1=down)
@@ -41,7 +44,7 @@ private:
 
 public:
     Ball(Scene* scene, Ball* oldBall, int dir);
-    Ball(Scene* scene, int x, int y, int size, float dirX = 1.0f, int dirY = 1, int top = 0, int id = 0);
+    Ball(Scene* scene, int x, int y, int size, float dirX = 1.0f, int dirY = 1, int top = 0, int color = 0);
     ~Ball();
 
     void init();

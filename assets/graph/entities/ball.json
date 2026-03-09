@@ -35,7 +35,7 @@
  "meta": {
   "app": "https://www.aseprite.org/",
   "version": "1.3.16-beta3",
-  "image": "ball_red.png",
+  "image": "ball_blue.png",
   "format": "RGBA8888",
   "size": { "w": 154, "h": 82 },
   "scale": "1"

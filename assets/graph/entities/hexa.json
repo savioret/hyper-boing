@@ -99,7 +99,7 @@
  "meta": {
   "app": "https://www.aseprite.org/",
   "version": "1.3.16-beta3",
-  "image": "hexa_green.png",
+  "image": "hexa_cyan.png",
   "format": "RGBA8888",
   "size": { "w": 368, "h": 51 },
   "scale": "1",

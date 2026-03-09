@@ -36,7 +36,7 @@
 #
 stage_id: 6
 background: egypt1.png
-music: beach1.ogg
+music: scifi1.ogg
 time_limit: 100
 player1_x: 286
 player2_x: 346
@@ -56,18 +56,18 @@ at 0:
   glass: x=16, y=272, type=vert_big
 
   # Left col 2 (x=44)
-  glass: x=44, y=16,  type=vert_big
+  glass: x=44, y=16,  type=vert_big pickup=1up
   glass: x=44, y=80, type=vert_big
   glass: x=44, y=144, type=vert_big
   glass: x=44, y=208, type=vert_big
   glass: x=44, y=272, type=vert_big
 
   # Left col 3 (x=72)
-  glass: x=72, y=16,  type=vert_big
+  glass: x=72, y=16,  type=vert_big  pickup=timefreeze
   glass: x=72, y=80, type=vert_big
   glass: x=72, y=144, type=vert_big
   glass: x=72, y=208, type=vert_big
-  glass: x=72, y=272, type=vert_big
+  glass: x=72, y=272, type=vert_big  pickup=doubleshoot
 
   # Left col 4 (x=100)
   glass: x=100, y=16,  type=vert_big
@@ -77,11 +77,11 @@ at 0:
   glass: x=100, y=272, type=vert_big
 
   # Left col 5 (x=128)
-  glass: x=128, y=16,  type=vert_big
+  glass: x=128, y=16,  type=vert_big  pickup=shield
   glass: x=128, y=80, type=vert_big
   glass: x=128, y=144, type=vert_big
   glass: x=128, y=208, type=vert_big
-  glass: x=128, y=272, type=vert_big
+  glass: x=128, y=272, type=vert_big 
 
   # Left col 6 (x=156)
   glass: x=156, y=16,  type=vert_big
@@ -91,16 +91,16 @@ at 0:
   glass: x=156, y=272, type=vert_big
 
   # Left col 7 (x=184)
-  glass: x=184, y=16,  type=vert_big
+  glass: x=184, y=16,  type=vert_big 
   glass: x=184, y=80, type=vert_big
-  glass: x=184, y=144, type=vert_big
+  glass: x=184, y=144, type=vert_big 
   glass: x=184, y=208, type=vert_big
   glass: x=184, y=272, type=vert_big
 
   # Left col 8 (x=212)
   glass: x=212, y=16,  type=vert_big
   glass: x=212, y=80, type=vert_big
-  glass: x=212, y=144, type=vert_big
+  glass: x=212, y=144, type=vert_big pickup=shield
   glass: x=212, y=208, type=vert_big
   glass: x=212, y=272, type=vert_big
 
@@ -108,7 +108,7 @@ at 0:
   glass: x=240, y=16,  type=vert_big
   glass: x=240, y=80, type=vert_big
   glass: x=240, y=144, type=vert_big
-  glass: x=240, y=208, type=vert_big
+  glass: x=240, y=208, type=vert_big pickup=doubleshoot
   glass: x=240, y=272, type=vert_big
 
   # -----------------------------------------------------------------------
@@ -121,13 +121,13 @@ at 0:
   glass: x=384, y=16,  type=vert_big
   glass: x=384, y=80, type=vert_big
   glass: x=384, y=144, type=vert_big
-  glass: x=384, y=208, type=vert_big
-  glass: x=384, y=272, type=vert_big
+  glass: x=384, y=208, type=vert_big pickup=doubleshoot
+  glass: x=384, y=272, type=vert_big 
 
   # Right col 2 (x=412)
   glass: x=412, y=16,  type=vert_big
   glass: x=412, y=80, type=vert_big
-  glass: x=412, y=144, type=vert_big
+  glass: x=412, y=144, type=vert_big pickup=shield
   glass: x=412, y=208, type=vert_big
   glass: x=412, y=272, type=vert_big
 
@@ -135,7 +135,7 @@ at 0:
   glass: x=440, y=16,  type=vert_big
   glass: x=440, y=80, type=vert_big
   glass: x=440, y=144, type=vert_big
-  glass: x=440, y=208, type=vert_big
+  glass: x=440, y=208, type=vert_big  pickup=doubleshoot
   glass: x=440, y=272, type=vert_big
 
   # Right col 4 (x=468)
@@ -148,12 +148,12 @@ at 0:
   # Right col 5 (x=496)
   glass: x=496, y=16,  type=vert_big
   glass: x=496, y=80, type=vert_big
-  glass: x=496, y=144, type=vert_big
+  glass: x=496, y=144, type=vert_big  pickup=doubleshoot
   glass: x=496, y=208, type=vert_big
   glass: x=496, y=272, type=vert_big
 
   # Right col 6 (x=524)
-  glass: x=524, y=16,  type=vert_big
+  glass: x=524, y=16,  type=vert_big  pickup=shield
   glass: x=524, y=80, type=vert_big
   glass: x=524, y=144, type=vert_big
   glass: x=524, y=208, type=vert_big
@@ -163,11 +163,11 @@ at 0:
   glass: x=552, y=16,  type=vert_big
   glass: x=552, y=80, type=vert_big
   glass: x=552, y=144, type=vert_big
-  glass: x=552, y=208, type=vert_big
+  glass: x=552, y=208, type=vert_big pickup=timefreeze
   glass: x=552, y=272, type=vert_big
 
   # Right col 8 (x=580)
-  glass: x=580, y=16,  type=vert_big
+  glass: x=580, y=16,  type=vert_big  pickup=1up
   glass: x=580, y=80, type=vert_big
   glass: x=580, y=144, type=vert_big
   glass: x=580, y=208, type=vert_big
@@ -188,41 +188,41 @@ at 0:
   # -----------------------------------------------------------------------
 
   # Left col 1 (x=16) -> ball center x=24
-  ball: x=32, y=25, size=3, top=300, dirX=1,  dirY=1
-  ball: x=32, y=40, size=3, top=300, dirX=1,  dirY=1
-  ball: x=32, y=55, size=3, top=300, dirX=1,  dirY=1
+  ball: x=32, y=25, size=3, top=300, dirX=-0.78,  dirY=1
+  ball: x=32, y=40, size=3, top=300, dirX=-0.88,  dirY=1
+  ball: x=32, y=55, size=3, top=300, dirX=0.78,  dirY=1
 
   # Left col 4 (x=100) -> ball center x=108
-  ball: x=116, y=25, size=3, top=300, dirX=-1, dirY=1
-  ball: x=116, y=40, size=3, top=300, dirX=-1, dirY=1
-  ball: x=116, y=55, size=3, top=300, dirX=-1, dirY=1
+  ball: x=116, y=25, size=3, top=300, dirX=-0.78, dirY=1
+  ball: x=116, y=40, size=3, top=300, dirX=-0.78, dirY=1
+  ball: x=116, y=55, size=3, top=300, dirX=-0.78, dirY=1
 
   # Left col 5 (x=128) -> ball center x=136
-  ball: x=144, y=25, size=3, top=300, dirX=1,  dirY=1
-  ball: x=144, y=40, size=3, top=300, dirX=1,  dirY=1
-  ball: x=144, y=55, size=3, top=300, dirX=1,  dirY=1
+  ball: x=144, y=25, size=3, top=300, dirX=0.78,  dirY=1
+  ball: x=144, y=40, size=3, top=300, dirX=0.78,  dirY=1
+  ball: x=144, y=55, size=3, top=300, dirX=0.78,  dirY=1
 
   # Left col 7 (x=184) -> ball center x=192
-  ball: x=200, y=25, size=3, top=300, dirX=-1, dirY=1
-  ball: x=200, y=40, size=3, top=300, dirX=-1, dirY=1
-  ball: x=200, y=55, size=3, top=300, dirX=-1, dirY=1
+  ball: x=200, y=25, size=3, top=300, dirX=-0.78, dirY=1
+  ball: x=200, y=40, size=3, top=300, dirX=-0.78, dirY=1
+  ball: x=200, y=55, size=3, top=300, dirX=-0.78, dirY=1
 
   # Right col 1 (x=384) -> ball center x=392
-  ball: x=400, y=25, size=3, top=300, dirX=-1, dirY=1
-  ball: x=400, y=40, size=3, top=300, dirX=-1, dirY=1
-  ball: x=400, y=55, size=3, top=300, dirX=-1, dirY=1
+  ball: x=400, y=25, size=3, top=300, dirX=-0.78, dirY=1
+  ball: x=400, y=40, size=3, top=300, dirX=-0.88, dirY=1
+  ball: x=400, y=55, size=3, top=300, dirX=0.78, dirY=1
 
   # Right col 4 (x=468) -> ball center x=476
-  ball: x=484, y=25, size=3, top=300, dirX=1,  dirY=1
-  ball: x=484, y=40, size=3, top=300, dirX=1,  dirY=1
-  ball: x=484, y=55, size=3, top=300, dirX=1,  dirY=1
+  ball: x=484, y=25, size=3, top=300, dirX=0.78,  dirY=1
+  ball: x=484, y=40, size=3, top=300, dirX=0.78,  dirY=1
+  ball: x=484, y=55, size=3, top=300, dirX=0.78,  dirY=1
 
   # Right col 5 (x=496) -> ball center x=504
-  ball: x=512, y=25, size=3, top=300, dirX=-1, dirY=1
-  ball: x=512, y=40, size=3, top=300, dirX=-1, dirY=1
-  ball: x=512, y=55, size=3, top=300, dirX=-1, dirY=1
+  ball: x=512, y=25, size=3, top=300, dirX=-0.78, dirY=1
+  ball: x=512, y=40, size=3, top=300, dirX=-0.78, dirY=1
+  ball: x=512, y=55, size=3, top=300, dirX=-0.78, dirY=1
 
   # Right col 7 (x=552) -> ball center x=560
-  ball: x=568, y=25, size=3, top=300, dirX=1,  dirY=1
-  ball: x=568, y=40, size=3, top=300, dirX=1,  dirY=1
-  ball: x=568, y=55, size=3, top=300, dirX=1,  dirY=1
+  ball: x=568, y=25, size=3, top=300, dirX=0.78,  dirY=1
+  ball: x=568, y=40, size=3, top=300, dirX=0.78,  dirY=1
+  ball: x=568, y=55, size=3, top=300, dirX=0.78,  dirY=1

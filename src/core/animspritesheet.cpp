@@ -92,6 +92,22 @@ std::unique_ptr<AnimSpriteSheet> AnimSpriteSheet::load(Graph* graph, const std::
         new AnimSpriteSheet(std::move(sheet), std::move(anim)));
 }
 
+std::unique_ptr<AnimSpriteSheet> AnimSpriteSheet::load(Graph* graph, const std::string& jsonPath,
+                                                        const std::string& pngPath)
+{
+    auto sheet = std::make_unique<SpriteSheet>();
+    auto anim = AsepriteLoader::load(graph, jsonPath, *sheet, pngPath);
+
+    if (!anim)
+    {
+        LOG_ERROR("AnimSpriteSheet::load failed: %s (png: %s)", jsonPath.c_str(), pngPath.c_str());
+        return nullptr;
+    }
+
+    return std::unique_ptr<AnimSpriteSheet>(
+        new AnimSpriteSheet(std::move(sheet), std::move(anim)));
+}
+
 std::unique_ptr<AnimSpriteSheet> AnimSpriteSheet::loadAsStateMachine(Graph* graph, const std::string& jsonPath)
 {
     auto sheet = std::make_unique<SpriteSheet>();

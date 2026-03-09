@@ -10,6 +10,7 @@ class Scene;
 class Player;
 class Graph;
 class Sprite;
+class Platform;
 
 // PickupType, MAX_DEATH_PICKUPS and DeathPickupEntry are defined in pickuptype.h
 
@@ -39,6 +40,13 @@ private:
     bool falling;
     float groundY;  // Y position where pickup stops falling
     float groundTimer;  // Time elapsed since landing (seconds)
+    Platform* landedPlatform = nullptr;  // Platform the pickup is resting on (nullptr = ground/MAX_Y)
+
+    /**
+     * Find the nearest platform top directly below the pickup's center.
+     * Returns Stage::MAX_Y if no platform is found.
+     */
+    float findGroundBelow() const;
 
 public:
     /**

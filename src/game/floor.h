@@ -29,13 +29,17 @@ class Scene;
 
 class Floor : public Platform
 {
+public:
+    enum class Color { Red = 0, Blue = 1, Green = 2, Yellow = 3 };
+
 private:
     Scene* scene;
     FloorType type;
+    Color color = Color::Red;
     int sx, sy;
 
 public:
-    Floor(Scene* scene, int x, int y, FloorType type);
+    Floor(Scene* scene, int x, int y, FloorType type, int color = 0);
     ~Floor();
 
     void update(float dt) override;

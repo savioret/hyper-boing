@@ -151,11 +151,11 @@ void Player::init()
 
     // Position uses bottom-middle coordinates:
     // X = horizontal center of sprite, Y = bottom of sprite (ground level)
-    // spawnX stores the stage-configured X; default until Scene sets it from stage->xpos
+    // spawnX/spawnY store the stage-configured position; default until Scene sets from stage->xpos/ypos
     spawnX = 200.0f + 100.0f * id;
-    float startY = (float)Stage::MAX_Y;
+    spawnY = (float)Stage::MAX_Y;
 
-    setPos(spawnX, startY);
+    setPos(spawnX, spawnY);
 
     xDir = 5;
     yDir = -4;
@@ -192,9 +192,8 @@ void Player::revive()
     setState(PlayerState::IDLE);
 
     // Position uses bottom-middle coordinates
-    // Use the stage-configured spawn X (set by Scene::init via setSpawnX)
-    float startY = (float)Stage::MAX_Y;
-    setPos(spawnX, startY);
+    // Use the stage-configured spawn X/Y (set by Scene::init via setSpawnX/setSpawnY)
+    setPos(spawnX, spawnY);
 
     xDir = 5;
     yDir = -4;

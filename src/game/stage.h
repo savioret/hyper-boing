@@ -86,6 +86,7 @@ struct BallParams : public StageObjectParams
 struct FloorParams : public StageObjectParams
 {
     FloorType floorType  = FloorType::HORIZ_BIG;
+    int floorColor   = 0;      ///< Color index: 0=red, 1=blue, 2=green, 3=yellow
     bool invisible   = false;  ///< Hidden until revealed by a weapon shot
     bool passthrough = false;  ///< Player can walk through horizontally
 
@@ -202,6 +203,7 @@ struct PickupParams : public StageObjectParams
 struct GlassParams : public StageObjectParams
 {
     GlassType glassType    = GlassType::HORIZ_BIG;
+    int glassColor         = 0;    ///< Color index: 0=red, 1=blue, 2=green, 3=yellow
     bool hasDeathPickup    = false;
     PickupType deathPickupType = PickupType::GUN;
     bool invisible   = false;  ///< Hidden until revealed by a weapon shot
@@ -234,6 +236,7 @@ struct GlassParams : public StageObjectParams
 struct HexaParams : public StageObjectParams
 {
     int size = 0;           // 0-2 (smaller range than Ball's 0-3)
+    int hexaColor = 0;      // 0=green, 1=cyan, 2=orange, 3=purple
     float velX = 1.5f;      // Horizontal velocity
     float velY = 1.0f;      // Vertical velocity
     DeathPickupEntry deathPickups[MAX_DEATH_PICKUPS] = {};
@@ -378,6 +381,7 @@ public:
     char music[64];
     int timelimit;
     int xpos[2]; // initial positions for players 1 and 2 TODO: Review this
+    int ypos[2]; // initial Y positions for players 1 and 2 (default: MAX_Y)
     std::string stageFile;  ///< Path to .stg file (set by AppData::initStages, loaded by Scene::init)
                    
 private:
@@ -388,6 +392,7 @@ private:
 public:
     Stage() : id(0), timelimit(0), itemsleft(0), sequenceIndex(0) {
         xpos[0] = xpos[1] = 0;
+        ypos[0] = ypos[1] = MAX_Y;
         back[0] = '\0';
         music[0] = '\0';
     }
@@ -643,6 +648,22 @@ public:
             hexa->velX = vx;
             hexa->velY = vy;
         }
+        return *this;
+    }
+
+    /**
+     * Set color (hexa: 0=green/1=cyan/2=orange/3=purple;
+     *            floor: 0=red/1=blue/2=green/3=yellow;
+     *            glass: 0=red/1=green/2=yellow)
+     */
+    StageObjectBuilder& color(int c)
+    {
+        if (auto* hexa = dynamic_cast<HexaParams*>(objectParams.get()))
+            hexa->hexaColor = c;
+        else if (auto* floor = dynamic_cast<FloorParams*>(objectParams.get()))
+            floor->floorColor = c;
+        else if (auto* glass = dynamic_cast<GlassParams*>(objectParams.get()))
+            glass->glassColor = c;
         return *this;
     }
     

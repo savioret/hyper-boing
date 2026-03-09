@@ -1,0 +1,30 @@
+# Stage 5 Configuration - Staircases and Side Spawns
+#
+# Simplified layout for t=0 (not to scale, Y shown by rows):
+#
+# y~80            @           @
+#              =                 =
+#              =                 =
+#              =                 =
+#
+#
+# y~MAX_Y             1   2   
+#        ----------------------------------------
+#
+
+
+stage_id: 10
+background: russia1.png
+music: winter1.ogg
+time_limit: 100
+player1_x: 295
+player2_x: 350
+
+at 0:
+  # Two big balls - left side moving right, right side moving left
+  ball: x=224, y=24, size=0, dirX=1,  dirY=1 pickup=[0:doubleshoot, 2:gun]
+  ball: x=332, y=24, size=0, dirX=-1, dirY=1 pickup=[1:doubleshoot, 3:shield]
+
+  floor: x=160, y=160, type=vert_big
+  floor: x=465, y=160, type=vert_big
+

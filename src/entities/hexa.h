@@ -27,9 +27,13 @@ struct CollisionSide;
  */
 class Hexa : public IGameObject
 {
+public:
+    enum class Color { Green = 0, Cyan = 1, Orange = 2, Purple = 3 };
+
 private:
     float velX, velY;           // Constant velocity components
     int size;                   // 0=large(57x45), 1=medium(31x24), 2=small(16x12)
+    Color color = Color::Green;
     int width, height;          // Current sprite dimensions
     Scene* scene;
     DeathPickupEntry deathPickups[MAX_DEATH_PICKUPS] = {};
@@ -60,7 +64,7 @@ public:
      * @param velX Horizontal velocity
      * @param velY Vertical velocity
      */
-    Hexa(Scene* scene, int x, int y, int size, float velX, float velY);
+    Hexa(Scene* scene, int x, int y, int size, float velX, float velY, int color = 0);
 
     /**
      * Create a child Hexa from a parent

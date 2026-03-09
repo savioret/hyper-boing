@@ -189,6 +189,7 @@ void ClawShot::onFloorHit(Platform* f)
 
     stuck = true;
     stuckTimer = STUCK_DURATION;
+    appAudio.playSound("claw");
 
     // Snap to the bottom of the platform so the claw hangs from the underside
     if (f)
@@ -209,6 +210,7 @@ void ClawShot::onCeilingHit()
 
     stuck = true;
     stuckTimer = STUCK_DURATION;
+    appAudio.playSound("claw");
     yPos = static_cast<float>(Stage::MIN_Y);
 
     LOG_TRACE("ClawShot stuck to ceiling at y=%.1f", yPos);

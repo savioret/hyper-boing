@@ -31,6 +31,41 @@ Pickup::Pickup(Scene* scene, int x, int y, PickupType type)
     }
 }
 
+float Pickup::findGroundBelow() const
+{
+    if (!scene)
+        return (float)Stage::MAX_Y;
+
+    // Use a narrow strip (10% of sprite width) centered at xPos.
+    // A full-width check would cause pickups to land on platforms they barely touch at the edge.
+    int halfStrip = std::max(1, (int)(SPRITE_SIZE * 0.05f));  // 5% each side = 10% total
+    int stripLeft  = (int)xPos - halfStrip;
+    int stripRight = (int)xPos + halfStrip;
+
+    float bestY = (float)Stage::MAX_Y;
+
+    for (const auto& floor : scene->lsFloor)
+    {
+        if (floor->isDead() || floor->isInvisible())
+            continue;
+
+        CollisionBox box = floor->getCollisionBox();
+
+        // The pickup's center strip must overlap the platform horizontally
+        if (stripRight < box.x || stripLeft > box.x + box.w)
+            continue;
+
+        // Platform top must be at or below the pickup's current bottom (yPos)
+        if ((float)box.y < yPos)
+            continue;
+
+        if ((float)box.y < bestY)
+            bestY = (float)box.y;
+    }
+
+    return bestY;
+}
+
 void Pickup::update(float dt)
 {
     if (isDead()) return;
@@ -38,16 +73,50 @@ void Pickup::update(float dt)
     if (shieldAnim)
         shieldAnim->update(dt * 1000.0f);
 
+    if (!falling)
+    {
+        // Check if the platform we're resting on is still alive
+        if (landedPlatform && (landedPlatform->isDead() || landedPlatform->isInvisible()))
+        {
+            // Platform is gone � resume falling
+            falling = true;
+            landedPlatform = nullptr;
+            groundY = (float)Stage::MAX_Y;
+        }
+    }
+
     if (falling)
     {
-        // Linear fall (not affected by time freeze)
         yPos += FALL_SPEED;
 
-        // Stop at ground level
+        // Find nearest platform below on every step so we don't overshoot
+        float platformY = findGroundBelow();
+        groundY = platformY;
+
         if (yPos >= groundY)
         {
             yPos = groundY;
             falling = false;
+
+            // Record which platform we landed on (nullptr means the hard floor)
+            landedPlatform = nullptr;
+            if (groundY < (float)Stage::MAX_Y && scene)
+            {
+                int halfStrip = std::max(1, (int)(SPRITE_SIZE * 0.05f));
+                int stripLeft  = (int)xPos - halfStrip;
+                int stripRight = (int)xPos + halfStrip;
+                for (const auto& floor : scene->lsFloor)
+                {
+                    if (floor->isDead() || floor->isInvisible())
+                        continue;
+                    CollisionBox box = floor->getCollisionBox();
+                    if (stripRight >= box.x && stripLeft <= box.x + box.w && (float)box.y == groundY)
+                    {
+                        landedPlatform = floor.get();
+                        break;
+                    }
+                }
+            }
         }
     }
     else

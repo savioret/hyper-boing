@@ -40,8 +40,12 @@ enum class GlassType : int
  */
 class Glass : public Platform
 {
+public:
+    enum class Color { Red = 0, Green = 1, Yellow = 2 };
+
 private:
     GlassType type;
+    Color color = Color::Red;
     int sx, sy;       ///< Collision-box dimensions (fixed to undamaged first frame)
     Scene* scene = nullptr;
     bool hasDeathPickup = false;
@@ -51,7 +55,7 @@ private:
     std::unique_ptr<FrameSequenceAnim> breakAnim;  ///< Destruction animation
 
 public:
-    Glass(Scene* scene, int x, int y, GlassType type);
+    Glass(Scene* scene, int x, int y, GlassType type, int color = 0);
     ~Glass() = default;
 
     void update(float dt) override;

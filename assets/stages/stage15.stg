@@ -1,5 +1,5 @@
-# Stage 5 Configuration - Staircases and Side Spawns
-stage_id: 5
+# Stage 15 Configuration - Staircases and Side Spawns
+stage_id: 15
 background: fondo5.png
 music: stage5.ogg
 time_limit: 100

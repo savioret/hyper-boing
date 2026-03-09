@@ -1,0 +1,95 @@
+# Stage 9 Configuration
+#
+# Simplified layout for t=0 (not to scale, Y shown by rows):
+#
+# y~16:             =º=
+#                   =~=
+# y~80:  O                      O   (size-1 balls, upper-left and upper-right)
+#
+# y~268: = = = = =  ==    = = = =  
+#        H           H         H
+#        H                     H
+#        H                     H
+#        H                     H
+# y~415: -----------1  2-----------  (floor)
+#
+# Symbol legend:
+#   1      player 1 start position
+#   2      player 2 start position
+#   =      small floor (16px)
+#   ===    middle floor (48px)
+#   ====   big floor (64px)
+#   º      tiny ball (size 3)
+#   o      small ball (size 2)
+#   O      middle ball (size 1)
+#   @      big ball (size 0)
+#   *      small hexa (size 2)
+#   X      big hexa (size 0)
+#   ~      small glass platform (16px)
+#   ~~~    middle glass platform (48px)
+#   ~~~~   big glass platform (64px)
+#   H      ladder segment
+#
+# Game sizes and boundaries:
+#   MIN_X:16 MAX_X: 623 MIN_Y:16 MAX_Y:415
+#   Ladder width=40 height=32
+#   Ball (size 0) width=82 height=82
+#   Ball (size 1) width=41 height=41
+#   Ball (size 2) width=21 height=21
+#   Ball (size 3) width=11 height=11
+#   Floor (type horiz_big ) width=64 height=16
+#   Floor (type horiz_middle ) width=48 height=16
+#   Floor (type small ) width=16 height=16
+#   Floor (type vert_big ) width=16 height=64
+#   Floor (type vert_middle ) width=16 height=48
+#   Glass (type small ) width=16 height=16
+#
+# Stage authoring notes:
+#   - Platform row at y=268 creates two zones: upper (above) and lower (below).
+#   - Upper balls (top=40) bounce between top of screen and the platform row.
+#   - Lower balls (top=280) are trapped below the platform row.
+#   - Center ladder at x=320 passes through the gap between platforms (x=304..368).
+#   - Side ladders at x=36 and x=604 reach from the floor (y=415) to above the
+#     platform row (top at y=255), allowing players to climb between zones.
+#   - Vertical floors on the outer edges (x=16, x=608) act as side pillars.
+#
+
+stage_id: 9
+background: asia1.png
+music: winter1.ogg
+time_limit: 100
+player1_x: 295
+player2_x: 350
+
+at 0:
+  # Top-center box with pickup
+  floor: x=290, y=16, type=vert_middle
+  glass: x=306, y=48, type=horiz_middle, pickup=shield
+  floor: x=338, y=16, type=vert_middle
+  ball: x=315, y=32, size=3, dirX=1,  dirY=1, pickup=doubleshoot
+
+  # Platform row (9 small horizontal floors) — gap at x=304..368 for center ladder
+  floor: x=16,  y=268, type=horiz_big
+  floor: x=96,  y=268, type=horiz_middle
+  floor: x=160, y=268, type=horiz_middle
+  floor: x=224, y=268, type=horiz_middle
+  floor: x=288, y=268, type=horiz_big
+  floor: x=368, y=268, type=horiz_middle
+  floor: x=432, y=268, type=horiz_middle
+  floor: x=496, y=268, type=horiz_middle
+  floor: x=560, y=268, type=horiz_big
+
+
+  # Ladders (3): left side, right side, center
+  # height in segments (each 32px); y = base of ladder (bottom-middle)
+  # Side ladders: 5 segments → top at y=415-160=255 (above platform row at y=268)
+  ladder: x=62,  y=415, height=6
+  ladder: x=580, y=415, height=6
+  # Center ladder: 5 segments, passes through platform row gap
+  ladder: x=320, y=300, height=1
+
+  # Balls (5)
+  ball: x=72,  y=80,  size=1, dirX=1
+  ball: x=558, y=80,  size=1,  dirX=-1
+  ball: x=80,  y=320, size=1, dirX=-1
+  ball: x=530, y=320, size=1, dirX=1

@@ -1,0 +1,35 @@
+{ "frames": {
+   "hexagon_splash_green 0.aseprite": {
+    "frame": { "x": 0, "y": 0, "w": 33, "h": 33 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 8, "y": 7, "w": 33, "h": 33 },
+    "sourceSize": { "w": 48, "h": 48 },
+    "duration": 100
+   },
+   "hexagon_splash_green 1.aseprite": {
+    "frame": { "x": 33, "y": 0, "w": 46, "h": 48 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 1, "y": 0, "w": 46, "h": 48 },
+    "sourceSize": { "w": 48, "h": 48 },
+    "duration": 100
+   },
+   "hexagon_splash_green 2.aseprite": {
+    "frame": { "x": 79, "y": 0, "w": 48, "h": 47 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 0, "y": 1, "w": 48, "h": 47 },
+    "sourceSize": { "w": 48, "h": 48 },
+    "duration": 100
+   }
+ },
+ "meta": {
+  "app": "https://www.aseprite.org/",
+  "version": "1.3.16-beta3",
+  "image": "hexagon_splash_cyan.png",
+  "format": "RGBA8888",
+  "size": { "w": 127, "h": 48 },
+  "scale": "1"
+ }
+}

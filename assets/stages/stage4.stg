@@ -13,7 +13,7 @@
 #   - Ball rows are intentionally separated to keep the center lane clearer at spawn.
 #
 stage_id: 3
-background: mexico1.png
+background: carcassone1.png
 music: beach1.ogg
 time_limit: 100
 player1_x: 270

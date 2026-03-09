@@ -21,13 +21,13 @@
  * The ball starts either moving up or down (dirY) and moving in the
  * horizontal direction (dirX).
  */
-Ball::Ball(Scene* scn, int x, int y, int size, float dx, int dy, int topVal, int idVal)
+Ball::Ball(Scene* scn, int x, int y, int size, float dx, int dy, int topVal, int colorVal)
 {
     scene = scn;
     this->xPos = (float)x;
     this->yPos = (float)y;  // Absolute screen coordinate
     this->size = size;
-    id = idVal;
+    color = static_cast<Color>(colorVal);
 
     top = topVal;
 
@@ -36,9 +36,10 @@ Ball::Ball(Scene* scn, int x, int y, int size, float dx, int dy, int topVal, int
 
     // Get diameter from the ball spritesheet
     StageResources& res = gameinf.getStageRes();
-    if (res.ballAnim)
+    AnimSpriteSheet* anim = res.getBallAnim(static_cast<int>(color));
+    if (anim)
     {
-        Sprite* spr = res.ballAnim->getFrame(size);
+        Sprite* spr = anim->getFrame(size);
         diameter = spr ? spr->getWidth() : 64;  // Fallback to 64 if sprite not found
     }
     else
@@ -78,7 +79,7 @@ Ball::Ball(Scene* scn, int x, int y, int size, float dx, int dy, int topVal, int
 Ball::Ball(Scene* scn, Ball* oldball, int dir)
 {
     scene = scn;
-    id = oldball->id;
+    color = oldball->color;
     dirY = 1;
     dirX = dir;
     time = oldball->time;
@@ -87,9 +88,10 @@ Ball::Ball(Scene* scn, Ball* oldball, int dir)
 
     // Get diameter from the ball spritesheet
     StageResources& res = gameinf.getStageRes();
-    if (res.ballAnim)
+    AnimSpriteSheet* anim = res.getBallAnim(static_cast<int>(color));
+    if (anim)
     {
-        Sprite* spr = res.ballAnim->getFrame(size);
+        Sprite* spr = anim->getFrame(size);
         diameter = spr ? spr->getWidth() : 40;  // Fallback
     }
     else
@@ -137,11 +139,8 @@ void Ball::init()
 Sprite* Ball::getCurrentSprite() const
 {
     StageResources& res = gameinf.getStageRes();
-    if (res.ballAnim)
-    {
-        return res.ballAnim->getFrame(size);
-    }
-    return nullptr;
+    AnimSpriteSheet* anim = res.getBallAnim(static_cast<int>(color));
+    return anim ? anim->getFrame(size) : nullptr;
 }
 
 void Ball::kill()
@@ -307,7 +306,7 @@ void Ball::onDeath()
     float scale = (size >= 0 && size <= 3) ? sizeScales[size] : 0.25f;
 
     StageResources& res = gameinf.getStageRes();
-    AnimSpriteSheet* tmpl = res.ballSplashAnim.get();
+    AnimSpriteSheet* tmpl = res.getBallSplashAnim(static_cast<int>(color));
     if (tmpl)
     {
         int cx = (int)xPos + diameter / 2;

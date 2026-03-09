@@ -18,12 +18,14 @@ class Sprite;
  */
 struct StageResources
 {
-    // Ball sprites (single spritesheet with 4 size frames)
-    std::unique_ptr<AnimSpriteSheet> ballAnim;        ///< Ball sprite sheet (4 sizes as frames)
-    std::unique_ptr<AnimSpriteSheet> ballSplashAnim;  ///< Ball splash animation (single shared)
+    // Ball sprites per color (0=red, 1=green, 2=blue)
+    static constexpr int BALL_COLOR_COUNT = 3;
+    std::unique_ptr<AnimSpriteSheet> ballAnim[BALL_COLOR_COUNT];
+    std::unique_ptr<AnimSpriteSheet> ballSplashAnim[BALL_COLOR_COUNT];
 
-    // Floor sprite sheet (shared; instances index frames directly)
-    std::unique_ptr<AnimSpriteSheet> floorBricksAnim; ///< Floor bricks sprite sheet (5 variants)
+    // Floor sprite sheets per color (0=red, 1=blue, 2=green, 3=yellow)
+    static constexpr int FLOOR_COLOR_COUNT = 4;
+    std::unique_ptr<AnimSpriteSheet> floorAnim[FLOOR_COLOR_COUNT];
 
     // Ladder sprite
     Sprite ladder;      ///< Ladder tile sprite (tiled vertically)
@@ -62,14 +64,47 @@ struct StageResources
     // Player shield effect animation template (cloned per player)
     std::unique_ptr<AnimSpriteSheet> shieldAnim;  ///< Player shield effect animation
 
-    // Glass platform sprite sheet (shared; instances index frames directly)
-    std::unique_ptr<AnimSpriteSheet> glassBricksAnim;  ///< Glass bricks sprite sheet
+    // Glass platform sprite sheets per color (0=red, 1=blue, 2=green, 3=yellow)
+    static constexpr int GLASS_COLOR_COUNT = 4;
+    std::unique_ptr<AnimSpriteSheet> glassAnim[GLASS_COLOR_COUNT];
 
-    // Hexa enemy sprites
-    std::unique_ptr<AnimSpriteSheet> hexaAnim;         ///< Hexa sprite sheet (3 sizes as frames)
-    std::unique_ptr<AnimSpriteSheet> hexaSplashAnim;   ///< Hexa death splash animation
+    // Hexa enemy sprites per color (0=green, 1=cyan, 2=orange, 3=purple)
+    static constexpr int HEXA_COLOR_COUNT = 4;
+    std::unique_ptr<AnimSpriteSheet> hexaAnim[HEXA_COLOR_COUNT];
+    std::unique_ptr<AnimSpriteSheet> hexaSplashAnim[HEXA_COLOR_COUNT];
 
     bool initialized;      ///< True if resources have been loaded
 
     StageResources() : initialized(false) {}
+
+    AnimSpriteSheet* getBallAnim(int color) const
+    {
+        int c = (color >= 0 && color < BALL_COLOR_COUNT) ? color : 0;
+        return ballAnim[c].get();
+    }
+    AnimSpriteSheet* getBallSplashAnim(int color) const
+    {
+        int c = (color >= 0 && color < BALL_COLOR_COUNT) ? color : 0;
+        return ballSplashAnim[c].get();
+    }
+    AnimSpriteSheet* getHexaAnim(int color) const
+    {
+        int c = (color >= 0 && color < HEXA_COLOR_COUNT) ? color : 0;
+        return hexaAnim[c].get();
+    }
+    AnimSpriteSheet* getHexaSplashAnim(int color) const
+    {
+        int c = (color >= 0 && color < HEXA_COLOR_COUNT) ? color : 0;
+        return hexaSplashAnim[c].get();
+    }
+    AnimSpriteSheet* getFloorAnim(int color) const
+    {
+        int c = (color >= 0 && color < FLOOR_COLOR_COUNT) ? color : 0;
+        return floorAnim[c].get();
+    }
+    AnimSpriteSheet* getGlassAnim(int color) const
+    {
+        int c = (color >= 0 && color < GLASS_COLOR_COUNT) ? color : 0;
+        return glassAnim[c].get();
+    }
 };

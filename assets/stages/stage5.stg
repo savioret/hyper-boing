@@ -16,7 +16,6 @@
 #   2      player 2 start position
 #   @      big ball (size 0)
 #   H      ladder segment (39px wide, 10 tiles tall = 320px)
-#   [gun]  gun pickup flanking each ladder
 #
 # Game sizes and boundaries:
 #   MIN_X:16 MAX_X:623 MIN_Y:16 MAX_Y:415
@@ -31,7 +30,7 @@
 #   - pickups: doubleshoot, timefreeze, extratime, shield
 
 stage_id: 5
-background: mexico1.png
+background: carcassone2.png
 music: beach1.ogg
 time_limit: 100
 player1_x: 295
@@ -39,8 +38,8 @@ player2_x: 350
 
 at 0:
   # Two big balls - left side moving right, right side moving left
-  ball: x=85, y=80, size=0, dirX=1,  dirY=1
-  ball: x=460, y=80, size=0, dirX=-1, dirY=1
+  ball: x=85, y=80, size=0, dirX=1,  dirY=1, pickup=[0:doubleshoot, 2:gun, 3:timefreeze]
+  ball: x=460, y=80, size=0, dirX=-1, dirY=1 pickup=[0:doubleshoot, 3:shield ]
 
   # Left ladder pair (two side-by-side ladders, center-left of stage)
   ladder: x=195, y=415, height=3

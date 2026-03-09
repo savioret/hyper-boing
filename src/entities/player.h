@@ -103,6 +103,7 @@ private:
 
     // Spawn position (set from stage config; used on revive)
     float spawnX;
+    float spawnY;
 
     // Ladder/climbing state
     Ladder* currentLadder;   // Ladder player is currently climbing (nullptr if not climbing)
@@ -246,6 +247,7 @@ public:
     void setLives(int l) { lives = l; }
     void setImmuneCounter(int counter) { immuneCounter = counter; }
     void setSpawnX(float x) { spawnX = x; }
+    void setSpawnY(float y) { spawnY = y; }
     void setMaxShoots(int n) { maxShoots = n; }
     int getMaxShoots() const { return maxShoots; }
 

@@ -4,15 +4,15 @@
 #include "animcontroller.h"
 #include "../entities/pickup.h"
 
-Glass::Glass(Scene* scn, int x, int y, GlassType type)
-    : type(type), scene(scn)
+Glass::Glass(Scene* scn, int x, int y, GlassType type, int colorVal)
+    : type(type), color(static_cast<Color>(colorVal)), scene(scn)
 {
     xPos = (float)x;
     yPos = (float)y;
 
     // Get collision-box dimensions from the first (undamaged) frame
     int firstFrame = static_cast<int>(type);
-    Sprite* spr = gameinf.getStageRes().glassBricksAnim->getFrame(firstFrame);
+    Sprite* spr = gameinf.getStageRes().getGlassAnim(static_cast<int>(color))->getFrame(firstFrame);
     if (spr)
     {
         sx = spr->getWidth();
@@ -68,5 +68,5 @@ Sprite* Glass::getCurrentSprite() const
     int frame = static_cast<int>(type);
     if (breaking && breakAnim)
         frame = breakAnim->getCurrentFrame();
-    return gameinf.getStageRes().glassBricksAnim->getFrame(frame);
+    return gameinf.getStageRes().getGlassAnim(static_cast<int>(color))->getFrame(frame);
 }

@@ -105,17 +105,25 @@ bool parseJson(const std::string& jsonPath, JsonValue& root)
     return true;
 }
 
-bool loadSpriteSheet(Graph* graph, const JsonValue& root, const std::string& jsonPath, SpriteSheet& sheet)
+bool loadSpriteSheet(Graph* graph, const JsonValue& root, const std::string& jsonPath,
+                     SpriteSheet& sheet, const std::string& overrideImagePath = "")
 {
-    JsonValue meta = root["meta"];
-    if (!meta.has("image"))
+    std::string imagePath;
+    if (!overrideImagePath.empty())
     {
-        LOG_ERROR("AsepriteLoader: No 'image' field in meta");
-        return false;
+        imagePath = overrideImagePath;
     }
-
-    std::string dir = getDirectory(jsonPath);
-    std::string imagePath = dir + meta["image"].asString();
+    else
+    {
+        JsonValue meta = root["meta"];
+        if (!meta.has("image"))
+        {
+            LOG_ERROR("AsepriteLoader: No 'image' field in meta");
+            return false;
+        }
+        std::string dir = getDirectory(jsonPath);
+        imagePath = dir + meta["image"].asString();
+    }
 
     if (!sheet.init(graph, imagePath))
     {
@@ -157,7 +165,7 @@ bool loadSpriteSheet(Graph* graph, const JsonValue& root, const std::string& jso
         sheet.addFrame(x, y, w, h, xOff, yOff, srcW, srcH);
     }
 
-    LOG_INFO("AsepriteLoader: Loaded %zu frames from %s", frameCount, imagePath.c_str());
+    //LOG_INFO("AsepriteLoader: Loaded %zu frames from %s", frameCount, imagePath.c_str());
     return true;
 }
 
@@ -185,11 +193,11 @@ FrameTimingData extractTimingData(const JsonValue& frames)
 
     if (!data.hasVariableDurations)
     {
-        LOG_INFO("AsepriteLoader: Using uniform duration of %dms for all frames", data.uniformDuration);
+        //LOG_INFO("AsepriteLoader: Using uniform duration of %dms for all frames", data.uniformDuration);
     }
     else
     {
-        LOG_INFO("AsepriteLoader: Using per-frame durations (variable)");
+        //LOG_INFO("AsepriteLoader: Using per-frame durations (variable)");
     }
 
     return data;
@@ -295,9 +303,9 @@ std::unique_ptr<StateMachineAnim> buildStateMachineFromTags(
         buildDirectionSequence(direction, from, to, timing.frameDurations, sequence, sequenceDurations);
         addAnimState(*anim, tagName, sequence, sequenceDurations, timing, loopCount);
 
-        const char* loopDesc = (loopCount == 0) ? "infinite" : (loopCount == 1) ? "once" : "repeat";
-        LOG_INFO("AsepriteLoader: Created state '%s' (%s, frames %d-%d, %s)",
-                tagName.c_str(), direction.c_str(), from, to, loopDesc);
+        //const char* loopDesc = (loopCount == 0) ? "infinite" : (loopCount == 1) ? "once" : "repeat";
+        //LOG_INFO("AsepriteLoader: Created state '%s' (%s, frames %d-%d, %s)",
+       //         tagName.c_str(), direction.c_str(), from, to, loopDesc);
     }
 
     // Create states for untagged frame ranges
@@ -326,8 +334,8 @@ std::unique_ptr<StateMachineAnim> buildStateMachineFromTags(
             std::string stateName = (defaultCount == 0) ? "default" : ("default" + std::to_string(defaultCount));
             addAnimState(*anim, stateName, sequence, sequenceDurations, timing, 0);  // 0 = infinite loop
 
-            LOG_INFO("AsepriteLoader: Created state '%s' (frames %d-%d, infinite)",
-                    stateName.c_str(), rangeStart, i - 1);
+            //LOG_INFO("AsepriteLoader: Created state '%s' (frames %d-%d, infinite)",
+            //        stateName.c_str(), rangeStart, i - 1);
 
             defaultCount++;
             rangeStart = -1;
@@ -373,7 +381,7 @@ std::unique_ptr<StateMachineAnim> buildDefaultStateMachine(const FrameTimingData
     addAnimState(*anim, "default", allFrames, timing.frameDurations, timing, 0);  // 0 = infinite loop
     anim->setState("default");
 
-    LOG_INFO("AsepriteLoader: Created StateMachineAnim with 'default' state (frames 0-%d, infinite)", timing.totalFrames - 1);
+    //LOG_INFO("AsepriteLoader: Created StateMachineAnim with 'default' state (frames 0-%d, infinite)", timing.totalFrames - 1);
     return anim;
 }
 
@@ -387,12 +395,12 @@ std::unique_ptr<FrameSequenceAnim> buildSequence(const FrameTimingData& timing)
         {
             allFrames.push_back(i);
         }
-        LOG_INFO("AsepriteLoader: Created FrameSequenceAnim with per-frame durations (frames 0-%d, infinite)", timing.totalFrames - 1);
+        //LOG_INFO("AsepriteLoader: Created FrameSequenceAnim with per-frame durations (frames 0-%d, infinite)", timing.totalFrames - 1);
         return std::make_unique<FrameSequenceAnim>(allFrames, timing.frameDurations, 0);  // 0 = infinite loop
     }
     else
     {
-        LOG_INFO("AsepriteLoader: Created FrameSequenceAnim (frames 0-%d, %dms per frame, infinite)", timing.totalFrames - 1, timing.uniformDuration);
+        //LOG_INFO("AsepriteLoader: Created FrameSequenceAnim (frames 0-%d, %dms per frame, infinite)", timing.totalFrames - 1, timing.uniformDuration);
         auto anim = FrameSequenceAnim::range(0, timing.totalFrames - 1, timing.uniformDuration, 0);  // 0 = infinite loop
         return std::make_unique<FrameSequenceAnim>(std::move(anim));
     }
@@ -450,13 +458,14 @@ std::unique_ptr<FrameSequenceAnim> buildSequenceFromJson(const JsonValue& root)
 std::unique_ptr<IAnimController> AsepriteLoader::load(
     Graph* graph,
     const std::string& jsonPath,
-    SpriteSheet& sheet)
+    SpriteSheet& sheet,
+    const std::string& imagePath)
 {
     JsonValue root;
     if (!parseJson(jsonPath, root))
         return nullptr;
 
-    if (!loadSpriteSheet(graph, root, jsonPath, sheet))
+    if (!loadSpriteSheet(graph, root, jsonPath, sheet, imagePath))
         return nullptr;
 
     return buildAnimFromJson(root);
@@ -474,13 +483,14 @@ std::unique_ptr<IAnimController> AsepriteLoader::loadAnimOnly(const std::string&
 std::unique_ptr<StateMachineAnim> AsepriteLoader::loadAsStateMachine(
     Graph* graph,
     const std::string& jsonPath,
-    SpriteSheet& sheet)
+    SpriteSheet& sheet,
+    const std::string& imagePath)
 {
     JsonValue root;
     if (!parseJson(jsonPath, root))
         return nullptr;
 
-    if (!loadSpriteSheet(graph, root, jsonPath, sheet))
+    if (!loadSpriteSheet(graph, root, jsonPath, sheet, imagePath))
         return nullptr;
 
     return buildStateMachineFromJson(root);
@@ -498,13 +508,14 @@ std::unique_ptr<StateMachineAnim> AsepriteLoader::loadAsStateMachine(const std::
 std::unique_ptr<FrameSequenceAnim> AsepriteLoader::loadAsSequence(
     Graph* graph,
     const std::string& jsonPath,
-    SpriteSheet& sheet)
+    SpriteSheet& sheet,
+    const std::string& imagePath)
 {
     JsonValue root;
     if (!parseJson(jsonPath, root))
         return nullptr;
 
-    if (!loadSpriteSheet(graph, root, jsonPath, sheet))
+    if (!loadSpriteSheet(graph, root, jsonPath, sheet, imagePath))
         return nullptr;
 
     return buildSequenceFromJson(root);

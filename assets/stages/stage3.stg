@@ -24,10 +24,10 @@ player2_x: 350
 
 at 0:
   # Single floor platform
-  floor: x=152, y=150, type=small
-  floor: x=472, y=150, type=small
-  glass: x=136, y=150, type=small pickup=doubleshoot invisible=1
-  glass: x=488, y=150, type=small pickup=gun invisible=1
+  floor: x=152, y=150, type=small color=blue
+  floor: x=472, y=150, type=small color=blue
+  glass: x=136, y=150, type=small  color=blue pickup=doubleshoot invisible=1
+  glass: x=488, y=150, type=small  color=blue pickup=gun invisible=1
 
   # Random top balls (fully random X, Y at top)
   hexa: x=294 y=80 velX=1 velY=2.0 pickup=timefreeze

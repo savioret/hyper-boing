@@ -399,23 +399,25 @@ public:
      * @param velX Horizontal velocity
      * @param velY Vertical velocity
      */
-    void addHexa(int x, int y, int size, float velX, float velY);
+    void addHexa(int x, int y, int size, float velX, float velY, int color = 0);
 
     /**
      * @brief Adds a floor/platform to the scene
      * @param x X position
      * @param y Y position
      * @param type Floor shape variant
+     * @param color Color index (0=red, 1=blue, 2=green, 3=yellow)
      */
-    void addFloor(int x, int y, FloorType type);
+    void addFloor(int x, int y, FloorType type, int color = 0);
 
     /**
      * @brief Adds a glass platform to the scene
      * @param x X position
      * @param y Y position
      * @param type Glass shape variant
+     * @param color Color index (0=red, 1=green, 2=yellow)
      */
-    void addGlass(int x, int y, GlassType type);
+    void addGlass(int x, int y, GlassType type, int color = 0);
 
     /**
      * @brief Adds a ladder to the scene

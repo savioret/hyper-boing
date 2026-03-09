@@ -1,0 +1,69 @@
+# Stage 7 Configuration - Central Ladder
+#
+# Simplified layout for t=0 (not to scale, Y shown by rows):
+#
+# y~80     ~~~                                      ~~~
+#
+# y~100   X                                              X
+#
+#                        1    2
+# y~160             ================
+#                          H
+# y~240       ====         H         ====
+#                          H
+# y~300            ==      H      ==
+#                          H
+# y~415--------------------H---------------------------
+#
+# Symbol legend:
+#   1      player 1 start position
+#   2      player 2 start position
+#   X      big hexa (size 0)
+#   ====   big floor (64px)
+#   ==     middle floor (48px)
+#   ~~~    middle glass (48px, gun pickup hidden)
+#   H      ladder segment (width=40, height=32 per tile)
+#
+# Game sizes and boundaries:
+#   MIN_X:16 MAX_X:623 MIN_Y:16 MAX_Y:415
+#   Floor (type horiz_big)    width=64  height=16
+#   Floor (type horiz_middle) width=48  height=16
+#   Glass (type horiz_middle) width=48  height=16
+#   Hexa (size 0)             width=51  height=51
+#   Ladder width=40, height=32 per tile
+#
+#
+
+stage_id: 7
+background: venice1.png
+music: beach1.ogg
+time_limit: 100
+player1_x: 288
+player2_x: 352
+player1_y: 160
+player2_y: 160
+
+at 0:
+  # Top-corner glass platforms (hidden gun pickups)
+  glass: x=80,  y=80, type=horiz_middle, pickup=gun
+  glass: x=496, y=80, type=horiz_middle, pickup=gun
+
+  # Main center platform - two horiz_big tiles = 128px wide, upper half, y=160
+  floor: x=256, y=160, type=horiz_big
+  floor: x=320, y=160, type=horiz_big
+
+  # Central tall ladder (8 tiles = 256px, bottom at ground, top at y=159 under main platform)
+  ladder: x=316, y=415, height=8
+
+  # Wide side platforms (symmetric around center, one level below main platform)
+  floor: x=128, y=240, type=horiz_big
+  floor: x=448, y=240, type=horiz_big
+
+  # Small inset platforms (symmetric, closer to mid-lower area)
+  floor: x=192, y=300, type=horiz_middle
+  floor: x=400, y=300, type=horiz_middle
+
+  # Two big hexas flanking above the main platform
+  hexa: x=160, y=100, size=0, velX=-1.5, velY=2.0
+  hexa: x=429, y=100, size=0, velX=1.5,  velY=2.0
+

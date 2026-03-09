@@ -73,6 +73,10 @@ bool StageLoader::parseStageProperty(Stage& stage, const std::string& key, const
         stage.xpos[AppData::PLAYER1] = std::stoi(value);
     else if (key == "player2_x")
         stage.xpos[AppData::PLAYER2] = std::stoi(value);
+    else if (key == "player1_y")
+        stage.ypos[AppData::PLAYER1] = std::stoi(value);
+    else if (key == "player2_y")
+        stage.ypos[AppData::PLAYER2] = std::stoi(value);
     else
         return false;
 
@@ -97,10 +101,26 @@ std::map<std::string, std::string> StageLoader::parseParams(const std::string& p
             c = ' ';
     }
 
-    std::istringstream iss(normalized);
-    std::string token;
+    // Depth-aware tokenization: spaces inside [...] do not split tokens.
+    // This allows "pickup=[0:gun, 1:shield, 2:doubleshoot]" with spaces after commas.
+    std::vector<std::string> tokens;
+    {
+        std::string current;
+        int d = 0;
+        for (char c : normalized)
+        {
+            if (c == '[')       { d++; current += c; }
+            else if (c == ']')  { d--; current += c; }
+            else if ((c == ' ' || c == '\t') && d == 0)
+            {
+                if (!current.empty()) { tokens.push_back(current); current.clear(); }
+            }
+            else { current += c; }
+        }
+        if (!current.empty()) tokens.push_back(current);
+    }
 
-    while (iss >> token)
+    for (const std::string& token : tokens)
     {
         size_t eqPos = token.find('=');
         if (eqPos != std::string::npos)
@@ -174,6 +194,45 @@ bool StageLoader::parseActionLine(Stage& stage, float currentTime, const std::st
 
     processActionObject(stage, currentTime, command);
     return true;
+}
+
+int StageLoader::parseBallColor(const std::string& str)
+{
+    if (str == "red")   return 0;
+    if (str == "green") return 1;
+    if (str == "blue")  return 2;
+    try { return std::stoi(str); } catch (...) {}
+    return 0;
+}
+
+int StageLoader::parseHexaColor(const std::string& str)
+{
+    if (str == "green")  return 0;
+    if (str == "cyan")   return 1;
+    if (str == "orange") return 2;
+    if (str == "purple") return 3;
+    try { return std::stoi(str); } catch (...) {}
+    return 0;
+}
+
+int StageLoader::parseFloorColor(const std::string& str)
+{
+    if (str == "red")    return 0;
+    if (str == "blue")   return 1;
+    if (str == "green")  return 2;
+    if (str == "yellow") return 3;
+    try { return std::stoi(str); } catch (...) {}
+    return 0;
+}
+
+int StageLoader::parseGlassColor(const std::string& str)
+{
+    if (str == "red")    return 0;
+    if (str == "blue")   return 1;
+    if (str == "green")  return 2;
+    if (str == "yellow") return 3;
+    try { return std::stoi(str); } catch (...) {}
+    return 0;
 }
 
 bool StageLoader::parsePickupTypeString(const std::string& str, PickupType& out)
@@ -281,8 +340,10 @@ void StageLoader::processBallObject(Stage& stage, float time, const std::map<std
         int   dy = params.count("dirY") ? std::stoi(params.at("dirY")) : 1;
         builder.dir(dx, dy);
     }
-    if (params.count("type"))
-        builder.type(std::stoi(params.at("type")));
+    if (params.count("color"))
+        builder.type(parseBallColor(params.at("color")));
+    else if (params.count("type"))
+        builder.type(parseBallColor(params.at("type")));
     if (params.count("pickup"))
         applyPickupParam(params.at("pickup"), builder);
 
@@ -316,6 +377,8 @@ void StageLoader::processFloorObject(Stage& stage, float time, const std::map<st
 
     if (params.count("x") && params.count("y"))
         builder.at(std::stoi(params.at("x")), std::stoi(params.at("y")));
+    if (params.count("color"))
+        builder.color(parseFloorColor(params.at("color")));
     if (params.count("invisible") && params.at("invisible") == "1")
         builder.invisible(true);
     if (params.count("passthrough") && params.at("passthrough") == "1")
@@ -415,6 +478,8 @@ void StageLoader::processGlassObject(Stage& stage, float time, const std::map<st
         if (parsePickupTypeString(params.at("pickup"), pt))
             builder.deathPickup(pt);
     }
+    if (params.count("color"))
+        builder.color(parseGlassColor(params.at("color")));
     if (params.count("invisible") && params.at("invisible") == "1")
         builder.invisible(true);
     if (params.count("passthrough") && params.at("passthrough") == "1")
@@ -444,6 +509,10 @@ void StageLoader::processHexaObject(Stage& stage, float time, const std::map<std
     if (params.count("velY"))
         velY = std::stof(params.at("velY"));
     builder.velocity(velX, velY);
+
+    // Color
+    if (params.count("color"))
+        builder.color(parseHexaColor(params.at("color")));
 
     // Death pickup
     if (params.count("pickup"))
@@ -536,6 +605,8 @@ bool StageLoader::save(const Stage& stage, const std::string& filename)
     file << "time_limit: " << stage.timelimit << "\n";
     file << "player1_x: " << stage.xpos[AppData::PLAYER1] << "\n";
     file << "player2_x: " << stage.xpos[AppData::PLAYER2] << "\n";
+    file << "player1_y: " << stage.ypos[AppData::PLAYER1] << "\n";
+    file << "player2_y: " << stage.ypos[AppData::PLAYER2] << "\n";
     file << "\n";
 
     // Note: Saving the sequence would require exposing it or iterating through

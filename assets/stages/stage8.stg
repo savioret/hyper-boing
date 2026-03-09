@@ -1,0 +1,110 @@
+# Stage 8 Configuration - Tight Glass Grid and Bubble Field
+#
+# Simplified layout for t=0 (not to scale, Y shown by rows):
+#
+# y~16    ~~~   ~~~   ~~~   ~~~   ~~~   ~~~
+# y~33       º     º     º     º     º     º
+# y~44       ~~~   ~~~   ~~~   ~~~   ~~~   ~~~
+# y~61    º     º     º     º     º     º
+# y~72    ~~~   ~~~   ~~~   ~~~   ~~~   ~~~
+# y~89       º     º     º     º     º     º
+# y~100      ~~~   ~~~   ~~~   ~~~   ~~~   ~~~
+#
+# y~165                 O           O
+#
+# y~260       o                               o
+#
+# y~MAX_Y                    1    2
+#        ------------------------------------------------------
+#
+# Symbol legend:
+#   1      player 1 start position
+#   2      player 2 start position
+#   º      tiny ball (size 3)
+#   o      small ball (size 2)
+#   O      middle ball (size 1)
+#   ~~~    middle glass platform (48px)
+#
+# Game sizes and boundaries:
+#   MIN_X:16 MAX_X:623 MIN_Y:16 MAX_Y:415
+#   Ball (size 1) width=41 height=41
+#   Ball (size 2) width=21 height=21
+#   Ball (size 3) width=11 height=11
+#   Glass (type horiz_middle) width=48 height=16
+#
+# Stage authoring notes:
+#   - The top formation now uses only horiz_middle glass.
+#   - Rows are vertically tighter and horizontally interlocked so each lower platform
+#     meets the vertex of the two above it, enclosing the tiny balls much better.
+#   - Two medium balls patrol the upper-middle lane, while two small balls pressure the
+#     lower left and right sides.
+#
+
+stage_id: 8
+background: venice2.png
+music: beach1.ogg
+time_limit: 100
+player1_x: 295
+player2_x: 350
+
+at 0:
+  # Tight interlocked glass field - all middle platforms
+  glass: x=16,  y=16,  type=horiz_middle
+  glass: x=112, y=16,  type=horiz_middle
+  glass: x=208, y=16,  type=horiz_middle
+  glass: x=304, y=16,  type=horiz_middle
+  glass: x=400, y=16,  type=horiz_middle
+  glass: x=496, y=16,  type=horiz_middle
+  glass: x=592, y=16,  type=small
+
+  glass: x=64,  y=32,  type=horiz_middle
+  glass: x=160, y=32,  type=horiz_middle
+  glass: x=256, y=32,  type=horiz_middle
+  glass: x=352, y=32,  type=horiz_middle
+  glass: x=448, y=32,  type=horiz_middle
+  glass: x=544, y=32,  type=horiz_middle
+
+  glass: x=16,  y=48,  type=horiz_middle
+  glass: x=112, y=48,  type=horiz_middle
+  glass: x=208, y=48,  type=horiz_middle
+  glass: x=304, y=48,  type=horiz_middle
+  glass: x=400, y=48,  type=horiz_middle
+  glass: x=496, y=48,  type=horiz_middle
+  glass: x=592, y=48,  type=small
+
+  glass: x=64,  y=64, type=horiz_middle
+  glass: x=160, y=64, type=horiz_middle
+  glass: x=256, y=64, type=horiz_middle
+  glass: x=352, y=64, type=horiz_middle
+  glass: x=448, y=64, type=horiz_middle
+  glass: x=544, y=64, type=horiz_middle
+
+  # Tiny balls enclosed between glass rows
+  ball: x=83,  y=21, size=3, top=300, dirX=1, dirY=1
+  ball: x=179, y=21, size=3, top=300, dirX=-1, dirY=1
+  ball: x=275, y=21, size=3, top=300, dirX=1, dirY=1
+  ball: x=371, y=21, size=3, top=300, dirX=-1, dirY=1
+  ball: x=467, y=21, size=3, top=300, dirX=1, dirY=1
+  ball: x=563, y=21, size=3, top=300, dirX=-1, dirY=1
+
+  ball: x=35,  y=37, size=3, top=300, dirX=1, dirY=1
+  ball: x=131, y=37, size=3, top=300, dirX=-1, dirY=1
+  ball: x=227, y=37, size=3, top=300, dirX=1, dirY=1
+  ball: x=323, y=37, size=3, top=300, dirX=-1, dirY=1
+  ball: x=419, y=37, size=3, top=300, dirX=1, dirY=1
+  ball: x=515, y=37, size=3, top=300, dirX=-1, dirY=1
+
+  ball: x=83,  y=53, size=3, top=300, dirX=1, dirY=1
+  ball: x=179, y=53, size=3, top=300, dirX=-1, dirY=1
+  ball: x=275, y=53, size=3, top=300, dirX=1, dirY=1
+  ball: x=371, y=53, size=3, top=300, dirX=-1, dirY=1
+  ball: x=467, y=53, size=3, top=300, dirX=1, dirY=1
+  ball: x=563, y=53, size=3, top=300, dirX=-1, dirY=1
+
+  # Two medium balls in the upper-middle lane
+  ball: x=220, y=165, size=1, top=260, dirX=1,  dirY=1
+  ball: x=379, y=165, size=1, top=260, dirX=-1, dirY=1
+
+  # Two small balls on the lower left and right flanks
+  ball: x=120, y=260, size=2, top=180, dirX=1,  dirY=1
+  ball: x=499, y=260, size=2, top=180, dirX=-1, dirY=1

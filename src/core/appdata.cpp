@@ -131,9 +131,15 @@ void AppData::initStageResources()
 
     int i;
 
-    // Load ball sprites (single spritesheet with 4 size frames, like Hexa)
-    stageRes.ballAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/ball_red.json");
-    stageRes.ballSplashAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/ball_splash_red.json");
+    // Load ball sprites per color (0=red, 1=green, 2=blue)
+    static const char* BALL_JSON        = "assets/graph/entities/ball.json";
+    static const char* BALL_SPLASH_JSON = "assets/graph/entities/ball_splash.json";
+    stageRes.ballAnim[0] = AnimSpriteSheet::load(&appGraph, BALL_JSON, "assets/graph/entities/ball_red.png");
+    stageRes.ballAnim[1] = AnimSpriteSheet::load(&appGraph, BALL_JSON, "assets/graph/entities/ball_green.png");
+    stageRes.ballAnim[2] = AnimSpriteSheet::load(&appGraph, BALL_JSON, "assets/graph/entities/ball_blue.png");
+    stageRes.ballSplashAnim[0] = AnimSpriteSheet::load(&appGraph, BALL_SPLASH_JSON, "assets/graph/entities/ball_splash_red.png");
+    stageRes.ballSplashAnim[1] = AnimSpriteSheet::load(&appGraph, BALL_SPLASH_JSON, "assets/graph/entities/ball_splash_green.png");
+    stageRes.ballSplashAnim[2] = AnimSpriteSheet::load(&appGraph, BALL_SPLASH_JSON, "assets/graph/entities/ball_splash_blue.png");
 
     // Load mini player icons
     stageRes.miniplayer[PLAYER1].init(&appGraph, "assets/graph/players/miniplayer1.png");
@@ -174,8 +180,12 @@ void AppData::initStageResources()
     for (i = 0; i < 5; i++)
         appGraph.setColorKey(stageRes.mark[i].getBmp(), 0x00FF00);
 
-    // Load floor sprite sheet
-    stageRes.floorBricksAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/floor_bricks.json");
+    // Load floor sprite sheets per color (0=red, 1=blue, 2=green, 3=yellow)
+    static const char* FLOOR_JSON = "assets/graph/entities/floor.json";
+    stageRes.floorAnim[0] = AnimSpriteSheet::load(&appGraph, FLOOR_JSON, "assets/graph/entities/floor_red.png");
+    stageRes.floorAnim[1] = AnimSpriteSheet::load(&appGraph, FLOOR_JSON, "assets/graph/entities/floor_blue.png");
+    stageRes.floorAnim[2] = AnimSpriteSheet::load(&appGraph, FLOOR_JSON, "assets/graph/entities/floor_green.png");
+    stageRes.floorAnim[3] = AnimSpriteSheet::load(&appGraph, FLOOR_JSON, "assets/graph/entities/floor_yellow.png");
 
     // Load ladder sprite
     stageRes.ladder.init(&appGraph, "assets/graph/entities/ladder.png");
@@ -223,6 +233,7 @@ void AppData::initStageResources()
     // Preload weapon sound effects
     AudioManager::instance().registerSound("harpoon", "assets/sounds/harpoon.ogg");
     AudioManager::instance().registerSound("gun", "assets/sounds/gun.ogg");
+    AudioManager::instance().registerSound("claw", "assets/sounds/claw.ogg");
 
     // Preload player sound effects
     AudioManager::instance().registerSound("player_dies", "assets/sounds/player_dies.ogg");
@@ -241,12 +252,24 @@ void AppData::initStageResources()
     stageRes.shieldAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/shield_anim.json");
     stageRes.itemHolder.init(&appGraph, "assets/graph/ui/item_holder.png");
 
-    // Load glass bricks sprite sheet (damage frames accessed by index)
-    stageRes.glassBricksAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/glass_bricks.json");
+    // Load glass sprite sheets per color (0=red, 1=blue, 2=green, 3=yellow)
+    static const char* GLASS_JSON = "assets/graph/entities/glass.json";
+    stageRes.glassAnim[0] = AnimSpriteSheet::load(&appGraph, GLASS_JSON, "assets/graph/entities/glass_red.png");
+    stageRes.glassAnim[1] = AnimSpriteSheet::load(&appGraph, GLASS_JSON, "assets/graph/entities/glass_blue.png");
+    stageRes.glassAnim[2] = AnimSpriteSheet::load(&appGraph, GLASS_JSON, "assets/graph/entities/glass_green.png");
+    stageRes.glassAnim[3] = AnimSpriteSheet::load(&appGraph, GLASS_JSON, "assets/graph/entities/glass_yellow.png");
 
-    // Load hexa enemy sprites (3 sizes as frames)
-    stageRes.hexaAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/hexa_green.json");
-    stageRes.hexaSplashAnim = AnimSpriteSheet::load(&appGraph, "assets/graph/entities/hexagon_splash_green.json");
+    // Load hexa enemy sprites per color (0=green, 1=cyan, 2=orange, 3=purple)
+    static const char* HEXA_JSON         = "assets/graph/entities/hexa.json";
+    static const char* HEXA_SPLASH_JSON  = "assets/graph/entities/hexagon_splash.json";
+    stageRes.hexaAnim[0] = AnimSpriteSheet::load(&appGraph, HEXA_JSON, "assets/graph/entities/hexa_green.png");
+    stageRes.hexaAnim[1] = AnimSpriteSheet::load(&appGraph, HEXA_JSON, "assets/graph/entities/hexa_cyan.png");
+    stageRes.hexaAnim[2] = AnimSpriteSheet::load(&appGraph, HEXA_JSON, "assets/graph/entities/hexa_orange.png");
+    stageRes.hexaAnim[3] = AnimSpriteSheet::load(&appGraph, HEXA_JSON, "assets/graph/entities/hexa_purple.png");
+    stageRes.hexaSplashAnim[0] = AnimSpriteSheet::load(&appGraph, HEXA_SPLASH_JSON, "assets/graph/entities/hexagon_splash_green.png");
+    stageRes.hexaSplashAnim[1] = AnimSpriteSheet::load(&appGraph, HEXA_SPLASH_JSON, "assets/graph/entities/hexagon_splash_cyan.png");
+    stageRes.hexaSplashAnim[2] = AnimSpriteSheet::load(&appGraph, HEXA_SPLASH_JSON, "assets/graph/entities/hexagon_splash_orange.png");
+    stageRes.hexaSplashAnim[3] = AnimSpriteSheet::load(&appGraph, HEXA_SPLASH_JSON, "assets/graph/entities/hexagon_splash_purple.png");
 
     stageRes.initialized = true;
 }
@@ -287,10 +310,6 @@ void AppData::release()
     // Release shared stage resources
     if (stageRes.initialized)
     {
-        // Ball and splash anims are unique_ptrs, auto-released
-        stageRes.ballAnim.reset();
-        stageRes.ballSplashAnim.reset();
-
         for (int i = 0; i < 2; i++)
         {
             stageRes.miniplayer[i].release();

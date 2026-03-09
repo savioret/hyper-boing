@@ -12,8 +12,8 @@ static constexpr int HEXA_ANIM_START[] = {0, 4, 8};  // size 0=big, 1=medium, 2=
 // Static member initialization
 constexpr int Hexa::SIZES[][2];
 
-Hexa::Hexa(Scene* scn, int x, int y, int sz, float vx, float vy)
-    : scene(scn), size(sz), velX(vx), velY(vy)
+Hexa::Hexa(Scene* scn, int x, int y, int sz, float vx, float vy, int col)
+    : scene(scn), size(sz), color(static_cast<Color>(col)), velX(vx), velY(vy)
 {
     this->xPos = (float)x;
     this->yPos = (float)y;
@@ -30,7 +30,7 @@ Hexa::Hexa(Scene* scn, int x, int y, int sz, float vx, float vy)
 }
 
 Hexa::Hexa(Scene* scn, Hexa* parent, int dirX, int dirY)
-    : scene(scn)
+    : scene(scn), color(parent->color)
 {
     // Child is one size smaller
     size = parent->size + 1;
@@ -122,7 +122,7 @@ void Hexa::onDeath()
     float scale = (size >= 0 && size <= 2) ? sizeScales[size] : 0.33f;
 
     StageResources& res = gameinf.getStageRes();
-    AnimSpriteSheet* tmpl = res.hexaSplashAnim.get();
+    AnimSpriteSheet* tmpl = res.getHexaSplashAnim(static_cast<int>(color));
     if (tmpl)
     {
         int centerX = (int)xPos + width / 2;
@@ -213,9 +213,6 @@ bool Hexa::collision(Player* pl)
 Sprite* Hexa::getCurrentSprite() const
 {
     StageResources& res = gameinf.getStageRes();
-    if (res.hexaAnim && animCtrl)
-    {
-        return res.hexaAnim->getFrame(animCtrl->getCurrentFrame());
-    }
-    return nullptr;
+    AnimSpriteSheet* anim = res.getHexaAnim(static_cast<int>(color));
+    return (anim && animCtrl) ? anim->getFrame(animCtrl->getCurrentFrame()) : nullptr;
 }
