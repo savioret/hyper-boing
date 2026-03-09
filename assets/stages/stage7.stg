@@ -46,7 +46,7 @@ player2_y: 160
 at 0:
   # Top-corner glass platforms (hidden gun pickups)
   glass: x=80,  y=80, type=horiz_middle, pickup=gun
-  glass: x=496, y=80, type=horiz_middle, pickup=gun
+  glass: x=496, y=80, type=horiz_middle, pickup=claw
 
   # Main center platform - two horiz_big tiles = 128px wide, upper half, y=160
   floor: x=256, y=160, type=horiz_big
@@ -64,6 +64,6 @@ at 0:
   floor: x=400, y=300, type=horiz_middle
 
   # Two big hexas flanking above the main platform
-  hexa: x=160, y=100, size=0, velX=-1.5, velY=2.0
-  hexa: x=429, y=100, size=0, velX=1.5,  velY=2.0
+  hexa: x=160, y=100, size=0, velX=-1.5, velY=2.0 pickup=[0:claw, 1:doubleshoot, 2:timefreeze]
+  hexa: x=429, y=100, size=0, velX=1.5,  velY=2.0  pickup=[1:doubleshoot, 2:shield]
 

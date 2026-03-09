@@ -81,10 +81,8 @@ at 0:
 
 
   # Ladders (3): left side, right side, center
-  # height in segments (each 32px); y = base of ladder (bottom-middle)
-  # Side ladders: 5 segments → top at y=415-160=255 (above platform row at y=268)
-  ladder: x=62,  y=415, height=6
-  ladder: x=580, y=415, height=6
+    ladder: x=62,  y=415, height=5
+  ladder: x=580, y=415, height=5
   # Center ladder: 5 segments, passes through platform row gap
   ladder: x=320, y=300, height=1
 

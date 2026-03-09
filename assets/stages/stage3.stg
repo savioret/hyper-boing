@@ -19,7 +19,7 @@ stage_id: 3
 background: italy1.png
 music: beach1.ogg
 time_limit: 100
-player1_x: 200
+player1_x: 270
 player2_x: 350
 
 at 0:
