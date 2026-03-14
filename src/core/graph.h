@@ -309,6 +309,19 @@ public:
     void filledRectangle(int a, int b, int c, int d);
 
     /**
+     * @brief Draw an arrow from (x0,y0) to (x1,y1)
+     *
+     * Renders a thick line with an arrowhead at the tip.
+     *
+     * @param x0        Start X
+     * @param y0        Start Y
+     * @param x1        End X (tip)
+     * @param y1        End Y (tip)
+     * @param thickness Line thickness in pixels (default 2)
+     */
+    void drawArrow(int x0, int y0, int x1, int y1, int thickness = 2);
+
+    /**
      * @brief Draw an unfilled circle
      *
      * @param cx Center X coordinate
@@ -362,4 +375,5 @@ public:
      * @return Pointer to the SDL_Renderer instance
      */
     SDL_Renderer* getRenderer() const { return renderer; }
+    SDL_Window*   getWindow()   const { return window; }
 };

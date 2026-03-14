@@ -85,6 +85,7 @@ set(SOURCES
     src/game/stageloader.cpp
     src/game/weapontype.cpp
     src/ui/textoverlay.cpp
+    src/ui/editor.cpp
 )
 
 # Headers
@@ -145,6 +146,7 @@ set(HEADERS
     src/game/stageloader.h
     src/game/weapontype.h
     src/ui/textoverlay.h
+    src/ui/editor.h
     src/resource.h
 )
 

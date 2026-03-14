@@ -45,12 +45,15 @@ protected:
     // BMFont for the menu
     BMFontLoader fontLoader;
     BMFontRenderer fontRenderer;
-    
+
     // Overlay font (simplified - only needs BMFontRenderer which manages everything)
     std::unique_ptr<BMFontRenderer> overlayFontRenderer;
-    
+
     // Text overlay system for debug info and system messages
     TextOverlay textOverlay;
+
+    // Exit confirmation dialog (shared by all screens)
+    bool showingExitConfirm = false;
 
 public:
     static constexpr int GLOBAL_UPDATE_FRAMERATE = 60;
@@ -81,8 +84,22 @@ public:
     static void drawScrollingBackground();
     static void releaseSharedBackground();
     
+    // Non-virtual: handles exit dialog ENTER/ESC first, then forwards to onSDLEvent()
+    void handleSDLEvent(const SDL_Event& e);
+
+    // Override this in derived classes instead of handleSDLEvent
+    virtual void onSDLEvent(const SDL_Event& e) {}
+
+    // Exit confirmation dialog
+    void triggerExitDialog()  { showingExitConfirm = true; }
+    void dismissExitDialog()  { showingExitConfirm = false; }
+    bool isShowingExitDialog() const { return showingExitConfirm; }
+
     // Debug overlay - virtual so each screen can customize it
     virtual void drawDebugOverlay();
+
+    // Draw the exit confirmation overlay (called from finalizeRender)
+    void drawExitConfirm();
     
     // Access to text overlay
     TextOverlay& getTextOverlay() { return textOverlay; }

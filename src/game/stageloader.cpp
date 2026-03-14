@@ -591,14 +591,220 @@ bool StageLoader::load(Stage& stage, const std::string& filename)
     return true;
 }
 
+// ---- Reverse-mapping helpers for save ----
+
+static const char* ballColorToString(int c)
+{
+    switch (c) {
+        case 0: return "red";
+        case 1: return "green";
+        case 2: return "blue";
+        default: return "red";
+    }
+}
+
+static const char* hexaColorToString(int c)
+{
+    switch (c) {
+        case 0: return "green";
+        case 1: return "cyan";
+        case 2: return "orange";
+        case 3: return "purple";
+        default: return "green";
+    }
+}
+
+static const char* floorColorToString(int c)
+{
+    switch (c) {
+        case 0: return "red";
+        case 1: return "blue";
+        case 2: return "green";
+        case 3: return "yellow";
+        default: return "red";
+    }
+}
+
+static const char* floorTypeToString(FloorType t)
+{
+    switch (t) {
+        case FloorType::HORIZ_BIG:    return "horiz_big";
+        case FloorType::HORIZ_MIDDLE: return "horiz_middle";
+        case FloorType::VERT_BIG:     return "vert_big";
+        case FloorType::VERT_MIDDLE:  return "vert_middle";
+        case FloorType::SMALL:        return "small";
+        default: return "horiz_big";
+    }
+}
+
+static const char* glassTypeToString(GlassType t)
+{
+    switch (t) {
+        case GlassType::VERT_BIG:     return "vert_big";
+        case GlassType::VERT_MIDDLE:  return "vert_middle";
+        case GlassType::HORIZ_BIG:    return "horiz_big";
+        case GlassType::HORIZ_MIDDLE: return "horiz_middle";
+        case GlassType::SMALL:        return "small";
+        default: return "horiz_big";
+    }
+}
+
+static const char* pickupTypeToString(PickupType t)
+{
+    switch (t) {
+        case PickupType::GUN:          return "gun";
+        case PickupType::DOUBLE_SHOOT: return "doubleshoot";
+        case PickupType::EXTRA_TIME:   return "extratime";
+        case PickupType::TIME_FREEZE:  return "timefreeze";
+        case PickupType::EXTRA_LIFE:   return "1up";
+        case PickupType::SHIELD:       return "shield";
+        case PickupType::CLAW:         return "claw";
+        default: return "gun";
+    }
+}
+
+static void writePickupTable(std::ofstream& file, const DeathPickupEntry* entries, int count)
+{
+    if (count == 1)
+    {
+        file << ", pickup=" << pickupTypeToString(entries[0].type);
+    }
+    else if (count > 1)
+    {
+        file << ", pickup=[";
+        for (int i = 0; i < count; i++)
+        {
+            if (i > 0) file << ",";
+            file << entries[i].size << ":" << pickupTypeToString(entries[i].type);
+        }
+        file << "]";
+    }
+}
+
+static void writeObject(std::ofstream& file, const StageObject& obj)
+{
+    switch (obj.id)
+    {
+    case StageObjectType::Ball:
+    {
+        auto* p = obj.getParams<BallParams>();
+        if (!p) break;
+        file << "  ball: x=" << obj.x << ", y=" << obj.y
+             << ", size=" << p->size;
+        if (p->top != 0)
+            file << ", top=" << p->top;
+        if (p->dirX != 1.0f)
+            file << ", dirX=" << p->dirX;
+        if (p->dirY != 1)
+            file << ", dirY=" << p->dirY;
+        file << ", color=" << ballColorToString(p->ballType);
+        writePickupTable(file, p->deathPickups, p->deathPickupCount);
+        file << "\n";
+        break;
+    }
+    case StageObjectType::Floor:
+    {
+        auto* p = obj.getParams<FloorParams>();
+        if (!p) break;
+        file << "  floor: x=" << obj.x << ", y=" << obj.y
+             << ", type=" << floorTypeToString(p->floorType)
+             << ", color=" << floorColorToString(p->floorColor);
+        if (p->invisible) file << ", invisible";
+        if (p->passthrough) file << ", passthrough";
+        file << "\n";
+        break;
+    }
+    case StageObjectType::Glass:
+    {
+        auto* p = obj.getParams<GlassParams>();
+        if (!p) break;
+        file << "  glass: x=" << obj.x << ", y=" << obj.y
+             << ", type=" << glassTypeToString(p->glassType)
+             << ", color=" << floorColorToString(p->glassColor);
+        if (p->hasDeathPickup)
+            file << ", pickup=" << pickupTypeToString(p->deathPickupType);
+        if (p->invisible) file << ", invisible";
+        if (p->passthrough) file << ", passthrough";
+        file << "\n";
+        break;
+    }
+    case StageObjectType::Ladder:
+    {
+        auto* p = obj.getParams<LadderParams>();
+        if (!p) break;
+        file << "  ladder: x=" << obj.x << ", y=" << obj.y
+             << ", height=" << p->numTiles << "\n";
+        break;
+    }
+    case StageObjectType::Item:
+    {
+        auto* p = obj.getParams<PickupParams>();
+        if (!p) break;
+        file << "  pickup: x=" << obj.x << ", y=" << obj.y
+             << ", type=" << pickupTypeToString(p->pickupType) << "\n";
+        break;
+    }
+    case StageObjectType::Hexa:
+    {
+        auto* p = obj.getParams<HexaParams>();
+        if (!p) break;
+        file << "  hexa: x=" << obj.x << ", y=" << obj.y
+             << ", size=" << p->size
+             << ", velX=" << p->velX
+             << ", velY=" << p->velY
+             << ", color=" << hexaColorToString(p->hexaColor);
+        writePickupTable(file, p->deathPickups, p->deathPickupCount);
+        file << "\n";
+        break;
+    }
+    case StageObjectType::Action:
+    {
+        auto* p = obj.getParams<ActionParams>();
+        if (!p) break;
+        file << "  /" << p->command << "\n";
+        break;
+    }
+    default:
+        break;
+    }
+}
+
 bool StageLoader::save(const Stage& stage, const std::string& filename)
 {
+    // First, try to preserve header comments from the original file
+    std::vector<std::string> headerComments;
+    {
+        std::ifstream orig(filename);
+        if (orig.is_open())
+        {
+            std::string line;
+            while (std::getline(orig, line))
+            {
+                std::string trimmed = trim(line);
+                if (trimmed.empty() || trimmed[0] == '#')
+                    headerComments.push_back(line);
+                else
+                    break;  // Stop at first non-comment, non-empty line
+            }
+        }
+    }
+
     std::ofstream file(filename);
     if (!file.is_open())
         return false;
 
-    // Write stage properties
-    file << "# Stage " << stage.id << "\n";
+    // Write preserved header comments (or default)
+    if (!headerComments.empty())
+    {
+        for (const auto& c : headerComments)
+            file << c << "\n";
+    }
+    else
+    {
+        file << "# Stage " << stage.id << "\n";
+    }
+
+    // Write stage metadata
     file << "stage_id: " << stage.id << "\n";
     file << "background: " << stage.back << "\n";
     file << "music: " << stage.music << "\n";
@@ -609,13 +815,27 @@ bool StageLoader::save(const Stage& stage, const std::string& filename)
     file << "player2_y: " << stage.ypos[AppData::PLAYER2] << "\n";
     file << "\n";
 
-    // Note: Saving the sequence would require exposing it or iterating through
-    // For now, this is a basic implementation that saves stage metadata
-    // Full sequence serialization could be added if needed
+    // Group objects by start time
+    std::map<int, std::vector<const StageObject*>> timeGroups;
+    for (const auto& obj : stage.getSequence())
+    {
+        if (obj->id == StageObjectType::Null) continue;
+        timeGroups[obj->start].push_back(obj.get());
+    }
 
-    file << "# Objects would be written here\n";
-    file << "# This is a placeholder - full serialization requires sequence access\n";
+    // Write time blocks
+    for (const auto& group : timeGroups)
+    {
+        file << "at " << group.first << ":\n";
+        for (const StageObject* obj : group.second)
+        {
+            writeObject(file, *obj);
+        }
+        file << "\n";
+    }
 
     file.close();
+    LOG_INFO("StageLoader: saved stage %d to %s (%d objects)",
+        stage.id, filename.c_str(), (int)stage.getSequence().size());
     return true;
 }

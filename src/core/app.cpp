@@ -81,19 +81,55 @@ void GameState::drawDebugOverlay()
  * Final render step - adds debug overlay, console overlay, and flips
  * Call this at the end of drawAll() in derived classes
  */
+void GameState::handleSDLEvent(const SDL_Event& e)
+{
+    onSDLEvent(e);
+}
+
+void GameState::drawExitConfirm()
+{
+    Graph& graph = AppData::instance().graph;
+
+    // Semi-transparent backdrop
+    SDL_SetRenderDrawBlendMode(graph.getRenderer(), SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(graph.getRenderer(), 0, 0, 0, 180);
+    SDL_Rect backdrop = { 0, 0, RES_X, RES_Y };
+    SDL_RenderFillRect(graph.getRenderer(), &backdrop);
+
+    // Filled box background
+    SDL_SetRenderDrawColor(graph.getRenderer(), 20, 20, 40, 240);
+    SDL_Rect box = { 160, 185, 320, 90 };
+    SDL_RenderFillRect(graph.getRenderer(), &box);
+    SDL_SetRenderDrawBlendMode(graph.getRenderer(), SDL_BLENDMODE_NONE);
+
+    // Border
+    SDL_SetRenderDrawColor(graph.getRenderer(), 200, 200, 220, 255);
+    SDL_RenderDrawRect(graph.getRenderer(), &box);
+
+    // Text
+    graph.setDrawColor(255, 255, 255, 255);
+    graph.text("Exit to main menu?", 215, 210);
+    graph.setDrawColor(180, 180, 180, 255);
+    graph.text("ENTER: Confirm    ESC: Cancel", 192, 250);
+}
+
 void GameState::finalizeRender()
 {
     AppData& appData = AppData::instance();
-    
+
     // Draw debug overlay if enabled
     drawDebugOverlay();
-    
+
     // Render text overlay
     textOverlay.render();
-    
+
+    // Draw exit confirmation dialog on top (before AppConsole)
+    if (showingExitConfirm)
+        drawExitConfirm();
+
     // Render AppConsole overlay (always last, on top of everything)
     AppConsole::instance().render();
-    
+
     // Present the rendered frame
     appData.graph.flip();
 }

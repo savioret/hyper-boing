@@ -1,6 +1,8 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <cstdio>
+#include <cmath>
+#include <algorithm>
 #include <string>
 #include <iostream>
 #include "sprite2d.h"
@@ -344,6 +346,43 @@ void Graph::rectangle(int a, int b, int c, int d) {
 void Graph::filledRectangle(int a, int b, int c, int d) {
     SDL_Rect rect = { a, b, c - a, d - b };
     SDL_RenderFillRect(renderer, &rect);
+}
+
+void Graph::drawArrow(int x0, int y0, int x1, int y1, int thickness)
+{
+    float dx = (float)(x1 - x0);
+    float dy = (float)(y1 - y0);
+    float len = std::sqrt(dx * dx + dy * dy);
+    if (len < 1.0f) return;
+
+    float ndx = dx / len;   // normalised direction
+    float ndy = dy / len;
+    float px  = -ndy;       // perpendicular
+    float py  =  ndx;
+
+    // Thick shaft: draw 'thickness' parallel single-pixel lines
+    int half = thickness / 2;
+    for (int i = -half; i <= half; ++i)
+    {
+        int ox = (int)(px * i);
+        int oy = (int)(py * i);
+        SDL_RenderDrawLine(renderer, x0 + ox, y0 + oy, x1 + ox, y1 + oy);
+    }
+
+    // Arrowhead: two lines at ±30° from the reversed direction
+    const float headLen = std::max(6.0f, (float)thickness * 3.0f);
+    const float cosA = 0.866f;  // cos(30°)
+    const float sinA = 0.500f;  // sin(30°)
+    float bx = -ndx, by = -ndy; // back direction from tip
+
+    // Rotate +30° and -30°
+    int ax1 = x1 + (int)((bx * cosA - by * sinA) * headLen);
+    int ay1 = y1 + (int)((bx * sinA + by * cosA) * headLen);
+    int ax2 = x1 + (int)((bx * cosA + by * sinA) * headLen);
+    int ay2 = y1 + (int)((-bx * sinA + by * cosA) * headLen);
+
+    SDL_RenderDrawLine(renderer, x1, y1, ax1, ay1);
+    SDL_RenderDrawLine(renderer, x1, y1, ax2, ay2);
 }
 
 void Graph::circle(int cx, int cy, int radius) {

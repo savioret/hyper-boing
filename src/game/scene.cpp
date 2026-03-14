@@ -41,8 +41,10 @@ int Scene::init()
     char txt[MAX_PATH];
 
     // Load stage content from file (background, music, and spawn sequence)
-    if (!stage->stageFile.empty())
+    // Skip disk read when coming from Editor with in-memory changes
+    if (!stage->skipFileReload && !stage->stageFile.empty())
         StageLoader::load(*stage, stage->stageFile);
+    stage->skipFileReload = false;
 
     timeLine = 0;
     dSecond = 0;
@@ -1725,29 +1727,27 @@ void Scene::drawScore()
         }
 }
 
-void Scene::drawMark()
+void Scene::drawMark(Graph& graph, StageResources& res)
 {
-    StageResources& res = gameinf.getStageRes();
-    
     for (int j = 0; j < 640; j += 16)
     {
-        appGraph.draw(&res.mark[2], j, 0);
-        appGraph.draw(&res.mark[1], j, Stage::MAX_Y + 1);
-        appGraph.draw(&res.mark[0], j, Stage::MAX_Y + 17);
-        appGraph.draw(&res.mark[0], j, Stage::MAX_Y + 33);
-        appGraph.draw(&res.mark[2], j, Stage::MAX_Y + 49);
+        graph.draw(&res.mark[2], j, 0);
+        graph.draw(&res.mark[1], j, Stage::MAX_Y + 1);
+        graph.draw(&res.mark[0], j, Stage::MAX_Y + 17);
+        graph.draw(&res.mark[0], j, Stage::MAX_Y + 33);
+        graph.draw(&res.mark[2], j, Stage::MAX_Y + 49);
     }
 
     for (int j = 0; j < 416; j += 16)
     {
-        appGraph.draw(&res.mark[4], 0, j);
-        appGraph.draw(&res.mark[3], Stage::MAX_X + 1, j);
+        graph.draw(&res.mark[4], 0, j);
+        graph.draw(&res.mark[3], Stage::MAX_X + 1, j);
     }
 
-    appGraph.draw(&res.mark[0], 0, 0);
-    appGraph.draw(&res.mark[0], Stage::MAX_X + 1, 0);
-    appGraph.draw(&res.mark[0], 0, Stage::MAX_Y + 1);
-    appGraph.draw(&res.mark[0], Stage::MAX_X + 1, Stage::MAX_Y + 1);
+    graph.draw(&res.mark[0], 0, 0);
+    graph.draw(&res.mark[0], Stage::MAX_X + 1, 0);
+    graph.draw(&res.mark[0], 0, Stage::MAX_Y + 1);
+    graph.draw(&res.mark[0], Stage::MAX_X + 1, Stage::MAX_Y + 1);
 }
 
 /**
@@ -2013,7 +2013,7 @@ void Scene::drawHUD()
 {
     StageResources& res = gameinf.getStageRes();
 
-    drawMark();
+    Scene::drawMark(appGraph, res);
     drawScore();
     appGraph.draw(&res.time, 320 - res.time.getWidth() / 2, Stage::MAX_Y + 3);
     appGraph.draw(&fontNum[FONT_BIG], timeRemaining, 320, Stage::MAX_Y + 25, ALIGN_CENTER);

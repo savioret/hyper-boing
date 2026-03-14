@@ -383,6 +383,7 @@ public:
     int xpos[2]; // initial positions for players 1 and 2 TODO: Review this
     int ypos[2]; // initial Y positions for players 1 and 2 (default: MAX_Y)
     std::string stageFile;  ///< Path to .stg file (set by AppData::initStages, loaded by Scene::init)
+    bool skipFileReload = false;  ///< Set by Editor→Scene transition; cleared in Scene::init()
                    
 private:
     std::vector<std::unique_ptr<StageObject>> sequence;
@@ -450,6 +451,21 @@ public:
      * @param params FloorParams with all configuration
      */
     void spawnFloor(const FloorParams& params);
+
+    /**
+     * Get read-only access to the object sequence (for Editor/Save)
+     */
+    const std::vector<std::unique_ptr<StageObject>>& getSequence() const { return sequence; }
+
+    /**
+     * Replace the entire object sequence (used by Editor when saving back)
+     */
+    void replaceSequence(std::vector<std::unique_ptr<StageObject>>&& newSeq)
+    {
+        sequence = std::move(newSeq);
+        sequenceIndex = 0;
+        countItemsLeft();
+    }
 
     /**
      * Pop next object from sequence if its start time has been reached

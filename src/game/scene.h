@@ -605,8 +605,9 @@ public:
     
     /**
      * @brief Draws border markers around play area
+     * Static so the Editor can call it without a Scene instance.
      */
-    void drawMark();
+    static void drawMark(Graph& graph, StageResources& res);
     
     /**
      * @brief Draws collision bounding boxes (debug mode)

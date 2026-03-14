@@ -3,6 +3,7 @@
 #include "menu.h"
 #include "configscreen.h"
 #include "scene.h"
+#include "../ui/editor.h"
 #include "logger.h"
 #include "appconsole.h"
 #include "eventmanager.h"
@@ -102,13 +103,19 @@ void GameRunner::processEvents()
         {
             continue; // Console consumed the event, don't process game input
         }
-        
+
+        // Forward all events to current screen (Editor uses this for mouse input)
+        if (appData.currentScreen)
+        {
+            appData.currentScreen->handleSDLEvent(e);
+        }
+
         // Handle window close event
         if (e.type == SDL_QUIT)
         {
             appData.quit = true;
         }
-        
+
         // Only process game events if console is NOT visible
         if (!AppConsole::instance().isVisible())
         {
@@ -117,16 +124,54 @@ void GameRunner::processEvents()
             {
                 switch (e.key.keysym.sym)
                 {
-                    case SDLK_ESCAPE:
-                        // ESC key - return to menu if not already there
-                        if (!appData.isMenu())
+                    case SDLK_e:
+                        // Ctrl+E - toggle between Scene and Editor
+                        if (e.key.keysym.mod & KMOD_CTRL)
                         {
-                            appData.goBack = true;
+                            if (Scene* scene = dynamic_cast<Scene*>(appData.currentScreen.get()))
+                            {
+                                Stage* stg = &appData.getStages()[appData.currentStage - 1];
+                                appData.nextScreen = std::make_unique<Editor>(stg);
+                                handleStateTransition();
+                            }
+                            else if (Editor* editor = dynamic_cast<Editor*>(appData.currentScreen.get()))
+                            {
+                                Stage* stg = editor->getStage();
+                                editor->writeBackToStage();
+                                stg->skipFileReload = true;
+                                stg->restart();
+                                appData.nextScreen = std::make_unique<Scene>(stg);
+                                handleStateTransition();
+                            }
                         }
                         break;
-                        
-                    case SDLK_p:
-                        // P key - toggle pause
+
+                    case SDLK_ESCAPE:
+                        if (!appData.isMenu())
+                        {
+                            auto* screen = appData.currentScreen.get();
+                            if (screen->isShowingExitDialog())
+                            {
+                                screen->dismissExitDialog();
+                            }
+                            else
+                            {
+                                // Don't open dialog if Editor is mid-insertion (onSDLEvent cancels it)
+                                Editor* ed = dynamic_cast<Editor*>(screen);
+                                if (!ed || !ed->isPlacing())
+                                    screen->triggerExitDialog();
+                            }
+                        }
+                        break;
+
+                    case SDLK_RETURN:
+                    case SDLK_KP_ENTER:
+                        if (appData.currentScreen && appData.currentScreen->isShowingExitDialog())
+                            appData.goBack = true;
+                        break;
+
+                    case SDLK_F5:
+                        // F5 key - toggle pause
                         if (appData.currentScreen)
                         {
                             appData.currentScreen->setPause(!appData.currentScreen->isPaused());
