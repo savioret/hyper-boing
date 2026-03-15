@@ -246,7 +246,7 @@ void Ball::update(float dt)
 
     // Calculate new Y position using physics equation
     yPos = y0 + 0.5f * gravity * (time * time);
-    yPos = (float)(Stage::MAX_Y - top) + yPos;
+    yPos = (float)(Stage::MAX_Y - top + 1) + yPos;
 
     xPos += incx;
     time += (float)dirY;
@@ -254,7 +254,7 @@ void Ball::update(float dt)
     if (dirY == 1)
     {
         // Falling: check if hit floor
-        if (yPos + diameter >= Stage::MAX_Y)
+        if (yPos + diameter >= Stage::MAX_Y+1)
         {
             y0 = 0;
             dirY = -1;

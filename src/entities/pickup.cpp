@@ -34,7 +34,7 @@ Pickup::Pickup(Scene* scene, int x, int y, PickupType type)
 float Pickup::findGroundBelow() const
 {
     if (!scene)
-        return (float)Stage::MAX_Y;
+        return (float)Stage::MAX_Y+1;
 
     // Use a narrow strip (10% of sprite width) centered at xPos.
     // A full-width check would cause pickups to land on platforms they barely touch at the edge.
@@ -42,7 +42,7 @@ float Pickup::findGroundBelow() const
     int stripLeft  = (int)xPos - halfStrip;
     int stripRight = (int)xPos + halfStrip;
 
-    float bestY = (float)Stage::MAX_Y;
+    float bestY = (float)Stage::MAX_Y+1;
 
     for (const auto& floor : scene->lsFloor)
     {

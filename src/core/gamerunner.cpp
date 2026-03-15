@@ -178,15 +178,6 @@ void GameRunner::processEvents()
                         }
                         break;
                         
-                    case SDLK_c:
-                        // C key - open config screen
-                        appData.nextScreen = std::make_unique<ConfigScreen>();
-                        if (appData.nextScreen)
-                        {
-                            handleStateTransition();
-                        }
-                        break;
-                        
                     case SDLK_TAB:
                         // TAB key - toggle debug mode
                         appData.debugMode = !appData.debugMode;

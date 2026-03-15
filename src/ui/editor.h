@@ -85,9 +85,12 @@ private:
     // Floating object (being placed, follows mouse until click)
     std::unique_ptr<EditorObject> floatingObj;
 
+    // Last cloned object template (for repeated C-key placement)
+    std::unique_ptr<EditorObject> cloneTemplate;
+
     // UI toggles
     bool showBBoxes = true;
-    bool showGrid = false;
+    bool showGrid = true;
     bool dirty = false;
 
     // Status bar message

@@ -91,7 +91,7 @@ void Hexa::update(float dt)
         velX = -velX;
     }
 
-    if (velY > 0 && yPos + height >= Stage::MAX_Y)
+    if (velY > 0 && yPos + height >= Stage::MAX_Y+1)
     {
         yPos = (float)(Stage::MAX_Y - height);
         velY = -velY;

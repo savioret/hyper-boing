@@ -140,7 +140,7 @@ public:
     bool isInFlashState() const { return flashing; }
     Sprite* getCurrentSprite() const;
 
-    int getCollisionRadius() const { return std::min(width, height) / 2; }
+    int getCollisionRadius() const { return std::min(width, height) / 2 - 1; }
     void getCollisionCenter(int& cx, int& cy) const {
         cx = (int)xPos + width / 2;
         cy = (int)yPos + height / 2;

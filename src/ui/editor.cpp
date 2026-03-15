@@ -31,6 +31,21 @@ static int snapToGrid(int v, bool snap)
     return (v + G / 2) / G * G;
 }
 
+static std::unique_ptr<EditorObject> cloneEditorObject(const EditorObject& src)
+{
+    auto eo = std::make_unique<EditorObject>();
+    eo->type     = src.type;
+    eo->x        = src.x;
+    eo->y        = src.y;
+    eo->startTime = src.startTime;
+    eo->spriteW  = src.spriteW;
+    eo->spriteH  = src.spriteH;
+    eo->selected = false;
+    if (src.params)
+        eo->params = src.params->clone();
+    return eo;
+}
+
 // ============================================================
 // Editor - Construction / Lifecycle
 // ============================================================
@@ -411,6 +426,33 @@ void Editor::onKeyDown(SDL_Keycode key, Uint16 mod)
             openPickupModal();
         break;
 
+    case SDLK_c:
+    {
+        EditorObject* sel = findById(selectedId);
+        const EditorObject* tmpl = sel ? sel : cloneTemplate.get();
+        if (!tmpl) break;
+
+        // Save a persistent template for next C press without selection
+        if (sel)
+            cloneTemplate = cloneEditorObject(*sel);
+
+        // Start placing a clone at mouse position (same logic as moveAll floating update)
+        floatingObj = cloneEditorObject(*tmpl);
+        floatingObj->id = 0;
+        if (isBottomMiddleType(floatingObj->type))
+        {
+            floatingObj->x = (float)snapToGrid(mouseX, showGrid);
+            floatingObj->y = (float)snapToGrid(mouseY, showGrid);
+        }
+        else
+        {
+            floatingObj->x = (float)snapToGrid(mouseX - floatingObj->spriteW / 2, showGrid);
+            floatingObj->y = (float)snapToGrid(mouseY - floatingObj->spriteH / 2, showGrid);
+        }
+        setStatus("Clone: click to place, Esc to cancel");
+        break;
+    }
+
     case SDLK_F1:
         saveToFile();
         break;
@@ -427,8 +469,8 @@ void Editor::onKeyDown(SDL_Keycode key, Uint16 mod)
             {
                 if (auto* p = dynamic_cast<BallParams*>(sel->params.get()))
                 {
-                    if (key == SDLK_LEFT)  p->dirX = std::max(-10.0f, p->dirX - 0.5f);
-                    if (key == SDLK_RIGHT) p->dirX = std::min( 10.0f, p->dirX + 0.5f);
+                    if (key == SDLK_LEFT)  p->dirX = std::max(-10.0f, p->dirX - 0.2f);
+                    if (key == SDLK_RIGHT) p->dirX = std::min( 10.0f, p->dirX + 0.2f);
                     if (key == SDLK_UP)    p->dirY = -1;
                     if (key == SDLK_DOWN)  p->dirY = 1;
                     char buf[64];
@@ -441,10 +483,10 @@ void Editor::onKeyDown(SDL_Keycode key, Uint16 mod)
             {
                 if (auto* p = dynamic_cast<HexaParams*>(sel->params.get()))
                 {
-                    if (key == SDLK_LEFT)  p->velX = std::max(-10.0f, p->velX - 0.5f);
-                    if (key == SDLK_RIGHT) p->velX = std::min( 10.0f, p->velX + 0.5f);
-                    if (key == SDLK_UP)    p->velY = std::max(-10.0f, p->velY - 0.5f);
-                    if (key == SDLK_DOWN)  p->velY = std::min( 10.0f, p->velY + 0.5f);
+                    if (key == SDLK_LEFT)  p->velX = std::max(-10.0f, p->velX - 0.2f);
+                    if (key == SDLK_RIGHT) p->velX = std::min( 10.0f, p->velX + 0.2f);
+                    if (key == SDLK_UP)    p->velY = std::max(-10.0f, p->velY - 0.2f);
+                    if (key == SDLK_DOWN)  p->velY = std::min( 10.0f, p->velY + 0.2f);
                     char buf[64];
                     std::snprintf(buf, sizeof(buf), "Hexa: velX=%.1f velY=%.1f", p->velX, p->velY);
                     setStatus(buf);
@@ -775,7 +817,7 @@ void Editor::drawPlayfieldBorder()
     if (showGrid)
     {
         SDL_SetRenderDrawBlendMode(appGraph.getRenderer(), SDL_BLENDMODE_BLEND);
-        appGraph.setDrawColor(160, 160, 160, 128);
+        appGraph.setDrawColor(160, 160, 160, 89);   // 35% alpha
         for (int gx = Stage::MIN_X; gx <= Stage::MAX_X; gx += 8)
             SDL_RenderDrawLine(appGraph.getRenderer(), gx, Stage::MIN_Y, gx, Stage::MAX_Y);
         for (int gy = Stage::MIN_Y; gy <= Stage::MAX_Y; gy += 8)
@@ -1051,7 +1093,7 @@ void Editor::drawStatusBar()
     // Row 3 (y≈459): global key hints
     const int ROW3 = BAR_Y + 36;
     appGraph.setDrawColor(120, 120, 120, 255);
-    appGraph.text("1-6:Place  Q/W:Cycle  B:Boxes  G:Grid  Del:Delete  F1:Save  Ctrl+E:Exit", 5, ROW3);
+    appGraph.text("1-6:Place  C:Clone  Q/W:Cycle  B:Boxes  G:Grid  Del:Delete  F1:Save  Ctrl+E:Exit", 5, ROW3);
 }
 
 // ============================================================

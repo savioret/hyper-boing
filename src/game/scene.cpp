@@ -304,7 +304,7 @@ void Scene::checkValidPosition(int& x, int& y, int ballDiameter)
     
     if (yWasRandom)
     {
-        y = std::rand() % 394 + 22; // Random Y in range [22, 416) - playable area
+        y = std::rand() % 394 + 22; // Random Y in range [22, 415) - playable area
     }
     
     // Try to find valid position (up to 10 attempts)
@@ -542,8 +542,8 @@ float Scene::findGroundLevel(Player* player) const
 {
     if (!player) return (float)Stage::MAX_Y;
 
-    float groundY = (float)Stage::MAX_Y;  // Default to screen bottom
-    const char* groundSource = "MAX_Y";
+    float groundY = (float)Stage::MAX_Y+1;  // Default to screen bottom
+    //const char* groundSource = "MAX_Y";
 
     // Check floors
     Platform* floor = findFloorUnderPlayer(player);
@@ -553,7 +553,7 @@ float Scene::findGroundLevel(Player* player) const
         if (floorY < groundY)
         {
             groundY = floorY;
-            groundSource = "floor";
+            //groundSource = "floor";
         }
     }
 
@@ -565,12 +565,12 @@ float Scene::findGroundLevel(Player* player) const
         if (ladderTopY < groundY)
         {
             groundY = ladderTopY;
-            groundSource = "ladder_top";
+            //groundSource = "ladder_top";
         }
     }
 
-    CollisionBox playerBox = player->getCollisionBox();
-    int playerFeetY = playerBox.y + playerBox.h;
+    //CollisionBox playerBox = player->getCollisionBox();
+    //int playerFeetY = playerBox.y + playerBox.h;
     //LOG_TRACE("findGroundLevel: playerFeetY=%d, groundY=%.1f, source=%s",
     //          playerFeetY, groundY, groundSource);
 
@@ -1738,7 +1738,7 @@ void Scene::drawMark(Graph& graph, StageResources& res)
         graph.draw(&res.mark[2], j, Stage::MAX_Y + 49);
     }
 
-    for (int j = 0; j < 416; j += 16)
+    for (int j = 0; j < 415; j += 16)
     {
         graph.draw(&res.mark[4], 0, j);
         graph.draw(&res.mark[3], Stage::MAX_X + 1, j);
@@ -2050,7 +2050,7 @@ void Scene::drawStateOverlay()
     {
         // Center the ready sprite on screen
         int x = (640 - res.ready.getWidth()) / 2;
-        int y = (416 - res.ready.getHeight()) / 2;
+        int y = (415 - res.ready.getHeight()) / 2;
         appGraph.draw(&res.ready, x, y);
     }
 }
