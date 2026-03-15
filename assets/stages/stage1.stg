@@ -15,7 +15,7 @@
 
 stage_id: 1
 background: chinatown1.png
-music: china1.ogg
+music: asia1.ogg
 time_limit: 100
 player1_x: 250
 player2_x: 350

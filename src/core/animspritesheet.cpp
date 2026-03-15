@@ -1,6 +1,7 @@
 #include "animspritesheet.h"
 #include "asepriteloader.h"
 #include "logger.h"
+#include <climits>
 
 // Static empty string for getStateName() when not a state machine
 const std::string AnimSpriteSheet::emptyString;

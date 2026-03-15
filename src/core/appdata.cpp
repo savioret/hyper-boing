@@ -24,6 +24,10 @@
 // Initialize static singleton instance
 std::unique_ptr<AppData> AppData::s_instance = nullptr;
 
+// Out-of-class definitions required by C++14 for ODR-used static constexpr members
+constexpr int AppData::PLAYER1;
+constexpr int AppData::PLAYER2;
+
 
 void Keys::setLeft(SDL_Scancode l) 
 { 

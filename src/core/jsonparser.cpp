@@ -18,15 +18,13 @@ bool JsonValue::has(const std::string& key) const
 
 std::vector<std::string> JsonValue::getKeys() const
 {
-    std::vector<std::string> keys;
+    // Return keys in insertion order (critical for Aseprite hash-format JSON
+    // where frame order depends on key ordering in the file)
     if (isObject())
     {
-        for (const auto& pair : objectValue)
-        {
-            keys.push_back(pair.first);
-        }
+        return insertionOrder;
     }
-    return keys;
+    return {};
 }
 
 const JsonValue& JsonValue::operator[](size_t index) const
@@ -84,6 +82,11 @@ void JsonValue::addMember(const std::string& key, JsonValue value)
 {
     if (isObject())
     {
+        // Track insertion order for keys (only add to order list if new key)
+        if (objectValue.find(key) == objectValue.end())
+        {
+            insertionOrder.push_back(key);
+        }
         objectValue[key] = std::move(value);
     }
 }

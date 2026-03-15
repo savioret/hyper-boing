@@ -59,7 +59,7 @@ void FreezeEffect::drawCountdown()
     if (!active || timer > BLINK_WARN || !countdownFont) return;
 
     int countdownVal = (int)timer + 1;  // 3, 2, 1
-    char buf[4];
+    char buf[12];
     std::snprintf(buf, sizeof(buf), "%d", countdownVal);
 
     int textW = countdownFont->getTextWidth(buf);

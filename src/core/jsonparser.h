@@ -60,6 +60,7 @@ public:
 private:
     Type type;
     std::unordered_map<std::string, JsonValue> objectValue;
+    std::vector<std::string> insertionOrder;  // Preserves key insertion order for hash-format JSON
     std::vector<JsonValue> arrayValue;
     std::string stringValue;
     double numberValue = 0.0;
