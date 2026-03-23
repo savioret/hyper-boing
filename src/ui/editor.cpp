@@ -24,11 +24,10 @@ CollisionBox EditorObject::getHitBox() const
     return { (int)x, (int)y, spriteW, spriteH };
 }
 
-static int snapToGrid(int v, bool snap)
+static int snapToGrid(int v, int gridSize)
 {
-    if (!snap) return v;
-    const int G = 8;
-    return (v + G / 2) / G * G;
+    if (gridSize <= 0) return v;
+    return (v + gridSize / 2) / gridSize * gridSize;
 }
 
 static std::unique_ptr<EditorObject> cloneEditorObject(const EditorObject& src)
@@ -89,13 +88,13 @@ GameState* Editor::moveAll(float dt)
     {
         if (isBottomMiddleType(floatingObj->type))
         {
-            floatingObj->x = (float)snapToGrid(mouseX, showGrid);
-            floatingObj->y = (float)snapToGrid(mouseY, showGrid);
+            floatingObj->x = (float)snapToGrid(mouseX, gridMode);
+            floatingObj->y = (float)snapToGrid(mouseY, gridMode);
         }
         else
         {
-            floatingObj->x = (float)snapToGrid(mouseX - floatingObj->spriteW / 2, showGrid);
-            floatingObj->y = (float)snapToGrid(mouseY - floatingObj->spriteH / 2, showGrid);
+            floatingObj->x = (float)snapToGrid(mouseX - floatingObj->spriteW / 2, gridMode);
+            floatingObj->y = (float)snapToGrid(mouseY - floatingObj->spriteH / 2, gridMode);
         }
     }
 
@@ -259,8 +258,8 @@ void Editor::onMouseMove(int mx, int my)
 {
     if (draggedPlayer >= 0)
     {
-        playerX[draggedPlayer] = (float)snapToGrid(mx - dragOffsetX, showGrid);
-        playerY[draggedPlayer] = (float)snapToGrid(my - dragOffsetY, showGrid);
+        playerX[draggedPlayer] = (float)snapToGrid(mx - dragOffsetX, gridMode);
+        playerY[draggedPlayer] = (float)snapToGrid(my - dragOffsetY, gridMode);
         dirty = true;
         return;
     }
@@ -274,13 +273,13 @@ void Editor::onMouseMove(int mx, int my)
             {
                 // hitbox top-left = (toRenderX(x,w), toRenderY(y,h))
                 // Reverse: x = hitbox_x + w/2,  y = hitbox_y + h
-                sel->x = (float)snapToGrid(mx - dragOffsetX + sel->spriteW / 2, showGrid);
-                sel->y = (float)snapToGrid(my - dragOffsetY + sel->spriteH, showGrid);
+                sel->x = (float)snapToGrid(mx - dragOffsetX + sel->spriteW / 2, gridMode);
+                sel->y = (float)snapToGrid(my - dragOffsetY + sel->spriteH, gridMode);
             }
             else
             {
-                sel->x = (float)snapToGrid(mx - dragOffsetX, showGrid);
-                sel->y = (float)snapToGrid(my - dragOffsetY, showGrid);
+                sel->x = (float)snapToGrid(mx - dragOffsetX, gridMode);
+                sel->y = (float)snapToGrid(my - dragOffsetY, gridMode);
             }
             dirty = true;
         }
@@ -369,8 +368,8 @@ void Editor::onKeyDown(SDL_Keycode key, Uint16 mod)
         break;
 
     case SDLK_g:
-        showGrid = !showGrid;
-        setStatus(showGrid ? "Grid ON" : "Grid OFF");
+        gridMode = (gridMode == 1) ? 2 : (gridMode == 2) ? 0 : 1;
+        setStatus(gridMode == 1 ? "Grid 8px" : gridMode == 2 ? "Grid 4px" : "Grid OFF");
         break;
 
     case SDLK_i:
@@ -441,13 +440,13 @@ void Editor::onKeyDown(SDL_Keycode key, Uint16 mod)
         floatingObj->id = 0;
         if (isBottomMiddleType(floatingObj->type))
         {
-            floatingObj->x = (float)snapToGrid(mouseX, showGrid);
-            floatingObj->y = (float)snapToGrid(mouseY, showGrid);
+            floatingObj->x = (float)snapToGrid(mouseX, gridMode);
+            floatingObj->y = (float)snapToGrid(mouseY, gridMode);
         }
         else
         {
-            floatingObj->x = (float)snapToGrid(mouseX - floatingObj->spriteW / 2, showGrid);
-            floatingObj->y = (float)snapToGrid(mouseY - floatingObj->spriteH / 2, showGrid);
+            floatingObj->x = (float)snapToGrid(mouseX - floatingObj->spriteW / 2, gridMode);
+            floatingObj->y = (float)snapToGrid(mouseY - floatingObj->spriteH / 2, gridMode);
         }
         setStatus("Clone: click to place, Esc to cancel");
         break;
@@ -813,14 +812,15 @@ void Editor::drawBackground()
 
 void Editor::drawPlayfieldBorder()
 {
-    // Draw 8px snap grid at 50% alpha
-    if (showGrid)
+    // Draw snap grid at 35% alpha
+    if (gridMode > 0)
     {
+        const int G = (gridMode == 2) ? 4 : 8;
         SDL_SetRenderDrawBlendMode(appGraph.getRenderer(), SDL_BLENDMODE_BLEND);
         appGraph.setDrawColor(160, 160, 160, 89);   // 35% alpha
-        for (int gx = Stage::MIN_X; gx <= Stage::MAX_X; gx += 8)
+        for (int gx = Stage::MIN_X; gx <= Stage::MAX_X; gx += G)
             SDL_RenderDrawLine(appGraph.getRenderer(), gx, Stage::MIN_Y, gx, Stage::MAX_Y);
-        for (int gy = Stage::MIN_Y; gy <= Stage::MAX_Y; gy += 8)
+        for (int gy = Stage::MIN_Y; gy <= Stage::MAX_Y; gy += G)
             SDL_RenderDrawLine(appGraph.getRenderer(), Stage::MIN_X, gy, Stage::MAX_X, gy);
         SDL_SetRenderDrawBlendMode(appGraph.getRenderer(), SDL_BLENDMODE_NONE);
     }

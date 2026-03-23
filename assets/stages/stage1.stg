@@ -13,7 +13,7 @@
 # y~MAX_Y                1   2
 #        ----------------------------------------
 
-stage_id: 1
+stage_id: 1-1
 background: chinatown1.png
 music: asia1.ogg
 time_limit: 100

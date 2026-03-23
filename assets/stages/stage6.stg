@@ -34,7 +34,7 @@
 #     Ball x = col_x + 8 (horizontal center of 16px glass)
 #     Ball y = 30, 47, 64  (above / inside top glass, bounce downward)
 #
-stage_id: 6
+stage_id: 1-6
 background: egypt1.png
 music: scifi1.ogg
 time_limit: 100

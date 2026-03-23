@@ -54,7 +54,7 @@
 #   - Vertical floors on the outer edges (x=16, x=608) act as side pillars.
 #
 
-stage_id: 9
+stage_id: 1-9
 background: asia1.png
 music: winter1.ogg
 time_limit: 100

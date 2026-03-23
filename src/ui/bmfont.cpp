@@ -6,6 +6,13 @@
 #include <sstream>
 #include <cstring>
 
+static int parseInt(const std::string& str, int defaultVal = 0)
+{
+    char* end;
+    long parsed = std::strtol(str.c_str(), &end, 10);
+    return (end != str.c_str()) ? static_cast<int>(parsed) : defaultVal;
+}
+
 void BmNumFont::init(Sprite* s)
 {
     sprite = s;
@@ -106,7 +113,7 @@ bool BMFontLoader::parseLine(const std::string& line)
             if (pos != std::string::npos)
             {
                 std::string key = token.substr(0, pos);
-                int value = std::stoi(token.substr(pos + 1));
+                int value = parseInt(token.substr(pos + 1));
 
                 if (key == "lineHeight") lineHeight = value;
                 else if (key == "base") base = value;
@@ -146,7 +153,7 @@ bool BMFontLoader::parseLine(const std::string& line)
             if (pos != std::string::npos)
             {
                 std::string key = token.substr(0, pos);
-                int value = std::stoi(token.substr(pos + 1));
+                int value = parseInt(token.substr(pos + 1));
 
                 if (key == "id") character.id = value;
                 else if (key == "x") character.x = value;

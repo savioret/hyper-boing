@@ -160,6 +160,8 @@ private:
 
     // Font renderer for hit-score popups (system font, owned by Scene)
     BMFontRenderer hitScoreFontRenderer;
+    BMFontRenderer worldFont;   ///< Font for "WORLD X-Y" HUD display
+    BMFontRenderer timeFont;    ///< Font for HUD timer display (pixelgame.fnt)
     
     // Ball management
     std::vector<std::unique_ptr<Ball>> pendingBalls;  ///< Buffer for balls created from splits

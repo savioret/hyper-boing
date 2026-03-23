@@ -40,7 +40,7 @@
 #     lower left and right sides.
 #
 
-stage_id: 8
+stage_id: 1-8
 background: venice2.png
 music: beach1.ogg
 time_limit: 100

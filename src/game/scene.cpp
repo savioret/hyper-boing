@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <string>
 #include <climits>
 #include <memory>
 #include "../main.h"
@@ -256,6 +257,13 @@ int Scene::initBitmaps()
 
     // Initialize hit-score popup font
     hitScoreFontRenderer.loadFont(&appGraph, "assets/fonts/maganize_18.fnt");
+
+    // Initialize HUD timer font
+    timeFont.loadFont(&appGraph, "assets/fonts/pixelgame_28.fnt");
+
+    // Initialize HUD world-label font
+    worldFont.loadFont(&appGraph, "assets/fonts/thickfont_stroke.fnt");
+    worldFont.setScale(0.7f);
 
     // Load freeze countdown font (3-2-1 during last 3s of time freeze)
     freezeEffect.init(&appGraph);
@@ -2015,8 +2023,30 @@ void Scene::drawHUD()
 
     Scene::drawMark(appGraph, res);
     drawScore();
-    appGraph.draw(&res.time, 320 - res.time.getWidth() / 2, Stage::MAX_Y + 3);
-    appGraph.draw(&fontNum[FONT_BIG], timeRemaining, 320, Stage::MAX_Y + 25, ALIGN_CENTER);
+
+    // Fixed column positions for the center HUD block
+    constexpr int TIME_LABEL_X  = 235;  // X for TIME image (left edge)
+    constexpr int TIME_VALUE_X  = 378;  // X for green timer number (right edge)
+    constexpr int WORLD_LABEL_X = 255;  // X for WORLD text (left edge)
+    constexpr int WORLD_ID_X    = 378;  // X for stage ID text (right edge)
+    constexpr int ROW1_Y = Stage::MAX_Y + 10;
+    constexpr int ROW2_Y = Stage::MAX_Y + 38;
+
+    // Row 1: TIME label | timer value
+    appGraph.draw(&res.time, TIME_LABEL_X, ROW1_Y);
+    {
+        char timeBuf[16];
+        std::snprintf(timeBuf, sizeof(timeBuf), "%d", timeRemaining);
+        timeFont.text(timeBuf, TIME_VALUE_X, ROW1_Y-9, TextAlign::Right);
+    }
+
+    // Row 2: WORLD label | stage display ID (honey yellow, thickfont_stroke)
+    const std::string& dispId = stage->displayId.empty()
+        ? std::to_string(stage->id) : stage->displayId;
+    worldFont.setColor(255, 195, 30, 255);
+    worldFont.text("WORLD", WORLD_LABEL_X, ROW2_Y, TextAlign::Left);
+    worldFont.setColor(255, 255, 255, 255);
+    worldFont.text(dispId.c_str(), WORLD_ID_X, ROW2_Y, TextAlign::Right);
 }
 
 void Scene::drawStateOverlay()

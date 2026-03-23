@@ -1,0 +1,58 @@
+# Stage 5 Configuration - Staircases and Side Spawns
+#
+# Simplified layout for t=0 (not to scale, Y shown by rows):
+#
+# y~80                     @
+#                   ===============
+#                   =             =
+#                   =   O     O   =
+#                   =             =
+#                   =             =
+#                   =             =
+#
+#
+# y~MAX_Y         1                 2   
+#        ----------------------------------------
+#
+
+
+stage_id: 1-12
+background: egypt1.png
+music: winter1.ogg
+time_limit: 100
+player1_x: 210
+player2_x: 428
+player1_y: 176
+player2_y: 176
+
+at 0:
+  floor: x=286, y=176, type=horiz_big, color=blue
+  ball: x=248, y=169, size=2, color=blue
+  glass: x=270, y=170, type=vert_big, color=blue
+  glass: x=270, y=234, type=vert_middle, color=blue
+  floor: x=252, y=266, type=small, color=blue
+  glass: x=234, y=234, type=vert_middle, color=blue
+  glass: x=234, y=170, type=vert_big, color=blue
+  floor: x=186, y=176, type=horiz_middle, color=blue
+  floor: x=88, y=176, type=horiz_middle, color=blue
+  glass: x=170, y=170, type=vert_big, color=blue
+  glass: x=136, y=170, type=vert_big, color=blue
+  glass: x=170, y=234, type=vert_middle, color=blue
+  glass: x=136, y=234, type=vert_middle, color=blue
+  floor: x=152, y=264, type=small, color=blue
+  glass: x=350, y=170, type=vert_big, color=blue
+  glass: x=350, y=234, type=vert_middle, color=blue
+  floor: x=368, y=266, type=small, color=blue
+  glass: x=386, y=234, type=vert_middle, color=blue
+  glass: x=386, y=170, type=vert_big, color=blue
+  floor: x=402, y=176, type=horiz_middle, color=blue
+  glass: x=450, y=170, type=vert_big, color=blue
+  glass: x=450, y=234, type=vert_middle, color=blue
+  floor: x=468, y=266, type=small, color=blue
+  glass: x=486, y=234, type=vert_middle, color=blue
+  glass: x=486, y=170, type=vert_big, color=blue
+  floor: x=502, y=176, type=horiz_middle, color=blue
+  ball: x=150, y=168, size=2, color=blue
+  ball: x=366, y=168, size=2, color=blue
+  ball: x=466, y=168, size=2, color=blue
+

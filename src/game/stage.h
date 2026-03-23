@@ -377,6 +377,7 @@ public:
     static constexpr int MIN_X = 16;
 
     int id;
+    std::string displayId;  ///< Display string for stage ID (e.g. "1-12"), defaults to string of id
     char back[64];
     char music[64];
     int timelimit;

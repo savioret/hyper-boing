@@ -62,21 +62,24 @@ float StageLoader::parseTimeBlock(const std::string& line)
 bool StageLoader::parseStageProperty(Stage& stage, const std::string& key, const std::string& value)
 {
     if (key == "stage_id")
-        stage.id = std::stoi(value);
+    {
+        stage.displayId = value;
+        stage.id = parseInt(value);
+    }
     else if (key == "background")
         stage.setBack(value.c_str());
     else if (key == "music")
         stage.setMusic(value.c_str());
     else if (key == "time_limit")
-        stage.timelimit = std::stoi(value);
+        stage.timelimit = parseInt(value);
     else if (key == "player1_x")
-        stage.xpos[AppData::PLAYER1] = std::stoi(value);
+        stage.xpos[AppData::PLAYER1] = parseInt(value);
     else if (key == "player2_x")
-        stage.xpos[AppData::PLAYER2] = std::stoi(value);
+        stage.xpos[AppData::PLAYER2] = parseInt(value);
     else if (key == "player1_y")
-        stage.ypos[AppData::PLAYER1] = std::stoi(value);
+        stage.ypos[AppData::PLAYER1] = parseInt(value);
     else if (key == "player2_y")
-        stage.ypos[AppData::PLAYER2] = std::stoi(value);
+        stage.ypos[AppData::PLAYER2] = parseInt(value);
     else
         return false;
 
@@ -196,13 +199,19 @@ bool StageLoader::parseActionLine(Stage& stage, float currentTime, const std::st
     return true;
 }
 
+int StageLoader::parseInt(const std::string& str, int defaultVal)
+{
+    char* end;
+    long parsed = std::strtol(str.c_str(), &end, 10);
+    return (end != str.c_str()) ? static_cast<int>(parsed) : defaultVal;
+}
+
 int StageLoader::parseBallColor(const std::string& str)
 {
     if (str == "red")   return 0;
     if (str == "green") return 1;
     if (str == "blue")  return 2;
-    try { return std::stoi(str); } catch (...) {}
-    return 0;
+    return parseInt(str);
 }
 
 int StageLoader::parseHexaColor(const std::string& str)
@@ -211,8 +220,7 @@ int StageLoader::parseHexaColor(const std::string& str)
     if (str == "cyan")   return 1;
     if (str == "orange") return 2;
     if (str == "purple") return 3;
-    try { return std::stoi(str); } catch (...) {}
-    return 0;
+    return parseInt(str);
 }
 
 int StageLoader::parseFloorColor(const std::string& str)
@@ -221,8 +229,7 @@ int StageLoader::parseFloorColor(const std::string& str)
     if (str == "blue")   return 1;
     if (str == "green")  return 2;
     if (str == "yellow") return 3;
-    try { return std::stoi(str); } catch (...) {}
-    return 0;
+    return parseInt(str);
 }
 
 int StageLoader::parseGlassColor(const std::string& str)
@@ -231,8 +238,7 @@ int StageLoader::parseGlassColor(const std::string& str)
     if (str == "blue")   return 1;
     if (str == "green")  return 2;
     if (str == "yellow") return 3;
-    try { return std::stoi(str); } catch (...) {}
-    return 0;
+    return parseInt(str);
 }
 
 bool StageLoader::parsePickupTypeString(const std::string& str, PickupType& out)
@@ -278,9 +284,7 @@ void StageLoader::applyPickupParam(const std::string& value, StageObjectBuilder&
                 continue;
             }
 
-            int sz = 0;
-            try { sz = std::stoi(entry.substr(0, colonPos)); }
-            catch (...) { LOG_WARNING("Invalid pickup size in entry: %s", entry.c_str()); continue; }
+            int sz = parseInt(entry.substr(0, colonPos));
 
             std::string typeName = trim(entry.substr(colonPos + 1));
             PickupType pt;
@@ -315,29 +319,29 @@ void StageLoader::processBallObject(Stage& stage, float time, const std::map<std
     else if (params.count("x") && params.count("y"))
     {
         // Equivalent to .at(x, y) - fixed position
-        builder.at(std::stoi(params.at("x")), std::stoi(params.at("y")));
+        builder.at(parseInt(params.at("x")), parseInt(params.at("y")));
     }
     else if (params.count("x"))
     {
         // Equivalent to .atX(x) - fixed X, random Y
-        builder.atX(std::stoi(params.at("x")));
+        builder.atX(parseInt(params.at("x")));
     }
     else if (params.count("y"))
     {
         // Equivalent to .atY(y) - random X, fixed Y
-        builder.atY(std::stoi(params.at("y")));
+        builder.atY(parseInt(params.at("y")));
     }
     // If no position specified, both remain INT_MAX (fully random)
 
     // Ball-specific properties
     if (params.count("size"))
-        builder.size(std::stoi(params.at("size")));
+        builder.size(parseInt(params.at("size")));
     if (params.count("top"))
-        builder.top(std::stoi(params.at("top")));
+        builder.top(parseInt(params.at("top")));
     if (params.count("dirX") || params.count("dirY"))
     {
         float dx = params.count("dirX") ? std::stof(params.at("dirX")) : 1.0f;
-        int   dy = params.count("dirY") ? std::stoi(params.at("dirY")) : 1;
+        int   dy = params.count("dirY") ? parseInt(params.at("dirY"), 1) : 1;
         builder.dir(dx, dy);
     }
     if (params.count("color"))
@@ -376,7 +380,7 @@ void StageLoader::processFloorObject(Stage& stage, float time, const std::map<st
     builder.type(static_cast<int>(type));
 
     if (params.count("x") && params.count("y"))
-        builder.at(std::stoi(params.at("x")), std::stoi(params.at("y")));
+        builder.at(parseInt(params.at("x")), parseInt(params.at("y")));
     if (params.count("color"))
         builder.color(parseFloorColor(params.at("color")));
     if (params.count("invisible") && params.at("invisible") == "1")
@@ -397,11 +401,11 @@ void StageLoader::processLadderObject(Stage& stage, float time, const std::map<s
 
     // Position (ladders use bottom-middle coordinates)
     if (params.count("x") && params.count("y"))
-        builder.at(std::stoi(params.at("x")), std::stoi(params.at("y")));
+        builder.at(parseInt(params.at("x")), parseInt(params.at("y")));
 
     // Ladder-specific properties
     if (params.count("height"))
-        builder.height(std::stoi(params.at("height")));
+        builder.height(parseInt(params.at("height")));
 
     stage.spawn(builder);
 }
@@ -441,7 +445,7 @@ void StageLoader::processPickupObject(Stage& stage, float time, const std::map<s
 
     // Position (pickups always use fixed coordinates)
     if (params.count("x") && params.count("y"))
-        builder.at(std::stoi(params.at("x")), std::stoi(params.at("y")));
+        builder.at(parseInt(params.at("x")), parseInt(params.at("y")));
 
     stage.spawn(builder);
 }
@@ -471,7 +475,7 @@ void StageLoader::processGlassObject(Stage& stage, float time, const std::map<st
     builder.time(static_cast<int>(time));
 
     if (params.count("x") && params.count("y"))
-        builder.at(std::stoi(params.at("x")), std::stoi(params.at("y")));
+        builder.at(parseInt(params.at("x")), parseInt(params.at("y")));
     if (params.count("pickup"))
     {
         PickupType pt;
@@ -495,11 +499,11 @@ void StageLoader::processHexaObject(Stage& stage, float time, const std::map<std
 
     // Position
     if (params.count("x") && params.count("y"))
-        builder.at(std::stoi(params.at("x")), std::stoi(params.at("y")));
+        builder.at(parseInt(params.at("x")), parseInt(params.at("y")));
 
     // Size (0-2 for hexa, unlike ball's 0-3)
     if (params.count("size"))
-        builder.size(std::stoi(params.at("size")));
+        builder.size(parseInt(params.at("size")));
 
     // Velocity (constant velocity, not direction-based)
     float velX = 1.5f;
@@ -805,7 +809,7 @@ bool StageLoader::save(const Stage& stage, const std::string& filename)
     }
 
     // Write stage metadata
-    file << "stage_id: " << stage.id << "\n";
+    file << "stage_id: " << (stage.displayId.empty() ? std::to_string(stage.id) : stage.displayId) << "\n";
     file << "background: " << stage.back << "\n";
     file << "music: " << stage.music << "\n";
     file << "time_limit: " << stage.timelimit << "\n";

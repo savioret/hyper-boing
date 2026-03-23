@@ -29,7 +29,7 @@
 #   - Ladder x is bottom-middle anchor; y is bottom (ground = MAX_Y).
 #   - pickups: doubleshoot, timefreeze, extratime, shield
 
-stage_id: 5
+stage_id: 1-5
 background: carcassone2.png
 music: beach1.ogg
 time_limit: 100

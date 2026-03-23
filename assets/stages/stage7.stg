@@ -34,7 +34,7 @@
 #
 #
 
-stage_id: 7
+stage_id: 1-7
 background: venice1.png
 music: beach1.ogg
 time_limit: 100

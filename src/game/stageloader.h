@@ -119,6 +119,9 @@ private:
     static void processHexaObject(Stage& stage, float time, const std::map<std::string, std::string>& params);
     static void processActionObject(Stage& stage, float time, const std::string& command);
 
+    // Parse integer from string, returning defaultVal if parsing fails
+    static int parseInt(const std::string& str, int defaultVal = 0);
+
     // Parse ball color name ("red", "green", "blue") or integer index to int (0-2)
     static int parseBallColor(const std::string& str);
 

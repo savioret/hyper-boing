@@ -13,7 +13,7 @@
 #
 
 
-stage_id: 10
+stage_id: 1-10
 background: russia1.png
 music: winter1.ogg
 time_limit: 100

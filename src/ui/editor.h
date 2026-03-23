@@ -90,7 +90,7 @@ private:
 
     // UI toggles
     bool showBBoxes = true;
-    bool showGrid = true;
+    int gridMode = 1; // 1=8px, 2=4px, 0=off
     bool dirty = false;
 
     // Status bar message

@@ -16,7 +16,7 @@
 #
 
 
-stage_id: 11
+stage_id: 1-11
 background: london1.png
 music: winter1.ogg
 time_limit: 100

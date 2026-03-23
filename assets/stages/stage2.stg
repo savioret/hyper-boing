@@ -13,7 +13,7 @@
 #       left = doubleshoot, right = timefreeze.
 #   - Ball rows are intentionally separated to keep the center lane clearer at spawn.
 #
-stage_id: 2
+stage_id: 1-2
 background: mexico1.png
 music: beach1.ogg
 time_limit: 100
