@@ -78,7 +78,7 @@ void Stage::spawnFloor(const FloorParams& params)
     spawn(StageObject(StageObjectType::Floor, std::move(paramsCopy)));
 }
 
-StageObject Stage::pop(int time)
+StageObject Stage::pop(float time)
 {
     StageObject res(StageObjectType::Null);
 

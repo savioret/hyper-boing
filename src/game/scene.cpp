@@ -25,7 +25,7 @@ Scene::Scene(Stage* stg, std::unique_ptr<StageClear> pstgclr)
     : currentState(pstgclr ? SceneState::Playing : SceneState::Ready),
       gameOverSubState(GameOverSubState::ContinueCountdown),
       pStageClear(std::move(pstgclr)), gameOverCountdown(10),
-      stage(stg), pendingQuickStage(0), dSecond(0), timeRemaining(0), timeLine(0),
+      stage(stg), pendingQuickStage(0), secondAccum(0.0f), timeRemaining(0), timeLine(0),
       moveTick(0), moveLastTick(0), moveCount(0),
       drawTick(0), drawLastTick(0), drawCount(0),
       boundingBoxes(false),
@@ -48,7 +48,7 @@ int Scene::init()
     stage->skipFileReload = false;
 
     timeLine = 0;
-    dSecond = 0;
+    secondAccum = 0.0f;
     timeRemaining = stage->timelimit;
 
     stage->restart();
@@ -1145,55 +1145,57 @@ void Scene::cleanupPhase()
 
 void Scene::updateTimer(float dt)
 {
-    if (dSecond < 60)
-        dSecond++;
-    else
+    timeLine += dt;
+
+    secondAccum += dt;
+    if (secondAccum < 1.0f)
+        return;
+
+    // Run next lines only after a second is accumulated, to avoid doing time-based logic every frame
+    secondAccum -= 1.0f;
+
+    if (timeRemaining > 0)
     {
-        dSecond = 0;
-        if (timeRemaining > 0)
+        if (!pStageClear && currentState != SceneState::GameOver)
         {
-            if (!pStageClear && currentState != SceneState::GameOver)
-            {
-                int previousTime = timeRemaining;
-                timeRemaining--;
+            int previousTime = timeRemaining;
+            timeRemaining--;
 
-                // Fire TIME_SECOND_ELAPSED event
-                GameEventData event(GameEventType::TIME_SECOND_ELAPSED);
-                event.timeElapsed.previousTime = previousTime;
-                event.timeElapsed.newTime = timeRemaining;
-                EVENT_MGR.trigger(event);
-            }
-        }
-        else if (timeRemaining == 0 && currentState != SceneState::GameOver)
-        {
-            setState(SceneState::GameOver);
-
-            // Fire GAME_OVER event (reason: time expired)
-            GameEventData event(GameEventType::GAME_OVER);
-            event.gameOver.reason = 2;
+            // Fire TIME_SECOND_ELAPSED event
+            GameEventData event(GameEventType::TIME_SECOND_ELAPSED);
+            event.timeElapsed.previousTime = previousTime;
+            event.timeElapsed.newTime = timeRemaining;
             EVENT_MGR.trigger(event);
-
-            gameinf.player[AppData::PLAYER1]->setPlaying(false);
-            if (gameinf.player[AppData::PLAYER2])
-                gameinf.player[AppData::PLAYER2]->setPlaying(false);
-
-            CloseMusic();
-            OpenMusic("assets/music/gameover.ogg");
-            PlayMusic();
         }
+    }
+    else if (timeRemaining == 0 && currentState != SceneState::GameOver)
+    {
+        setState(SceneState::GameOver);
 
-        timeLine++;
-        if (currentState == SceneState::GameOver)
+        // Fire GAME_OVER event (reason: time expired)
+        GameEventData event(GameEventType::GAME_OVER);
+        event.gameOver.reason = 2;
+        EVENT_MGR.trigger(event);
+
+        gameinf.player[AppData::PLAYER1]->setPlaying(false);
+        if (gameinf.player[AppData::PLAYER2])
+            gameinf.player[AppData::PLAYER2]->setPlaying(false);
+
+        CloseMusic();
+        OpenMusic("assets/music/gameover.ogg");
+        PlayMusic();
+    }
+
+    if (currentState == SceneState::GameOver)
+    {
+        if (gameOverCountdown >= 0)
         {
-            if (gameOverCountdown >= 0)
+            gameOverCountdown--;
+            // Transition to Definitive when countdown expires
+            if (gameOverCountdown < 0 && gameOverSubState == GameOverSubState::ContinueCountdown)
             {
-                gameOverCountdown--;
-                // Transition to Definitive when countdown expires
-                if (gameOverCountdown < 0 && gameOverSubState == GameOverSubState::ContinueCountdown)
-                {
-                    gameOverSubState = GameOverSubState::Definitive;
-                    LOG_INFO("Game Over: Countdown expired, transitioning to Definitive");
-                }
+                gameOverSubState = GameOverSubState::Definitive;
+                LOG_INFO("Game Over: Countdown expired, transitioning to Definitive");
             }
         }
     }
@@ -1946,7 +1948,7 @@ void Scene::drawDebugOverlay()
             (int)lsLadders.size(),
             (int)lsPickups.size());
 
-    textOverlay.addTextF("Stage: %d  Time=%d  Timeline=%d",
+    textOverlay.addTextF("Stage: %d  Time=%d  Timeline=%.1f",
             stage->id, timeRemaining, timeLine);
 
     textOverlay.addTextF("State=%s",

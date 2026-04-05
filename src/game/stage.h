@@ -22,7 +22,7 @@ struct StageObjectParams
 {
     int x = INT_MAX;
     int y = INT_MAX;
-    int startTime = 0;
+    float startTime = 0.0f;
     
     StageObjectParams() = default;
     virtual ~StageObjectParams() = default;
@@ -284,20 +284,20 @@ enum class StageObjectType : int
 struct StageObject
 {
     StageObjectType id;
-    int start; // start time
+    float start; // start time
     int x, y;
 
     // Type-safe parameters
     std::unique_ptr<StageObjectParams> params;
 
-    StageObject(StageObjectType id = StageObjectType::Null, int start = 0)
+    StageObject(StageObjectType id = StageObjectType::Null, float start = 0.0f)
         : id(id), start(start), x(INT_MAX), y(INT_MAX), params(nullptr)
     {
     }
 
     // Constructor with typed params
     StageObject(StageObjectType id, std::unique_ptr<StageObjectParams> p)
-        : id(id), start(p ? p->startTime : 0), x(p ? p->x : INT_MAX), y(p ? p->y : INT_MAX),
+        : id(id), start(p ? p->startTime : 0.0f), x(p ? p->x : INT_MAX), y(p ? p->y : INT_MAX),
           params(std::move(p))
     {
     }
@@ -475,7 +475,7 @@ public:
      * @param time Current game time
      * @return StageObject (id=StageObjectType::Null if nothing to pop)
      */
-    StageObject pop(int time);
+    StageObject pop(float time);
 };
 
 // Forward declaration
@@ -628,7 +628,7 @@ public:
      * Set spawn time
      * @param time Game tick when object should appear
      */
-    StageObjectBuilder& time(int time)
+    StageObjectBuilder& time(float time)
     {
         objectParams->startTime = time;
         return *this;

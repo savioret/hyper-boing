@@ -307,7 +307,7 @@ void StageLoader::processBallObject(Stage& stage, float time, const std::map<std
     auto builder = StageObjectBuilder::ball();
 
     // Set spawn time
-    builder.time(static_cast<int>(time));
+    builder.time(time);
 
     // Position handling (INT_MAX defaults)
     // Priority: y_max > both x+y > individual x or y
@@ -376,7 +376,7 @@ void StageLoader::processFloorObject(Stage& stage, float time, const std::map<st
     }
 
     auto builder = StageObjectBuilder::floor();
-    builder.time(static_cast<int>(time));
+    builder.time(time);
     builder.type(static_cast<int>(type));
 
     if (params.count("x") && params.count("y"))
@@ -397,7 +397,7 @@ void StageLoader::processLadderObject(Stage& stage, float time, const std::map<s
     auto builder = StageObjectBuilder::ladder();
 
     // Set spawn time
-    builder.time(static_cast<int>(time));
+    builder.time(time);
 
     // Position (ladders use bottom-middle coordinates)
     if (params.count("x") && params.count("y"))
@@ -441,7 +441,7 @@ void StageLoader::processPickupObject(Stage& stage, float time, const std::map<s
     auto builder = StageObjectBuilder::pickup(type);
 
     // Set spawn time
-    builder.time(static_cast<int>(time));
+    builder.time(time);
 
     // Position (pickups always use fixed coordinates)
     if (params.count("x") && params.count("y"))
@@ -472,7 +472,7 @@ void StageLoader::processGlassObject(Stage& stage, float time, const std::map<st
     }
 
     auto builder = StageObjectBuilder::glass(type);
-    builder.time(static_cast<int>(time));
+    builder.time(time);
 
     if (params.count("x") && params.count("y"))
         builder.at(parseInt(params.at("x")), parseInt(params.at("y")));
@@ -495,7 +495,7 @@ void StageLoader::processGlassObject(Stage& stage, float time, const std::map<st
 void StageLoader::processHexaObject(Stage& stage, float time, const std::map<std::string, std::string>& params)
 {
     auto builder = StageObjectBuilder::hexa();
-    builder.time(static_cast<int>(time));
+    builder.time(time);
 
     // Position
     if (params.count("x") && params.count("y"))
@@ -528,7 +528,7 @@ void StageLoader::processHexaObject(Stage& stage, float time, const std::map<std
 void StageLoader::processActionObject(Stage& stage, float time, const std::string& command)
 {
     auto builder = StageObjectBuilder::action(command);
-    builder.time(static_cast<int>(time));
+    builder.time(time);
     stage.spawn(builder);
 }
 
@@ -820,7 +820,7 @@ bool StageLoader::save(const Stage& stage, const std::string& filename)
     file << "\n";
 
     // Group objects by start time
-    std::map<int, std::vector<const StageObject*>> timeGroups;
+    std::map<float, std::vector<const StageObject*>> timeGroups;
     for (const auto& obj : stage.getSequence())
     {
         if (obj->id == StageObjectType::Null) continue;
@@ -830,7 +830,12 @@ bool StageLoader::save(const Stage& stage, const std::string& filename)
     // Write time blocks
     for (const auto& group : timeGroups)
     {
-        file << "at " << group.first << ":\n";
+        float t = group.first;
+        // Write integer times without decimal point, fractional times with minimal precision
+        if (t == static_cast<int>(t))
+            file << "at " << static_cast<int>(t) << ":\n";
+        else
+            file << "at " << t << ":\n";
         for (const StageObject* obj : group.second)
         {
             writeObject(file, *obj);

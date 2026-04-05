@@ -117,9 +117,9 @@ private:
     int pendingQuickStage;                  ///< Queued ultra-fast stage jump target (0 = none)
 
     // Time management
-    int dSecond;         ///< Deciseconds counter (60 = 1 second)
+    float secondAccum;   ///< Accumulates dt (seconds) to detect when a full second has elapsed
     int timeRemaining;   ///< Time left on stage timer (in seconds)
-    int timeLine;        ///< Current timeline position for spawning stage objects
+    float timeLine;      ///< Current timeline position for spawning stage objects
 
     // Time freeze state (delegated to FreezeEffect helper)
     static constexpr float FREEZE_DURATION = 10.0f;  ///< Default freeze duration (seconds)
