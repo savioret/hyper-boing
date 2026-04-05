@@ -24,9 +24,11 @@ CollisionBox EditorObject::getHitBox() const
     return { (int)x, (int)y, spriteW, spriteH };
 }
 
-static int snapToGrid(int v, int gridSize)
+static int snapToGrid(int v, int gridMode)
 {
-    if (gridSize <= 0) return v;
+    if ( gridMode <= 0 ) return v;
+    const int gridSize = (gridMode == 2) ? 4 : 8;
+
     return (v + gridSize / 2) / gridSize * gridSize;
 }
 
@@ -815,13 +817,25 @@ void Editor::drawPlayfieldBorder()
     // Draw snap grid at 35% alpha
     if (gridMode > 0)
     {
-        const int G = (gridMode == 2) ? 4 : 8;
+        const int gridSize = (gridMode == 2) ? 4 : 8;
         SDL_SetRenderDrawBlendMode(appGraph.getRenderer(), SDL_BLENDMODE_BLEND);
+
+        // Regular grid lines
         appGraph.setDrawColor(160, 160, 160, 89);   // 35% alpha
-        for (int gx = Stage::MIN_X; gx <= Stage::MAX_X; gx += G)
+        for (int gx = Stage::MIN_X; gx <= Stage::MAX_X; gx += gridSize)
             SDL_RenderDrawLine(appGraph.getRenderer(), gx, Stage::MIN_Y, gx, Stage::MAX_Y);
-        for (int gy = Stage::MIN_Y; gy <= Stage::MAX_Y; gy += G)
+        for (int gy = Stage::MIN_Y; gy <= Stage::MAX_Y; gy += gridSize)
             SDL_RenderDrawLine(appGraph.getRenderer(), Stage::MIN_X, gy, Stage::MAX_X, gy);
+
+        // Major grid lines every 80px (overdraw at those positions)
+        appGraph.setDrawColor(80, 80, 80, 200);   // darker, more opaque
+        for (int gx = Stage::MIN_X; gx <= Stage::MAX_X; gx += gridSize)
+            if ((gx % 80) == 0)
+                SDL_RenderDrawLine(appGraph.getRenderer(), gx, Stage::MIN_Y, gx, Stage::MAX_Y);
+        for (int gy = Stage::MIN_Y; gy <= Stage::MAX_Y; gy += gridSize)
+            if ((gy % 80) == 0)
+                SDL_RenderDrawLine(appGraph.getRenderer(), Stage::MIN_X, gy, Stage::MAX_X, gy);
+
         SDL_SetRenderDrawBlendMode(appGraph.getRenderer(), SDL_BLENDMODE_NONE);
     }
 

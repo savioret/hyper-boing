@@ -1,0 +1,52 @@
+# Stage 5 Configuration - Staircases and Side Spawns
+#
+# Simplified layout for t=0 (not to scale, Y shown by rows):
+#
+# y~80      @                       @
+#                      o  o
+#                  ===     ===
+#              =======     =======
+#
+#
+# y~MAX_Y             1   2   
+#        ----------------------------------------
+#
+# Symbol legend:
+#   1      player 1 start position
+#   2      player 2 start position
+#   =      small floor (16px)
+#   ===    middle floor (48px)
+#   ====   big floor (64px)
+#   º      tiny ball (size 3)
+#   o      small ball (size 2)
+#   O      middle ball (size 1)
+#   @      big ball (size 0)
+#   *      small hexa (size 2)
+#   X      big hexa (size 0)
+#   ~      small glass platform (16px)
+#   ~~~    middle glass platform (48px)
+#   ~~~~   big glass platform (64px)
+#   H      ladder segment
+#
+
+stage_id: 1-12
+background: asia1.png
+music: winter1.ogg
+time_limit: 100
+player1_x: 280
+player2_x: 376
+player1_y: 416
+player2_y: 416
+
+at 0:
+  ball: x=56, y=32, size=0, dirX=2, color=green, pickup=[0:doubleshoot,2:gun]
+  ball: x=504, y=32, size=0, dirX=-2, color=green, pickup=[1:doubleshoot,3:shield]
+  floor: x=208, y=296, type=horiz_big, color=yellow
+  floor: x=368, y=296, type=horiz_big, color=yellow
+  floor: x=160, y=296, type=horiz_middle, color=yellow
+  floor: x=432, y=296, type=horiz_middle, color=yellow
+  ball: x=256, y=192, size=1, color=green, pickup=[0:doubleshoot,2:gun]
+  ball: x=336, y=192, size=1, dirX=-1, color=green, pickup=[0:doubleshoot,2:gun]
+  floor: x=208, y=248, type=horiz_big, color=yellow
+  floor: x=360, y=248, type=horiz_big, color=yellow
+
