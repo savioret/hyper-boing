@@ -27,13 +27,15 @@ at 0:
   floor: x=320, y=264, type=vert_big, color=blue
   floor: x=304, y=368, type=vert_middle, color=blue
   floor: x=320, y=368, type=vert_middle, color=blue
-  ball: x=80, y=80, size=0, dirX=2, color=blue
-  ball: x=480, y=80, size=0, dirX=-2, color=blue
+  ball: x=80, y=80, size=0, dirX=2, color=blue, pickup=[0:doubleshoot,1:claw]
+  ball: x=480, y=80, size=0, dirX=-2, color=blue, pickup=[0:claw,1:extratime]
   ball: x=280, y=328, size=1, dirX=2, color=blue
   ball: x=320, y=328, size=1, dirX=-2, color=blue
   ladder: x=280, y=416, height=6
   ladder: x=360, y=416, height=6
+  ball: x=280, y=328, size=1, dirX=2, top=350, color=blue, pickup=shield
+  ball: x=320, y=328, size=1, dirX=-2, top=350, color=blue, pickup=gun
 
 at 0.2:
-  ball: x=280, y=328, size=1, dirX=2, color=blue
-  ball: x=320, y=328, size=1, dirX=-2, color=blue
+  ball: x=280, y=328, size=1, dirX=2, top=350, color=blue
+  ball: x=320, y=328, size=1, dirX=-2, top=350, color=blue
