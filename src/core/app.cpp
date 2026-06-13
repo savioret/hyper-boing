@@ -52,7 +52,11 @@ int GameState::init()
     
     // Configure default section position (can be customized in derived classes)
     textOverlay.getSection("default").setPosition(0, 300);
-    
+
+    // Initialize 2x system font for help overlay
+    helpFontRenderer.init(&AppData::instance().graph);
+    helpFontRenderer.setScale(2.0f);
+
     return 1;
 }
 
@@ -113,6 +117,115 @@ void GameState::drawExitConfirm()
     graph.text("ENTER: Confirm    ESC: Cancel", 192, 250);
 }
 
+void GameState::drawHelpOverlay()
+{
+    AppData& appData = AppData::instance();
+    if (!appData.showHelpOverlay) return;
+
+    Graph& graph = appData.graph;
+    SDL_Renderer* renderer = graph.getRenderer();
+
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 210);
+    SDL_Rect backdrop = { 0, 0, RES_X, RES_Y };
+    SDL_RenderFillRect(renderer, &backdrop);
+
+    SDL_SetRenderDrawColor(renderer, 12, 12, 32, 248);
+    SDL_Rect box = { 8, 16, RES_X - 16, RES_Y - 24 };
+    SDL_RenderFillRect(renderer, &box);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+
+    SDL_SetRenderDrawColor(renderer, 130, 130, 190, 255);
+    SDL_RenderDrawRect(renderer, &box);
+
+    // Title (2x font: 12px/char; 34 chars = 408px; center at (640-408)/2 = 116)
+    helpFontRenderer.setColor(255, 220, 80);
+    helpFontRenderer.text("KEYBOARD SHORTCUTS  (F1 to close)", 116, 24);
+
+    SDL_SetRenderDrawColor(renderer, 80, 80, 130, 255);
+    SDL_RenderDrawLine(renderer, 10, 44, RES_X - 10, 44);
+
+    const int lineH = 17;  // 14px tall glyph + 3px spacing at 2x scale
+    const int col1  = 10;
+    const int col2  = 232;
+    const int col3  = 432;
+    int startY = 50;
+
+    // --- Column 1: Gameplay ---
+    const Keys& k1 = appData.getKeys(AppData::PLAYER1);
+    const Keys& k2 = appData.getKeys(AppData::PLAYER2);
+    char buf[64];
+
+    helpFontRenderer.setColor(80, 190, 255);
+    helpFontRenderer.text("GAMEPLAY", col1, startY);
+
+    int y = startY + lineH + 2;
+    helpFontRenderer.setColor(200, 220, 255);
+    helpFontRenderer.text("Player 1:", col1, y); y += lineH;
+
+    helpFontRenderer.setColor(170, 200, 170);
+    snprintf(buf, sizeof(buf), " Left   %s", Keys::getKeyName(k1.getLeft()));
+    helpFontRenderer.text(buf, col1, y); y += lineH;
+    snprintf(buf, sizeof(buf), " Right  %s", Keys::getKeyName(k1.getRight()));
+    helpFontRenderer.text(buf, col1, y); y += lineH;
+    snprintf(buf, sizeof(buf), " Shoot  %s", Keys::getKeyName(k1.getShoot()));
+    helpFontRenderer.text(buf, col1, y); y += lineH;
+    snprintf(buf, sizeof(buf), " Up     %s", Keys::getKeyName(k1.getUp()));
+    helpFontRenderer.text(buf, col1, y); y += lineH;
+    snprintf(buf, sizeof(buf), " Down   %s", Keys::getKeyName(k1.getDown()));
+    helpFontRenderer.text(buf, col1, y); y += lineH + 4;
+
+    helpFontRenderer.setColor(200, 220, 255);
+    helpFontRenderer.text("Player 2:", col1, y); y += lineH;
+
+    helpFontRenderer.setColor(170, 200, 170);
+    snprintf(buf, sizeof(buf), " Left   %s", Keys::getKeyName(k2.getLeft()));
+    helpFontRenderer.text(buf, col1, y); y += lineH;
+    snprintf(buf, sizeof(buf), " Right  %s", Keys::getKeyName(k2.getRight()));
+    helpFontRenderer.text(buf, col1, y); y += lineH;
+    snprintf(buf, sizeof(buf), " Shoot  %s", Keys::getKeyName(k2.getShoot()));
+    helpFontRenderer.text(buf, col1, y); y += lineH;
+    snprintf(buf, sizeof(buf), " Up     %s", Keys::getKeyName(k2.getUp()));
+    helpFontRenderer.text(buf, col1, y); y += lineH;
+    snprintf(buf, sizeof(buf), " Down   %s", Keys::getKeyName(k2.getDown()));
+    helpFontRenderer.text(buf, col1, y);
+
+    // --- Column 2: Editor ---
+    y = startY;
+    helpFontRenderer.setColor(80, 190, 255);
+    helpFontRenderer.text("EDITOR (Ctrl+E)", col2, y); y += lineH + 2;
+
+    helpFontRenderer.setColor(170, 200, 170);
+    helpFontRenderer.text("1-6   Add objects", col2, y); y += lineH;
+    helpFontRenderer.text("Q     Cycle size",  col2, y); y += lineH;
+    helpFontRenderer.text("W     Cycle color", col2, y); y += lineH;
+    helpFontRenderer.text("Del   Delete",      col2, y); y += lineH;
+    helpFontRenderer.text("B     Boxes",       col2, y); y += lineH;
+    helpFontRenderer.text("G     Grid",        col2, y); y += lineH;
+    helpFontRenderer.text("I     Invisible",   col2, y); y += lineH;
+    helpFontRenderer.text("P     Passthru",    col2, y); y += lineH;
+    helpFontRenderer.text("A     Pickup",      col2, y); y += lineH;
+    helpFontRenderer.text("C     Clone",       col2, y); y += lineH;
+    helpFontRenderer.text("F2    Save stage",  col2, y); y += lineH;
+    helpFontRenderer.text("Ctrl+Arr  Vel",     col2, y); y += lineH;
+    helpFontRenderer.text("Esc   Cancel",      col2, y);
+
+    // --- Column 3: Global / Debug ---
+    y = startY;
+    helpFontRenderer.setColor(80, 190, 255);
+    helpFontRenderer.text("GLOBAL / DEBUG", col3, y); y += lineH + 2;
+
+    helpFontRenderer.setColor(170, 200, 170);
+    helpFontRenderer.text("F1       Help",      col3, y); y += lineH;
+    helpFontRenderer.text("F5       Pause",     col3, y); y += lineH;
+    helpFontRenderer.text("TAB      Debug",     col3, y); y += lineH;
+    helpFontRenderer.text("F9/`     Console",   col3, y); y += lineH;
+    helpFontRenderer.text("Esc      Exit",      col3, y); y += lineH;
+    helpFontRenderer.text("Ctrl+E   Editor",    col3, y); y += lineH;
+    helpFontRenderer.text("Ctrl+F11 Prev",      col3, y); y += lineH;
+    helpFontRenderer.text("Ctrl+F12 Next",      col3, y);
+}
+
 void GameState::finalizeRender()
 {
     AppData& appData = AppData::instance();
@@ -122,6 +235,9 @@ void GameState::finalizeRender()
 
     // Render text overlay
     textOverlay.render();
+
+    // Draw help overlay (F1) on top of game content but below console
+    drawHelpOverlay();
 
     // Draw exit confirmation dialog on top (before AppConsole)
     if (showingExitConfirm)

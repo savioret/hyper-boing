@@ -454,7 +454,7 @@ void Editor::onKeyDown(SDL_Keycode key, Uint16 mod)
         break;
     }
 
-    case SDLK_F1:
+    case SDLK_F2:
         saveToFile();
         break;
 
@@ -1107,7 +1107,7 @@ void Editor::drawStatusBar()
     // Row 3 (y≈459): global key hints
     const int ROW3 = BAR_Y + 36;
     appGraph.setDrawColor(120, 120, 120, 255);
-    appGraph.text("1-6:Place  C:Clone  Q/W:Cycle  B:Boxes  G:Grid  Del:Delete  F1:Save  Ctrl+E:Exit", 5, ROW3);
+    appGraph.text("1-6:Place  C:Clone  Q/W:Cycle  B:Boxes  G:Grid  Del:Delete  F2:Save  Ctrl+E:Exit", 5, ROW3);
 }
 
 // ============================================================

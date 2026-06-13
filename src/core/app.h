@@ -46,6 +46,9 @@ protected:
     BMFontLoader fontLoader;
     BMFontRenderer fontRenderer;
 
+    // 2x-scale system font used by the help overlay
+    BMFontRenderer helpFontRenderer;
+
     // Overlay font (simplified - only needs BMFontRenderer which manages everything)
     std::unique_ptr<BMFontRenderer> overlayFontRenderer;
 
@@ -100,6 +103,9 @@ public:
 
     // Draw the exit confirmation overlay (called from finalizeRender)
     void drawExitConfirm();
+
+    // Draw the global help overlay (F1 shortcut reference)
+    void drawHelpOverlay();
     
     // Access to text overlay
     TextOverlay& getTextOverlay() { return textOverlay; }

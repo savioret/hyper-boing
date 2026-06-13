@@ -63,8 +63,8 @@ GameState* ConfigScreen::moveAll(float dt)
     if (postConfigDelay > 0.0f)
     {
         postConfigDelay -= dt;
-        // Only allow ESC and F1 during post-config delay (exit options)
-        if (appInput.key(SDL_SCANCODE_F1))
+        // Only allow ESC and F2 during post-config delay (exit options)
+        if (appInput.key(SDL_SCANCODE_F2))
         {
             saveConfiguration();
             return new Menu();
@@ -212,7 +212,7 @@ GameState* ConfigScreen::moveAll(float dt)
             else rightPressed = false;
         }
         
-        if (appInput.key(SDL_SCANCODE_F1))
+        if (appInput.key(SDL_SCANCODE_F2))
         {
             saveConfiguration();
             return new Menu();
@@ -377,7 +377,7 @@ void ConfigScreen::drawUI()
     if (state == ConfigState::Normal)
     {
         drawText("Arrows: Navigate  |  ENTER: Change key", 80, y, false);
-        drawText("F1: Save  |  ESC: Cancel", 160, y + 20, false);
+        drawText("F2: Save  |  ESC: Cancel", 160, y + 20, false);
     }
 }
 

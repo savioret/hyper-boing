@@ -126,6 +126,7 @@ public:
 
     // Global flags and state (moved from main)
     bool debugMode;
+    bool showHelpOverlay;
     bool quit;           // Application quit flag
     bool goBack;         // Return to menu flag
     int renderMode;      // Render mode (windowed/fullscreen)

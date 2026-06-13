@@ -178,6 +178,10 @@ void GameRunner::processEvents()
                         }
                         break;
                         
+                    case SDLK_F1:
+                        appData.showHelpOverlay = !appData.showHelpOverlay;
+                        break;
+
                     case SDLK_TAB:
                         // TAB key - toggle debug mode
                         appData.debugMode = !appData.debugMode;

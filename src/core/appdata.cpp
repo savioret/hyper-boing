@@ -80,7 +80,7 @@ AppData::AppData()
     : numPlayers(1), numStages(0), currentStage(1), inMenu(true),
       activeScene(nullptr), sharedBackground(nullptr), scrollX(0.0f),
       scrollY(0.0f), backgroundInitialized(false), debugMode(false),
-      quit(false), goBack(false), renderMode(RENDERMODE_NORMAL),
+      showHelpOverlay(false), quit(false), goBack(false), renderMode(RENDERMODE_NORMAL),
       currentScreen(nullptr), nextScreen(nullptr)
 {
     player[PLAYER1] = nullptr;
